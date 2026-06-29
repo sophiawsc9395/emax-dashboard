@@ -130,6 +130,7 @@ function PdfDownloads({month,year}){
         </a>
       ))}
       <PdfDownloads month={month} year={year}/>
+      </div>
     </div>
   </div>;
 }
