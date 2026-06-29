@@ -534,24 +534,8 @@ function AeonTable({sr,records,printMode,month,year,days}){
 }
 
 // ─── BRANCH PERFORMANCE TABLE ──────────────────────────────
-function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,startDay=1,endDay=30,onChangeStartDay,onChangeEndDay,records,srList}){
-  // Compute range-filtered totals (startDay to endDay inclusive)
-  const rangeTotals = useMemo(()=>{
-    if(!records||!srList) return branchTotals;
-    const t={};
-    BRANCH_ORDER.forEach(b=>{
-      const bSRs=(srList||[]).filter(s=>s.branch===b);
-      let wi=0,ae=0;
-      for(let d=startDay;d<=endDay;d++){
-        const k=`${d}/${month}/${year}`,day=records[k]||{};
-        bSRs.forEach(sr=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});
-        wi+=(day[`BM_${b}`]?.walkin||0);ae+=(day[`BM_${b}`]?.aeon||0);wi+=(day[`BM_${b}`]?.unalloc||0);
-      }
-      t[b]={wi,ae,total:wi+ae};
-    });
-    return t;
-  },[records,srList,startDay,endDay,month,year]);
-  const bt = (records&&srList) ? rangeTotals : branchTotals;
+function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,startDay=1,endDay=30,onChangeStartDay,onChangeEndDay}){
+  const bt = branchTotals;
 
   const grandWI=BRANCH_ORDER.reduce((s,b)=>s+(bt[b]?.wi||0),0);
   const grandAE=BRANCH_ORDER.reduce((s,b)=>s+(bt[b]?.ae||0),0);
@@ -1712,7 +1696,7 @@ export default function App(){
           <h2 style={{fontSize:14,fontWeight:800,color:"#0A1628",margin:0}}>Branch Performance</h2>
           <button className="btn btn-primary" onClick={printSummary} style={{fontSize:12}}>Download Report</button>
         </div>
-        <BranchPerfTable branchTotals={branchTotals} targets={targets} branchMeta={branchMeta} printRef={summaryRef} month={month} year={year} startDay={selStartDay} endDay={selEndDay} onChangeStartDay={setSelStartDay} onChangeEndDay={setSelEndDay} records={records} srList={srList}/>
+        <BranchPerfTable branchTotals={branchTotals} targets={targets} branchMeta={branchMeta} printRef={summaryRef} month={month} year={year} startDay={selStartDay} endDay={selEndDay} onChangeStartDay={setSelStartDay} onChangeEndDay={setSelEndDay}/>
       </div>}
 
       {/* RANKINGS */}
