@@ -366,7 +366,7 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
     bSRs.forEach(sr=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});
     return{day:d,wi,ae,ua};
   });
-  const tWI=rows.reduce((s,r)=>s+r.wi,0),tAE=rows.reduce((s,r)=>s+r.ae,0),tUA=rows.reduce((s,r)=>s+r.ua,0),total=tWI+tAE;
+  const tWI=rows.reduce((s,r)=>s+r.wi,0),tAE=rows.reduce((s,r)=>s+r.ae,0),tUA=rows.reduce((s,r)=>s+r.ua,0),total=tWI+tAE+tUA;
   const p=pctN(total,target),color=achColor(total,target);
   const bmBonusEarned=target>0&&total>=target&&bmBonus>0;
   const achBonus=calcAchievementBonus(p,"bm"),points=calcRewardPoints(p,p);
