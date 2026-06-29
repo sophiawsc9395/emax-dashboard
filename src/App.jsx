@@ -541,19 +541,20 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
     const t={};
     BRANCH_ORDER.forEach(b=>{
       const bSRs=(srList||[]).filter(s=>s.branch===b);
-      let wi=0,ae=0;
+      let wi=0,ae=0,ua=0;
       for(let d=startDay;d<=endDay;d++){
         const k=`${d}/${month}/${year}`,day=records[k]||{};
         bSRs.forEach(sr=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});
-        wi+=(day[`BM_${b}`]?.walkin||0);ae+=(day[`BM_${b}`]?.aeon||0);wi+=(day[`BM_${b}`]?.unalloc||0);
+        wi+=(day[`BM_${b}`]?.walkin||0);ae+=(day[`BM_${b}`]?.aeon||0);ua+=(day[`BM_${b}`]?.unalloc||0);
       }
-      t[b]={wi,ae,total:wi+ae};
+      t[b]={wi,ae,ua,total:wi+ae+ua};
     });
     return t;
   },[records,srList,startDay,endDay,month,year]);
   const bt = (records&&srList) ? rangeTotals : branchTotals;
 
   const grandWI=BRANCH_ORDER.reduce((s,b)=>s+(bt[b]?.wi||0),0);
+  const grandUA=BRANCH_ORDER.reduce((s,b)=>s+(bt[b]?.ua||0),0);
   const grandAE=BRANCH_ORDER.reduce((s,b)=>s+(bt[b]?.ae||0),0);
   const grandT=grandWI+grandAE;
   const grandTgt=BRANCH_ORDER.reduce((s,b)=>s+(targets?.bm?.[b]||0),0);
@@ -607,7 +608,7 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
             const pb=pctN(bt[b2]?.total||0,targets?.bm?.[b2]||0);
             return pb-pa;
           }).map((b,i)=>{
-          const wi=bt[b]?.wi||0,ae=bt[b]?.ae||0,total=wi+ae;
+          const wi=bt[b]?.wi||0,ae=bt[b]?.ae||0,ua=bt[b]?.ua||0,total=wi+ae+ua;
           const target=targets?.bm?.[b]||0,bal=target>0?total-target:null,over=target>0&&total>=target;
           return <tr key={b} className="shine-row" style={{background:i%2===0?"#fff":"#F7F9FC"}}>
             <td style={{...TD({textAlign:"left"})}}>
@@ -619,7 +620,7 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
               <span style={{fontWeight:600,color:over?"#00C896":"#4A5568"}}>{total>0?`RM ${nc(total)}`:"—"}</span>
             </td>
             <td style={{...TD({background:over?"#EFF6FF":"#fff"}),textAlign:"right"}}>
-              <span style={{color:"#4A5568"}}>{wi>0?`RM ${nc(wi)}`:"—"}</span>
+              <span style={{color:"#4A5568"}}>{(wi+ua)!==0?`RM ${nc(wi+ua)}`:"—"}</span>
             </td>
             <td style={{...TD({background:over?"#EFF6FF":"#fff"}),textAlign:"right"}}>
               <span style={{color:"#4A5568"}}>{ae>0?`RM ${nc(ae)}`:"—"}</span>
@@ -638,7 +639,7 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
           <td style={{padding:"10px 16px",fontWeight:600,color:"rgba(255,255,255,.6)"}}>Total</td>
           <td style={{padding:"10px 16px",textAlign:"right"}}><span style={{color:"rgba(255,255,255,.6)"}}>{grandTgt>0?nc(grandTgt):"—"}</span></td>
           <td style={{padding:"10px 16px",textAlign:"right"}}><span style={{fontWeight:600,color:grandT>=grandTgt?"#00C896":"rgba(255,255,255,.6)"}}>{grandT>0?`RM ${nc(grandT)}`:"—"}</span></td>
-          <td style={{padding:"10px 16px",textAlign:"right"}}><span style={{color:"rgba(255,255,255,.6)"}}>{grandWI>0?`RM ${nc(grandWI)}`:"—"}</span></td>
+          <td style={{padding:"10px 16px",textAlign:"right"}}><span style={{color:"rgba(255,255,255,.6)"}}>{(grandWI+grandUA)!==0?`RM ${nc(grandWI+grandUA)}`:"—"}</span></td>
           <td style={{padding:"10px 16px",textAlign:"right"}}><span style={{color:"rgba(255,255,255,.6)"}}>{grandAE>0?`RM ${nc(grandAE)}`:"—"}</span></td>
           <td style={{padding:"10px 16px",textAlign:"right"}}>
             <span style={{fontWeight:700,color:grandT>=grandTgt?"#00C896":"#F0354B"}}>
@@ -1569,9 +1570,9 @@ export default function App(){
   const branchTotals=useMemo(()=>{
     const t={};
     BRANCH_ORDER.forEach(b=>{
-      const bSRs=srList.filter(s=>s.branch===b);let wi=0,ae=0;
-      Object.values(records).forEach(day=>{bSRs.forEach(sr=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});wi+=(day[`BM_${b}`]?.walkin||0);ae+=(day[`BM_${b}`]?.aeon||0);wi+=(day[`BM_${b}`]?.unalloc||0);});
-      t[b]={wi,ae,total:wi+ae};
+      const bSRs=srList.filter(s=>s.branch===b);let wi=0,ae=0,ua=0;
+      Object.values(records).forEach(day=>{bSRs.forEach(sr=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});wi+=(day[`BM_${b}`]?.walkin||0);ae+=(day[`BM_${b}`]?.aeon||0);ua+=(day[`BM_${b}`]?.unalloc||0);});
+      t[b]={wi,ae,ua,total:wi+ae+ua};
     });
     return t;
   },[records,srList]);
