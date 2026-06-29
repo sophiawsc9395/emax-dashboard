@@ -1570,11 +1570,15 @@ export default function App(){
     const t={};
     BRANCH_ORDER.forEach(b=>{
       const bSRs=srList.filter(s=>s.branch===b);let wi=0,ae=0;
-      Object.values(records).forEach(day=>{bSRs.forEach(sr=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});wi+=(day[`BM_${b}`]?.walkin||0);ae+=(day[`BM_${b}`]?.aeon||0);wi+=(day[`BM_${b}`]?.unalloc||0);});
+      for(let d=selStartDay;d<=selEndDay;d++){
+        const k=`${d}/${month}/${year}`,day=records[k]||{};
+        bSRs.forEach(sr=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});
+        wi+=(day[`BM_${b}`]?.walkin||0);ae+=(day[`BM_${b}`]?.aeon||0);wi+=(day[`BM_${b}`]?.unalloc||0);
+      }
       t[b]={wi,ae,total:wi+ae};
     });
     return t;
-  },[records,srList]);
+  },[records,srList,selStartDay,selEndDay,month,year]);
 
   const srTotals=useMemo(()=>{
     const t={};
