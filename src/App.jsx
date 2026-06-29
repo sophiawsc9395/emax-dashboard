@@ -226,52 +226,18 @@ function SectionHeader({title,subtitle,action}){
 
 // ─── EDITABLE CELL ─────────────────────────────────────────
 function EC({value,onSave,color="#1E6FDB"}){
-  const [val,setVal]=useState(value>0?String(value):"");
-
-  useEffect(()=>{
-    const next=value>0?String(value):"";
-    setVal(next);
-  },[value]);
-
-  const save=()=>{
-    const cleaned=String(val).trim();
-    const num=cleaned===""?0:Number(cleaned);
-    onSave(Number.isFinite(num)?num:0);
-  };
-
-  return <td style={{padding:"2px 6px",textAlign:"right"}}>
-    <input
-      type="number"
-      value={val}
-      step="0.01"
-      placeholder="—"
-      onChange={e=>setVal(e.target.value)}
-      onBlur={save}
-      onKeyDown={e=>{
-        if(e.key==="Enter"){e.currentTarget.blur();}
-        if(e.key==="Escape"){setVal(value>0?String(value):"");e.currentTarget.blur();}
-      }}
-      style={{
-        width:80,
-        padding:"3px 8px",
-        border:"1px solid transparent",
-        borderRadius:6,
-        fontSize:11,
-        outline:"none",
-        fontFamily:"'Inter',sans-serif",
-        textAlign:"right",
-        background:"transparent",
-        color:value>0?color:"#8A96A8",
-        fontWeight:value>0?600:400
-      }}
-      onFocus={e=>{
-        e.currentTarget.style.background="#FFFBEB";
-        e.currentTarget.style.border="1.5px solid #F5A623";
-      }}
-      onMouseEnter={e=>{ if(document.activeElement!==e.currentTarget) e.currentTarget.style.background="#EFF6FF"; }}
-      onMouseLeave={e=>{ if(document.activeElement!==e.currentTarget) e.currentTarget.style.background="transparent"; }}
-    />
-  </td>;
+  const [editing,setEditing]=useState(false);
+  const [val,setVal]=useState("");
+  if(editing)return <td style={{padding:"2px 6px",background:"#FFFBEB",textAlign:"right"}}>
+    <input autoFocus type="number" value={val} step="0.01" onChange={e=>setVal(e.target.value)}
+      onBlur={()=>{onSave(parseFloat(val)||0);setEditing(false);}}
+      onKeyDown={e=>{if(e.key==="Enter"){onSave(parseFloat(val)||0);setEditing(false);}if(e.key==="Escape")setEditing(false);}}
+      style={{width:80,padding:"3px 8px",border:"1.5px solid #F5A623",borderRadius:6,fontSize:11,outline:"none",fontFamily:"'Inter',sans-serif",textAlign:"right"}}/></td>;
+  return <td onClick={()=>{setVal(value>0?value:"");setEditing(true);}} title="Click to edit"
+    style={{padding:"6px 12px",textAlign:"right",cursor:"pointer",color:value>0?color:"#E4EAF2",fontWeight:value>0?600:400,fontSize:11,whiteSpace:"nowrap"}}
+    onMouseEnter={e=>e.currentTarget.style.background="#EFF6FF"}
+    onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+    {value>0?f2(value):"—"}</td>;
 }
 
 // ─── SR TABLE ──────────────────────────────────────────────
@@ -1308,18 +1274,34 @@ function DailyEntry({records,setRecords,srList,branchMeta,month,year,days,record
     setTimeout(()=>setSaved(false),2000);
   };
 
-  const NumInput=({value,onChange,accent="#E4EAF2"})=>(
-    <input type="number" step="0.01" min="0"
-      value={value===0?"":value}
-      onChange={e=>onChange(e.target.value)}
+  const NumInput=({value,onChange,accent="#E4EAF2"})=>{
+    const [str,setStr]=useState(value===0?"":String(value));
+    const prev=useRef(value);
+    useEffect(()=>{
+      if(prev.current!==value){
+        prev.current=value;
+        setStr(value===0?"":String(value));
+      }
+    },[value]);
+    return <input type="number" step="0.01" min="0"
+      value={str}
+      onChange={e=>{setStr(e.target.value);}}
+      onBlur={e=>{
+        const v=parseFloat(e.target.value)||0;
+        prev.current=v;
+        setStr(v===0?"":String(v));
+        onChange(String(v));
+        e.target.style.borderColor=v>0?"#F5A623":accent;
+        e.target.style.background=v>0?"#FFFBEB":"#F7F9FC";
+        e.target.style.boxShadow="none";
+      }}
       placeholder="0.00"
       style={{width:"100%",padding:"7px 10px",border:`1.5px solid ${value>0?"#F5A623":accent}`,borderRadius:7,fontSize:12,
         outline:"none",textAlign:"right",fontFamily:"Inter,sans-serif",
         background:value>0?"#FFFBEB":"#F7F9FC"}}
       onFocus={e=>{e.target.style.borderColor="#1E6FDB";e.target.style.background="#fff";e.target.style.boxShadow="0 0 0 3px rgba(30,111,219,.1)";}}
-      onBlur={e=>{e.target.style.borderColor=value>0?"#F5A623":accent;e.target.style.background=value>0?"#FFFBEB":"#F7F9FC";e.target.style.boxShadow="none";}}
-    />
-  );
+    />;
+  };
 
   const branchDayTotal=bSRs.reduce((s,sr)=>s+(localInputs[sr.id]?.walkin||0)+(localInputs[sr.id]?.aeon||0),0)
     +(localInputs[`BM_${selBranch}`]?.unalloc||0);
