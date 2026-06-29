@@ -233,11 +233,11 @@ function EC({value,onSave,color="#1E6FDB"}){
       onBlur={()=>{onSave(parseFloat(val)||0);setEditing(false);}}
       onKeyDown={e=>{if(e.key==="Enter"){onSave(parseFloat(val)||0);setEditing(false);}if(e.key==="Escape")setEditing(false);}}
       style={{width:80,padding:"3px 8px",border:"1.5px solid #F5A623",borderRadius:6,fontSize:11,outline:"none",fontFamily:"'Inter',sans-serif",textAlign:"right"}}/></td>;
-  return <td onClick={()=>{setVal(value>0?value:"");setEditing(true);}} title="Click to edit"
-    style={{padding:"6px 12px",textAlign:"right",cursor:"pointer",color:value>0?color:"#E4EAF2",fontWeight:value>0?600:400,fontSize:11,whiteSpace:"nowrap"}}
+  return <td onClick={()=>{setVal(value!==0?value:"");setEditing(true);}} title="Click to edit"
+    style={{padding:"6px 12px",textAlign:"right",cursor:"pointer",color:value>0?color:value<0?"#F0354B":"#E4EAF2",fontWeight:value!==0?600:400,fontSize:11,whiteSpace:"nowrap"}}
     onMouseEnter={e=>e.currentTarget.style.background="#EFF6FF"}
     onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-    {value>0?f2(value):"—"}</td>;
+    {value!==0?f2(value):"—"}</td>;
 }
 
 // ─── SR TABLE ──────────────────────────────────────────────
