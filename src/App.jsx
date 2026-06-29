@@ -269,7 +269,7 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days}
         <th style={{...thS,color:"#0A1628"}}>Total</th>
       </tr></thead>
       <tbody>{rows.map(({day,wi,ae})=>{
-        const dk=`${day}/${month}/${year}`,rt=wi+ae+ua;
+        const dk=`${day}/${month}/${year}`,rt=wi+ae;
         return <tr key={day} className="shine-row" style={{borderBottom:"1px solid rgba(228,234,242,.8)",background:day%2===0?"#fff":"#F7F9FC"}}>
           <td style={{padding:"4px 8px",color:"#4A5568",fontWeight:600,textAlign:"center",fontSize:11,borderRight:"1px solid rgba(228,234,242,.6)"}}>{day}/{month}</td>
           {printMode
@@ -1525,7 +1525,7 @@ export default function App(){
     const t={};
     BRANCH_ORDER.forEach(b=>{
       const bSRs=srList.filter(s=>s.branch===b);let wi=0,ae=0;
-      Object.values(records).forEach(day=>{bSRs.forEach(sr=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});wi+=(day[`BM_${b}`]?.walkin||0);ae+=(day[`BM_${b}`]?.aeon||0);});
+      Object.values(records).forEach(day=>{bSRs.forEach(sr=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});wi+=(day[`BM_${b}`]?.walkin||0);ae+=(day[`BM_${b}`]?.aeon||0);wi+=(day[`BM_${b}`]?.unalloc||0);});
       t[b]={wi,ae,total:wi+ae};
     });
     return t;
