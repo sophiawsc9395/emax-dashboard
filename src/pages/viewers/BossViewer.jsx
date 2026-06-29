@@ -150,11 +150,6 @@ export default function App(){
     return t;
   },[records,srList]);
 
-  const srTotals=useMemo(()=>{
-    const t={};
-    srList.forEach(sr=>{let wi=0,ae=0;Object.values(records).forEach(day=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});t[sr.id]={wi,ae,total:wi+ae};});
-    return t;
-  },[records,srList]);
 
   const grandTotal=BRANCH_ORDER.reduce((s,b)=>s+(branchTotals[b]?.total||0),0);
   const grandTarget=BRANCH_ORDER.reduce((s,b)=>s+(targets?.bm?.[b]||0),0);
