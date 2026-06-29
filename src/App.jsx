@@ -597,7 +597,7 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
           <th style={TH({textAlign:"left"})}>Branch</th>
           <th style={TH()}>Monthly Target</th>
           <th style={{...TH(),background:"#1A3A5C",color:"rgba(255,255,255,.9)"}}>Total Profit</th>
-          <th style={{...TH(),background:"#1A3A5C",color:"rgba(255,255,255,.65)"}}>Walk In</th>
+          <th style={{...TH(),background:"#1A3A5C",color:"rgba(255,255,255,.65)"}}>Walk In & Unalloc</th>
           <th style={{...TH(),background:"#1A3A5C",color:"rgba(255,255,255,.65)"}}>Invoice</th>
           <th style={TH()}>Balance</th>
           <th style={TH()}>Achievement</th>
