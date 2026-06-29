@@ -1283,7 +1283,7 @@ function DailyEntry({records,setRecords,srList,branchMeta,month,year,days,record
         setStr(value===0?"":String(value));
       }
     },[value]);
-    return <input type="number" step="0.01" min="0"
+    return <input type="number" step="0.01"
       value={str}
       onChange={e=>{setStr(e.target.value);}}
       onBlur={e=>{
@@ -1458,7 +1458,7 @@ export default function App(){
   const [tab,setTab]               = useState("overview");
   const [selBranch,setSelBranch]   = useState("KM");
   const [selStartDay,setSelStartDay] = useState(1);
-  const [selEndDay,setSelEndDay]   = useState(()=>new Date().getDate());
+  const [selEndDay,setSelEndDay]   = useState(()=>daysInMonth(new Date().getMonth()+1,new Date().getFullYear()));
   const periodDays = days.filter(d=>d>=selStartDay&&d<=selEndDay);
   const [repairRefresh,setRepairRefresh] = useState(0);
   const [showTargetModal,setShowTargetModal] = useState(false);
@@ -1485,6 +1485,8 @@ export default function App(){
   useEffect(()=>{
     setLoading(true);
     setRecords({});
+    setSelStartDay(1);
+    setSelEndDay(daysInMonth(selMonth,selYear));
     Promise.all([loadData(recordsKey),loadData(TARGET_KEY),loadData(SR_KEY),loadData(BM_KEY)]).then(([r,t,srData,bmData])=>{
       setRecords(r||{});
       if(srData&&Array.isArray(srData)&&srData.length>0)setSrList(srData);
