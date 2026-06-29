@@ -311,11 +311,11 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days}
       <div style={{height:1,background:"#E4EAF2",margin:"8px 0"}}/>
       <div style={{fontSize:9,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Incentives</div>
 
-      {/* Personal bonus */}
-      {bonus>0&&<div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:4}}>
+      {/* Personal Achievement Bonus */}
+      {bonus>0&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,marginBottom:4}}>
         <span style={{color:"#8A96A8"}}>Personal Achievement Bonus</span>
-        <span style={{fontWeight:700,color:bonusEarned?"#00C896":"#8A96A8"}}>
-          {bonusEarned?fRM(bonus):"—"}
+        <span style={{fontWeight:700,color:bonusEarned?"#00C896":"#8A96A8",whiteSpace:"nowrap"}}>
+          {bonusEarned?fRM(bonus):`${fRM(bonus)} (Pending)`}
         </span>
       </div>}
 
@@ -432,18 +432,11 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
       <div style={{fontSize:9,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Incentives</div>
 
       {/* Personal Achievement Bonus: RM500 always, RM2200 if branch hits 100%+ */}
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:4}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,marginBottom:4}}>
         <span style={{color:"#8A96A8"}}>Personal Achievement Bonus</span>
-        {p>=100
-          ? <div style={{textAlign:"right"}}>
-              <div style={{fontWeight:700,color:"#00C896"}}>RM 2,200</div>
-              <div style={{fontSize:10,color:"#00C896"}}>Branch hit target</div>
-            </div>
-          : <div style={{textAlign:"right"}}>
-              <div style={{fontWeight:700,color:"#8A96A8"}}>RM 500</div>
-              <div style={{fontSize:10,color:"#8A96A8"}}>+ RM 1,700 when hit</div>
-            </div>
-        }
+        <span style={{fontWeight:700,color:p>=100?"#00C896":"#8A96A8",whiteSpace:"nowrap"}}>
+          {p>=100?"RM 2,200":"RM 500 (Pending)"}
+        </span>
       </div>
 
 
