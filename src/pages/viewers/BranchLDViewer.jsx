@@ -271,14 +271,16 @@ export default function App(){
                 const s=(sr.status||"").toLowerCase();
                 const isDir=s.includes("director"),isConf=s.includes("confirmed");
                 const bg=isDir?"#F5F3FF":isConf?"#F0FDF4":"#EFF6FF";
-                const col=isDir?"#6D28D9":isConf?"#15803D":"#1D4ED8";
+                const color=isDir?"#6D28D9":isConf?"#15803D":"#1D4ED8";
                 const base=isDir?"Director":isConf?"Confirmed":"Probation";
-                const pm=(sr.status||"").match(/Passed\s*(\d+)/i),fm=(sr.status||"").match(/Failed\s*(\d+)/i);
-                const passed=pm?parseInt(pm[1]):null,failed=fm?parseInt(fm[1]):null;
-                return <span style={{display:"inline-flex",alignItems:"center",gap:5,background:bg,color:col,padding:"2px 10px",borderRadius:20,fontSize:10,fontWeight:600,whiteSpace:"nowrap"}}>
+                const pm=(sr.status||"").match(/Passed\s*(\d+)/i);
+                const fm=(sr.status||"").match(/Failed\s*(\d+)/i);
+                const passed=pm?parseInt(pm[1]):null;
+                const failed=fm?parseInt(fm[1]):null;
+                return <span style={{display:"inline-flex",alignItems:"center",gap:5,background:bg,color,padding:"2px 10px",borderRadius:20,fontSize:10,fontWeight:600,whiteSpace:"nowrap"}}>
                   {base}
                   {(passed!==null||failed!==null)&&<span style={{display:"flex",gap:3,alignItems:"center"}}>
-                    <span style={{width:1,height:10,background:col+"50"}}/>
+                    <span style={{width:1,height:10,background:color+"50"}}/>
                     {passed!==null&&<span style={{color:"#00C896",fontWeight:700}}>P{passed}</span>}
                     {failed!==null&&<span style={{color:"#F0354B",fontWeight:700}}>F{failed}</span>}
                   </span>}
