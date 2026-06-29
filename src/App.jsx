@@ -315,7 +315,7 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days}
       {bonus>0&&<div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:4}}>
         <span style={{color:"#8A96A8"}}>Personal Achievement Bonus</span>
         <span style={{fontWeight:700,color:bonusEarned?"#00C896":"#8A96A8"}}>
-          {bonusEarned?fRM(bonus):fRM(bonus)+" — Pending"}
+          {bonusEarned?fRM(bonus):"—"}
         </span>
       </div>}
 
@@ -404,6 +404,7 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
         </tr>;
       })}</tbody>
     </table>
+    </div>
     <div style={{padding:"10px 14px",background:"#F7F9FC",borderTop:"2px solid #E4EAF2"}}>
       {[["Unallocated",fRM(tUA),"#8A96A8"],["Walk In",fRM(tWI),"#1E6FDB"],["Invoice",fRM(tAE),"#7C5CFC"],["Total Profit",fRM(total),"#0A1628"]].map(([l,v,c])=>(
         <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"2px 0",fontSize:11}}>
