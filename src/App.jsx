@@ -330,8 +330,20 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days}
       {(branchPct>=121&&p>=100)&&(()=>{
         const tier=Math.floor((branchPct-121)/10);
         const nextTierPct=121+(tier+1)*10;
-        return <div style={{background:"#FFF9EB",borderRadius:6,padding:"4px 8px",marginBottom:4,fontSize:10,color:"#92400E",border:"1px solid #FDE68A"}}>
-          Branch {branchPct.toFixed(1)}% · Tier {tier+1} · Next tier {nextTierPct}% → {fRM(calcAchievementBonus(nextTierPct,"sr"))}
+        const isMaxTier=nextTierPct>200;
+        return <div style={{background:"linear-gradient(135deg,#FFF9EB,#FFFBF0)",borderRadius:8,padding:"8px 10px",marginBottom:4,border:"1px solid #FDE68A",boxShadow:"0 1px 3px rgba(245,166,35,.1)"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+            <span style={{fontSize:10,fontWeight:700,color:"#92400E",display:"flex",alignItems:"center",gap:4}}>
+              <span style={{background:"#F5A623",color:"#fff",borderRadius:20,padding:"1px 7px",fontSize:9,fontWeight:800}}>Tier {tier+1}</span>
+              Branch {branchPct.toFixed(1)}%
+            </span>
+            <span style={{fontWeight:800,fontSize:12,color:"#D97706"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
+          </div>
+          {!isMaxTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:4,borderTop:"1px dashed #FDE68A"}}>
+            <span style={{fontSize:9,color:"#B45309"}}>Next: Tier {tier+2} at {nextTierPct}%</span>
+            <span style={{fontSize:9,fontWeight:700,color:"#B45309"}}>{fRM(calcAchievementBonus(nextTierPct,"sr"))}</span>
+          </div>}
+          {isMaxTier&&<div style={{fontSize:9,color:"#D97706",fontWeight:600,paddingTop:4,borderTop:"1px dashed #FDE68A"}}>🏆 Maximum tier reached</div>}
         </div>;
       })()}
 
@@ -452,8 +464,20 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
       {p>=121&&(()=>{
         const tier=Math.floor((p-121)/10);
         const nextTierPct=121+(tier+1)*10;
-        return <div style={{background:"#FFF9EB",borderRadius:6,padding:"4px 8px",marginBottom:4,fontSize:10,color:"#92400E",border:"1px solid #FDE68A"}}>
-          Branch {p.toFixed(1)}% · Tier {tier+1} · Next tier {nextTierPct}% → {fRM(calcAchievementBonus(nextTierPct,"bm"))}
+        const isMaxTier=nextTierPct>200;
+        return <div style={{background:"linear-gradient(135deg,#FFF9EB,#FFFBF0)",borderRadius:8,padding:"8px 10px",marginBottom:4,border:"1px solid #FDE68A",boxShadow:"0 1px 3px rgba(245,166,35,.1)"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+            <span style={{fontSize:10,fontWeight:700,color:"#92400E",display:"flex",alignItems:"center",gap:4}}>
+              <span style={{background:"#F5A623",color:"#fff",borderRadius:20,padding:"1px 7px",fontSize:9,fontWeight:800}}>Tier {tier+1}</span>
+              Branch {p.toFixed(1)}%
+            </span>
+            <span style={{fontWeight:800,fontSize:12,color:"#D97706"}}>{fRM(calcAchievementBonus(p,"bm"))}</span>
+          </div>
+          {!isMaxTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:4,borderTop:"1px dashed #FDE68A"}}>
+            <span style={{fontSize:9,color:"#B45309"}}>Next: Tier {tier+2} at {nextTierPct}%</span>
+            <span style={{fontSize:9,fontWeight:700,color:"#B45309"}}>{fRM(calcAchievementBonus(nextTierPct,"bm"))}</span>
+          </div>}
+          {isMaxTier&&<div style={{fontSize:9,color:"#D97706",fontWeight:600,paddingTop:4,borderTop:"1px dashed #FDE68A"}}>🏆 Maximum tier reached</div>}
         </div>;
       })()}
 
@@ -518,7 +542,7 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
       for(let d=startDay;d<=endDay;d++){
         const k=`${d}/${month}/${year}`,day=records[k]||{};
         bSRs.forEach(sr=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});
-        wi+=(day[`BM_${b}`]?.walkin||0);ae+=(day[`BM_${b}`]?.aeon||0);
+        wi+=(day[`BM_${b}`]?.walkin||0);ae+=(day[`BM_${b}`]?.aeon||0);wi+=(day[`BM_${b}`]?.unalloc||0);
       }
       t[b]={wi,ae,total:wi+ae};
     });
@@ -569,9 +593,9 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
         <thead><tr>
           <th style={TH({textAlign:"left"})}>Branch</th>
           <th style={TH()}>Monthly Target</th>
-          <th style={{...TH(),background:"#0D3D1C",color:"rgba(255,255,255,.9)"}}>Total Profit</th>
-          <th style={{...TH(),background:"#0D3D1C",color:"rgba(255,255,255,.65)"}}>Walk In</th>
-          <th style={{...TH(),background:"#0D3D1C",color:"rgba(255,255,255,.65)"}}>Invoice</th>
+          <th style={{...TH(),background:"#1A3A5C",color:"rgba(255,255,255,.9)"}}>Total Profit</th>
+          <th style={{...TH(),background:"#1A3A5C",color:"rgba(255,255,255,.65)"}}>Walk In</th>
+          <th style={{...TH(),background:"#1A3A5C",color:"rgba(255,255,255,.65)"}}>Invoice</th>
           <th style={TH()}>Balance</th>
           <th style={TH()}>Achievement</th>
         </tr></thead>
@@ -584,13 +608,13 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
               <div style={{fontSize:10,color:"#8A96A8",marginTop:1}}>{branchMeta[b]?.manager}</div>
             </td>
             <td style={{...TD(),textAlign:"right"}}><span style={{color:"#4A5568"}}>{target>0?nc(target):"—"}</span></td>
-            <td style={{...TD({background:over?"#F0FDF4":"#fff"}),textAlign:"right"}}>
+            <td style={{...TD({background:over?"#EFF6FF":"#fff"}),textAlign:"right"}}>
               <span style={{fontWeight:600,color:over?"#00C896":"#4A5568"}}>{total>0?`RM ${nc(total)}`:"—"}</span>
             </td>
-            <td style={{...TD({background:over?"#F0FDF4":"#fff"}),textAlign:"right"}}>
+            <td style={{...TD({background:over?"#EFF6FF":"#fff"}),textAlign:"right"}}>
               <span style={{color:"#4A5568"}}>{wi>0?`RM ${nc(wi)}`:"—"}</span>
             </td>
-            <td style={{...TD({background:over?"#F0FDF4":"#fff"}),textAlign:"right"}}>
+            <td style={{...TD({background:over?"#EFF6FF":"#fff"}),textAlign:"right"}}>
               <span style={{color:"#4A5568"}}>{ae>0?`RM ${nc(ae)}`:"—"}</span>
             </td>
             <td style={{...TD(),textAlign:"right"}}>
@@ -604,7 +628,7 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
           </tr>;
         })}</tbody>
         <tfoot><tr style={{background:"#0A1628",fontSize:12}}>
-          <td style={{padding:"10px 16px",fontWeight:600,color:"rgba(255,255,255,.6)"}}>Network Total</td>
+          <td style={{padding:"10px 16px",fontWeight:600,color:"rgba(255,255,255,.6)"}}>Total</td>
           <td style={{padding:"10px 16px",textAlign:"right"}}><span style={{color:"rgba(255,255,255,.6)"}}>{grandTgt>0?nc(grandTgt):"—"}</span></td>
           <td style={{padding:"10px 16px",textAlign:"right"}}><span style={{fontWeight:600,color:grandT>=grandTgt?"#00C896":"rgba(255,255,255,.6)"}}>{grandT>0?`RM ${nc(grandT)}`:"—"}</span></td>
           <td style={{padding:"10px 16px",textAlign:"right"}}><span style={{color:"rgba(255,255,255,.6)"}}>{grandWI>0?`RM ${nc(grandWI)}`:"—"}</span></td>
@@ -932,7 +956,7 @@ function UploadPanel({records,setRecords,srList,defaultBranch,recordsKey:rKey}){
       day[sr.id].repair=(day[sr.id].repair||0)+(item.repair_profit||0);
     });
     const nr={...records,[preview.date]:day};
-    await saveData(recordsKey,nr);setRecords(nr);setSaved(true);
+    await saveData(rKey||STORE_KEY,nr);setRecords(nr);setSaved(true);
     setTimeout(()=>{setSaved(false);setAeFile(null);setPreview(null);},1500);
   };
 
