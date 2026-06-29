@@ -580,6 +580,7 @@ export default function App(){
             {bSRs.map(sr=><SRCard key={sr.id} sr={sr} records={records} targets={targets} branchPct={branchPct} month={month} year={year} days={periodDays} bMeta={bMeta}/>)}
           </div>;
         })()}
+        <PdfDownloads month={month} year={year}/>
       </div>}
 
       {/* REPAIR */}

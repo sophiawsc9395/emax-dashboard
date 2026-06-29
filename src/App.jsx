@@ -2,7 +2,7 @@
 // EMAX NETWORK SDN BHD — Sales Performance Dashboard
 // Enterprise Analytics Platform
 // ============================================================
-import { useState, useEffect, useMinus, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { loadData, saveData } from "./storage/index.js";
 
 const T = {
@@ -1748,8 +1748,8 @@ export default function App(){
           const branchPct=pctN(bTotal,bTarget);
           return <div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14,alignItems:"start"}}>
-              {bSRs.map(sr=><SRTable key={sr.id} sr={sr} records={records} targets={targets} branchPct={branchPct} onEdit={handleEdit} printMode={false} month={month} year={year} days={periodDays}/>)}
-              <BMTable branchId={selBranch} records={records} targets={targets} srList={srList} branchMeta={branchMeta} onEdit={handleEdit} printMode={false} month={month} year={year} days={periodDays}/>
+              {bSRs.map(sr=><SRTable key={sr.id} sr={sr} records={records} targets={targets} branchPct={branchPct} onEdit={handleEdit} printMode={false} month={month} year={year} days={days}/>)}
+              <BMTable branchId={selBranch} records={records} targets={targets} srList={srList} branchMeta={branchMeta} onEdit={handleEdit} printMode={false} month={month} year={year} days={days}/>
             </div>
             {/* PDF Upload for all SR invoice */}
             <div style={{marginTop:22}}>
