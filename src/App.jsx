@@ -3,7 +3,6 @@
 // Enterprise Analytics Platform
 // ============================================================
 import { useState, useEffect, useMemo, useRef } from "react";
-import { loadData, saveData } from "./storage/index.js";
 
 const T = {
   navy:"#0A1628", navyMid:"#0F2040", navyLight:"#162B52",
@@ -106,6 +105,7 @@ const DEFAULT_SR=[
 ];
 
 const STORE_KEY="emax_v5_records",TARGET_KEY="emax_v5_targets",SR_KEY="emax_v5_sr_list",BM_KEY="emax_v5_branch_meta",REPAIR_KEY="emax_v5_repair";
+// Status snapshot key pattern: emax_v5_status_{year}_{month}
 
 // ─── BONUS CALCULATORS ─────────────────────────────────────
 function calcAchievementBonus(pct, role="sr") {
@@ -130,7 +130,6 @@ function achColor(p,t){const r=pctN(p,t);return r>=100?"#00C896":r>=80?"#F5A623"
 function achBg(p,t){const r=pctN(p,t);return r>=100?"#00C89612":r>=80?"#F5A62312":r>=50?"#F0794B12":"#F0354B12";}
 
 // ─── STORAGE ───────────────────────────────────────────────
-// loadData and saveData imported from ./storage/index.js
 function fileToB64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=rej;r.readAsDataURL(file);});}
 
 // ─── PDF PARSING ───────────────────────────────────────────
@@ -269,16 +268,16 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days}
         <th style={{...thS,color:"#0A1628"}}>Total</th>
       </tr></thead>
       <tbody>{rows.map(({day,wi,ae})=>{
-        const dk=`${day}/${month}/${year}`,rt=wi+ae;
+        const dk=`${day}/${month}/${year}`,rt=wi+ae+ua;
         return <tr key={day} className="shine-row" style={{borderBottom:"1px solid rgba(228,234,242,.8)",background:day%2===0?"#fff":"#F7F9FC"}}>
           <td style={{padding:"4px 8px",color:"#4A5568",fontWeight:600,textAlign:"center",fontSize:11,borderRight:"1px solid rgba(228,234,242,.6)"}}>{day}/{month}</td>
           {printMode
-            ?<><td style={{padding:"4px 12px",textAlign:"right",fontSize:11,color:wi>0?"#4A5568":"#E4EAF2",fontWeight:wi>0?500:300}}>{wi>0?f2(wi):"—"}</td>
-               <td style={{padding:"4px 12px",textAlign:"right",fontSize:11,color:ae>0?"#4A5568":"#E4EAF2",fontWeight:ae>0?500:300}}>{ae>0?f2(ae):"—"}</td></>
+            ?<><td style={{padding:"4px 12px",textAlign:"right",fontSize:11,color:wi!==0?"#4A5568":"#E4EAF2",fontWeight:wi!==0?500:300}}>{wi!==0?f2(wi):"—"}</td>
+               <td style={{padding:"4px 12px",textAlign:"right",fontSize:11,color:ae!==0?"#4A5568":"#E4EAF2",fontWeight:ae!==0?500:300}}>{ae!==0?f2(ae):"—"}</td></>
             :<><EC value={wi} color="#1E6FDB" onSave={v=>onEdit(dk,sr.id,"walkin",v)}/>
                <EC value={ae} color="#7C5CFC" onSave={v=>onEdit(dk,sr.id,"aeon",v)}/></>
           }
-          <td style={{padding:"4px 12px",textAlign:"right",fontWeight:rt>0?600:300,fontSize:11,color:rt>0?"#0A1628":"#E4EAF2"}}>{rt>0?f2(rt):"—"}</td>
+          <td style={{padding:"4px 12px",textAlign:"right",fontWeight:rt!==0?600:300,fontSize:11,color:rt>0?"#0A1628":rt<0?"#F0354B":"#E4EAF2"}}>{rt!==0?f2(rt):"—"}</td>
         </tr>;
       })}</tbody>
     </table>
@@ -391,16 +390,16 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
         <th style={{...thS,color:"#0A1628"}}>Total</th>
       </tr></thead>
       <tbody>{rows.map(({day,wi,ae,ua})=>{
-        const dk=`${day}/${month}/${year}`,rt=wi+ae;
+        const dk=`${day}/${month}/${year}`,rt=wi+ae+ua;
         return <tr key={day} className="shine-row" style={{borderBottom:"1px solid rgba(228,234,242,.8)",background:day%2===0?"#fff":"#F7F9FC"}}>
           <td style={{padding:"4px 8px",color:"#4A5568",fontWeight:600,textAlign:"center",fontSize:11,borderRight:"1px solid rgba(228,234,242,.6)"}}>{day}/{month}</td>
           {printMode
-            ?<td style={{padding:"4px 10px",textAlign:"right",fontSize:11,color:"#8A96A8"}}>{ua>0?f2(ua):"—"}</td>
+            ?<td style={{padding:"4px 10px",textAlign:"right",fontSize:11,color:ua<0?"#F0354B":"#8A96A8"}}>{ua!==0?f2(ua):"—"}</td>
             :<EC value={ua} color="#8A96A8" onSave={v=>onEdit(dk,`BM_${branchId}`,"unalloc",v)}/>
           }
-          <td style={{padding:"4px 10px",textAlign:"right",fontSize:11,color:wi>0?"#4A5568":"#E4EAF2",fontWeight:wi>0?500:300}}>{wi>0?f2(wi):"—"}</td>
-          <td style={{padding:"4px 10px",textAlign:"right",fontSize:11,color:ae>0?"#4A5568":"#E4EAF2",fontWeight:ae>0?500:300}}>{ae>0?f2(ae):"—"}</td>
-          <td style={{padding:"4px 10px",textAlign:"right",fontWeight:rt>0?600:300,fontSize:11,color:rt>0?"#0A1628":"#E4EAF2"}}>{rt>0?f2(rt):"—"}</td>
+          <td style={{padding:"4px 10px",textAlign:"right",fontSize:11,color:wi!==0?"#4A5568":"#E4EAF2",fontWeight:wi!==0?500:300}}>{wi!==0?f2(wi):"—"}</td>
+          <td style={{padding:"4px 10px",textAlign:"right",fontSize:11,color:ae!==0?"#4A5568":"#E4EAF2",fontWeight:ae!==0?500:300}}>{ae!==0?f2(ae):"—"}</td>
+          <td style={{padding:"4px 10px",textAlign:"right",fontWeight:rt!==0?600:300,fontSize:11,color:rt>0?"#0A1628":rt<0?"#F0354B":"#E4EAF2"}}>{rt!==0?f2(rt):"—"}</td>
         </tr>;
       })}</tbody>
     </table>
@@ -1126,6 +1125,7 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose}){
             </select>
             <div style={{flex:1}}/>
             {srSaved&&<span style={{color:"#00C896",fontWeight:600,fontSize:12}}>Changes saved</span>}
+            <button className="btn btn-ghost" onClick={async()=>{const now=new Date();const snapKey=`emax_v5_status_${now.getFullYear()}_${now.getMonth()+1}`;const snap={};localSR.forEach(sr=>{snap[sr.id]={status:sr.status,active:true};});await saveData(snapKey,snap);alert("Status snapshot saved for "+now.toLocaleString("en",{month:"long",year:"numeric"}));}} style={{fontSize:11}}>Save Month Snapshot</button>
             <button className="btn btn-success" onClick={()=>setEditSR("new")}>Add New SR</button>
           </div>
           {editSR==="new"&&<div style={{background:"rgba(0,200,150,.06)",borderRadius:12,padding:16,border:"1px solid rgba(0,200,150,.3)",marginBottom:16}}>
@@ -1261,10 +1261,14 @@ function DailyEntry({records,setRecords,srList,branchMeta,month,year,days,record
     if(!nr[dateKey][bmKey])nr[dateKey][bmKey]={walkin:0,aeon:0,unalloc:0};
     nr[dateKey][bmKey].unalloc=localInputs[bmKey]?.unalloc||0;
     await saveData(recordsKey,nr);
+    // Auto-snapshot current SR statuses for this month
+    const snapKey=`emax_v5_status_${year}_${month}`;
+    const existingSnap=await loadData(snapKey)||{};
+    srList.forEach(sr=>{if(!existingSnap[sr.id])existingSnap[sr.id]={status:sr.status,active:true};});
+    await saveData(snapKey,existingSnap);
     const repairStoreKey=`emax_v5_repair_${year}_${month}`;
     try{
-      const r=await (async()=>{const r=await loadData(repairStoreKey);return r?{value:JSON.stringify(r)}:null})();
-      const rd=r?JSON.parse(r.value):{};
+      const rd=await loadData(repairStoreKey)||{};
       const repVal=localInputs[`REPAIR_${selBranch}`]||0;
       if(repVal>0)rd[selDay]=repVal; else delete rd[selDay];
       await saveData(repairStoreKey,rd);
@@ -1274,8 +1278,10 @@ function DailyEntry({records,setRecords,srList,branchMeta,month,year,days,record
     setTimeout(()=>setSaved(false),2000);
   };
 
+  // NumInput keeps own string state so typing is smooth (no float re-parse mid-keystroke)
   const NumInput=({value,onChange,accent="#E4EAF2"})=>{
     const [str,setStr]=useState(value===0?"":String(value));
+    // Sync if parent value changes (e.g. switching day/branch)
     const prev=useRef(value);
     useEffect(()=>{
       if(prev.current!==value){
@@ -1487,9 +1493,17 @@ export default function App(){
     setRecords({});
     setSelStartDay(1);
     setSelEndDay(daysInMonth(selMonth,selYear));
-    Promise.all([loadData(recordsKey),loadData(TARGET_KEY),loadData(SR_KEY),loadData(BM_KEY)]).then(([r,t,srData,bmData])=>{
+    const snapKey=`emax_v5_status_${selYear}_${selMonth}`;
+    Promise.all([loadData(recordsKey),loadData(TARGET_KEY),loadData(SR_KEY),loadData(BM_KEY),loadData(snapKey)]).then(([r,t,srData,bmData,snap])=>{
       setRecords(r||{});
-      if(srData&&Array.isArray(srData)&&srData.length>0)setSrList(srData);
+      const baseSR=(srData&&Array.isArray(srData)&&srData.length>0)?srData:DEFAULT_SR;
+      // Overlay historical status snapshot if viewing a past month
+      if(snap&&Object.keys(snap).length>0){
+        const merged=baseSR.map(sr=>snap[sr.id]?{...sr,status:snap[sr.id].status,active:snap[sr.id].active!==false}:{...sr});
+        setSrList(merged.filter(sr=>sr.active!==false));
+      } else {
+        setSrList(baseSR);
+      }
       if(bmData&&Object.keys(bmData).length>0)setBranchMeta({...DEFAULT_BRANCH_META,...bmData});
       if(t&&t.bm)setTargets({bm:{...DEFAULT_TARGETS.bm,...t.bm},bmBonus:{...DEFAULT_TARGETS.bmBonus,...(t.bmBonus||{})},sr:{...DEFAULT_TARGETS.sr,...t.sr}});
       else setTargets(DEFAULT_TARGETS);
