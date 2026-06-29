@@ -190,6 +190,44 @@ function SRCard({sr,records,targets,branchPct,month,year,days,bMeta}){
         <span style={{color:"#8A96A8"}}>Reward Points</span>
         {pts>0?<span style={{fontWeight:700,color:"#1E6FDB"}}>{pts.toLocaleString()} pts</span>:<span style={{color:"#8A96A8"}}>—</span>}
       </div>
+      {/* REPAIR */}
+      {tab==="repair"&&<div className="fade-in">
+        <div style={{background:"#0A1628",borderRadius:12,padding:"14px 18px",marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+          <div>
+            <h2 style={{fontWeight:800,fontSize:14,color:"#fff",margin:0}}>Repair & Service</h2>
+            <p style={{fontSize:11,color:"rgba(255,255,255,.45)",margin:0,marginTop:2}}>Excluded from sales targets</p>
+          </div>
+          <div style={{fontWeight:700,fontSize:14,color:"#7C5CFC"}}>{fRM(Object.values(repairData).reduce((s,v)=>s+(v||0),0))}</div>
+        </div>
+        <div className="card" style={{overflow:"hidden",maxWidth:480}}>
+          <div style={{padding:"12px 16px",borderBottom:"1px solid #E4EAF2",fontWeight:700,fontSize:12,color:"#0A1628",display:"flex",justifyContent:"space-between"}}>
+            <span>{MONTHS[month-1]} {year}</span>
+            <span style={{fontSize:11,color:"#8A96A8",fontWeight:400}}>{Object.keys(repairData).filter(k=>repairData[k]>0).length} days active</span>
+          </div>
+          <table style={{width:"100%",borderCollapse:"collapse"}}>
+            <thead><tr style={{background:"#F7F9FC"}}>
+              <th style={{padding:"8px 16px",fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left",borderBottom:"1px solid #E4EAF2",width:100}}>Date</th>
+              <th style={{padding:"8px 16px",fontSize:10,fontWeight:700,color:"#7C5CFC",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",borderBottom:"1px solid #E4EAF2"}}>Amount (RM)</th>
+            </tr></thead>
+            <tbody>
+              {days.filter(d=>repairData[d]>0).map(d=>(
+                <tr key={d} className="shine" style={{borderBottom:"1px solid rgba(228,234,242,.7)"}}>
+                  <td style={{padding:"7px 16px",fontSize:12,color:"#4A5568",fontWeight:600}}>{d}/{month}/{year}</td>
+                  <td style={{padding:"7px 16px",fontSize:12,textAlign:"right",fontWeight:700,color:"#7C5CFC"}}>{f2(repairData[d])}</td>
+                </tr>
+              ))}
+              {days.filter(d=>repairData[d]>0).length===0&&(
+                <tr><td colSpan={2} style={{padding:24,textAlign:"center",color:"#8A96A8",fontSize:12}}>No repair records this month</td></tr>
+              )}
+            </tbody>
+          </table>
+          <div style={{padding:"9px 16px",background:"#F7F9FC",borderTop:"2px solid #E4EAF2",display:"flex",justifyContent:"space-between",fontSize:12}}>
+            <span style={{color:"#8A96A8",fontWeight:600}}>Total</span>
+            <span style={{fontWeight:700,color:"#7C5CFC"}}>{fRM(Object.values(repairData).reduce((s,v)=>s+(v||0),0))}</span>
+          </div>
+        </div>
+      </div>}
+
     </div>
   </div>;
 }
@@ -221,6 +259,7 @@ export default function App(){
   const [srList,setSrList]=useState(DEFAULT_SR);
   const [bMeta,setBMeta]=useState(DEFAULT_BRANCH_META);
   const [loading,setLoading]=useState(true);
+  const [repairData,setRepairData]=useState({});
   const [tab,setTab]=useState("overview");
   const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const recordsKey=`emax_v5_records_${year}_${month}`;
@@ -229,8 +268,10 @@ export default function App(){
     setLoading(true);setRecords({});
     setSelStartDay(1);setSelEndDay(daysInMonth(selMonth,selYear));
     const snapKey=`emax_v5_status_${year}_${month}`;
-    Promise.all([loadData(recordsKey),loadData(TARGET_KEY),loadData(SR_KEY),loadData(BM_KEY),loadData(snapKey)])
-      .then(([r,t,srData,bmData,snap])=>{
+    const repairKey=`emax_v5_repair_${year}_${month}`;
+    Promise.all([loadData(recordsKey),loadData(TARGET_KEY),loadData(SR_KEY),loadData(BM_KEY),loadData(snapKey),loadData(repairKey)])
+      .then(([r,t,srData,bmData,snap,repData])=>{
+        setRepairData(repData||{});
         setRecords(r||{});
         const baseSR=(srData&&Array.isArray(srData)&&srData.length>0)?srData:DEFAULT_SR;
         if(snap&&Object.keys(snap).length>0){
@@ -345,7 +386,7 @@ export default function App(){
     <div style={{fontSize:11,color:"rgba(255,255,255,.3)",letterSpacing:"0.15em",textTransform:"uppercase",marginTop:6}}>Loading</div></div>
   </div>;
 
-  const TABS=[{id:"overview",label:"Overview"},{id:"rankings",label:"Rankings"},{id:"report",label:"Monthly Report"}];
+  const TABS=[{id:"overview",label:"Overview"},{id:"rankings",label:"Rankings"},{id:"report",label:"Monthly Report"},{id:"repair",label:"Repair & Service"}];
 
   return <div style={{minHeight:"100vh",background:"#F7F9FC",fontFamily:"Inter,-apple-system,sans-serif"}}>
     <style>{CSS}</style>
@@ -501,6 +542,44 @@ export default function App(){
             {bSRs.map(sr=><SRCard key={sr.id} sr={sr} records={records} targets={targets} branchPct={branchPct} month={month} year={year} days={periodDays} bMeta={bMeta}/>)}
           </div>;
         })()}
+      </div>}
+
+      {/* REPAIR */}
+      {tab==="repair"&&<div className="fade-in">
+        <div style={{background:"#0A1628",borderRadius:12,padding:"14px 18px",marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+          <div>
+            <h2 style={{fontWeight:800,fontSize:14,color:"#fff",margin:0}}>Repair & Service</h2>
+            <p style={{fontSize:11,color:"rgba(255,255,255,.45)",margin:0,marginTop:2}}>Excluded from sales targets</p>
+          </div>
+          <div style={{fontWeight:700,fontSize:14,color:"#7C5CFC"}}>{fRM(Object.values(repairData).reduce((s,v)=>s+(v||0),0))}</div>
+        </div>
+        <div className="card" style={{overflow:"hidden",maxWidth:480}}>
+          <div style={{padding:"12px 16px",borderBottom:"1px solid #E4EAF2",fontWeight:700,fontSize:12,color:"#0A1628",display:"flex",justifyContent:"space-between"}}>
+            <span>{MONTHS[month-1]} {year}</span>
+            <span style={{fontSize:11,color:"#8A96A8",fontWeight:400}}>{Object.keys(repairData).filter(k=>repairData[k]>0).length} days active</span>
+          </div>
+          <table style={{width:"100%",borderCollapse:"collapse"}}>
+            <thead><tr style={{background:"#F7F9FC"}}>
+              <th style={{padding:"8px 16px",fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left",borderBottom:"1px solid #E4EAF2",width:100}}>Date</th>
+              <th style={{padding:"8px 16px",fontSize:10,fontWeight:700,color:"#7C5CFC",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",borderBottom:"1px solid #E4EAF2"}}>Amount (RM)</th>
+            </tr></thead>
+            <tbody>
+              {days.filter(d=>repairData[d]>0).map(d=>(
+                <tr key={d} className="shine" style={{borderBottom:"1px solid rgba(228,234,242,.7)"}}>
+                  <td style={{padding:"7px 16px",fontSize:12,color:"#4A5568",fontWeight:600}}>{d}/{month}/{year}</td>
+                  <td style={{padding:"7px 16px",fontSize:12,textAlign:"right",fontWeight:700,color:"#7C5CFC"}}>{f2(repairData[d])}</td>
+                </tr>
+              ))}
+              {days.filter(d=>repairData[d]>0).length===0&&(
+                <tr><td colSpan={2} style={{padding:24,textAlign:"center",color:"#8A96A8",fontSize:12}}>No repair records this month</td></tr>
+              )}
+            </tbody>
+          </table>
+          <div style={{padding:"9px 16px",background:"#F7F9FC",borderTop:"2px solid #E4EAF2",display:"flex",justifyContent:"space-between",fontSize:12}}>
+            <span style={{color:"#8A96A8",fontWeight:600}}>Total</span>
+            <span style={{fontWeight:700,color:"#7C5CFC"}}>{fRM(Object.values(repairData).reduce((s,v)=>s+(v||0),0))}</span>
+          </div>
+        </div>
       </div>}
 
     </div>
