@@ -243,6 +243,33 @@ body{font-family:'Inter',-apple-system,sans-serif;background:#F7F9FC;color:#0A16
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 `;
 
+function PdfDownloads({month,year}){
+  const [pdfList,setPdfList]=useState([]);
+  useEffect(()=>{
+    loadData("emax_v5_pdf_index").then(idx=>{
+      const list=Array.isArray(idx)?idx:[];
+      Promise.all(list.map(k=>loadData(k))).then(pdfs=>{
+        const valid=pdfs.filter(p=>p&&p.date&&p.b64);
+        const filtered=valid.filter(p=>{const parts=p.date.split("/");return parseInt(parts[1])===month&&parseInt(parts[2])===year;});
+        setPdfList(filtered);
+      });
+    });
+  },[month,year]);
+  if(!pdfList.length)return null;
+  return <div style={{marginTop:20}}>
+    <h3 style={{fontSize:12,fontWeight:800,color:"#0A1628",marginBottom:10,textTransform:"uppercase",letterSpacing:"0.08em"}}>AEON Profit Reports</h3>
+    <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+      {pdfList.map((pdf,i)=>(
+        <a key={i} href={`data:application/pdf;base64,${pdf.b64}`} download={pdf.name||`AEON_${pdf.date}.pdf`}
+          style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 14px",background:"#7C5CFC",color:"#fff",borderRadius:8,fontSize:12,fontWeight:600,textDecoration:"none"}}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          {pdf.name||`AEON ${pdf.date}`}
+        </a>
+      ))}
+    </div>
+  </div>;
+}
+
 export default function App(){
   const now=new Date();
   const [selMonth,setSelMonth]=useState(now.getMonth()+1);

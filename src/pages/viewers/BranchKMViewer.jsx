@@ -77,7 +77,7 @@ const f2=(n=0)=>Number(n||0).toFixed(2);
 const pctN=(p,t)=>t>0?(p/t)*100:0;
 function achColor(p,t){const r=pctN(p,t);return r>=100?"#00C896":r>=80?"#F5A623":r>=50?"#F0794B":"#F0354B";}
 function achBg(p,t){const r=pctN(p,t);return r>=100?"#00C89612":r>=80?"#F5A62312":r>=50?"#F0794B12":"#F0354B12";}
-// loadData imported from storage module
+// loadData imported
 function daysInMonth(m,y){return new Date(y,m,0).getDate();}
 function calcAchievementBonus(pct,role="sr"){if(pct<121)return 0;const t=Math.floor((pct-121)/10);return role==="bm"?500+t*500:300+t*50;}
 function calcRewardPoints(pct,bPct){if(bPct<100||pct<110)return 0;const T=[[200,12000],[190,9000],[180,7500],[170,6000],[160,4500],[150,3000],[140,2000],[130,1500],[120,1000],[110,500]];for(const[t,p]of T)if(pct>=t)return p;return 0;}
@@ -102,6 +102,37 @@ body{font-family:'Inter',-apple-system,sans-serif;background:#F7F9FC;color:#0A16
 .shine:hover{background:#F7F9FC!important;}
 .tag{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;}
 `;
+
+function PdfDownloads({month,year}){
+  const [pdfList,setPdfList]=useState([]);
+  useEffect(()=>{
+    loadData("emax_v5_pdf_index").then(idx=>{
+      const list=Array.isArray(idx)?idx:[];
+      Promise.all(list.map(k=>loadData(k))).then(pdfs=>{
+        const valid=pdfs.filter(p=>p&&p.date&&p.b64);
+        const filtered=valid.filter(p=>{
+          const parts=p.date.split("/");
+          return parseInt(parts[1])===month&&parseInt(parts[2])===year;
+        });
+        setPdfList(filtered);
+      });
+    });
+  },[month,year]);
+  if(!pdfList.length)return null;
+  return <div style={{marginTop:20}}>
+    <h3 style={{fontSize:12,fontWeight:800,color:"#0A1628",marginBottom:10,textTransform:"uppercase",letterSpacing:"0.08em"}}>AEON Profit Reports</h3>
+    <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+      {pdfList.map((pdf,i)=>(
+        <a key={i} href={`data:application/pdf;base64,${pdf.b64}`} download={pdf.name||`AEON_${pdf.date}.pdf`}
+          style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 14px",background:"#7C5CFC",color:"#fff",borderRadius:8,fontSize:12,fontWeight:600,textDecoration:"none"}}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          {pdf.name||`AEON ${pdf.date}`}
+        </a>
+      ))}
+      <PdfDownloads month={month} year={year}/>
+    </div>
+  </div>;
+}
 
 export default function App(){
   const now=new Date();
@@ -238,11 +269,21 @@ export default function App(){
               <span className="tag" style={{background:sr.status?.toLowerCase().includes("confirmed")?"#F0FDF4":sr.status?.toLowerCase().includes("director")?"#F5F3FF":"#EFF6FF",
                 color:sr.status?.toLowerCase().includes("confirmed")?"#15803D":sr.status?.toLowerCase().includes("director")?"#6D28D9":"#1D4ED8",fontSize:9}}>
                 {(()=>{
-                  const base=(sr.status||"").split("(")[0].trim();
-                  const m=sr.status?.match(/\(([^)]+)\)/);
-                  const detail=m?m[1]:null;
-                  const dc=detail?(detail.toLowerCase().includes("failed")?"#F0354B":detail.toLowerCase().includes("passed")?"#00C896":"#8A96A8"):null;
-                  return <>{base}{detail&&<span style={{color:dc,fontWeight:700,marginLeft:2}}>({detail})</span>}</>;
+                  const s=(sr.status||"").toLowerCase();
+                  const isDir=s.includes("director"),isConf=s.includes("confirmed");
+                  const bg=isDir?"#F5F3FF":isConf?"#F0FDF4":"#EFF6FF";
+                  const color=isDir?"#6D28D9":isConf?"#15803D":"#1D4ED8";
+                  const base=isDir?"Director":isConf?"Confirmed":"Probation";
+                  const pm=(sr.status||"").match(/Passed\s*(\d+)/i),fm=(sr.status||"").match(/Failed\s*(\d+)/i);
+                  const passed=pm?parseInt(pm[1]):null,failed=fm?parseInt(fm[1]):null;
+                  return <span style={{display:"inline-flex",alignItems:"center",gap:4,background:bg,color,padding:"1px 8px",borderRadius:20,fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>
+                    {base}
+                    {(passed!==null||failed!==null)&&<span style={{display:"flex",gap:2,alignItems:"center"}}>
+                      <span style={{width:1,height:9,background:color+"50"}}/>
+                      {passed!==null&&<span style={{color:"#00C896",fontWeight:800}}>P{passed}</span>}
+                      {failed!==null&&<span style={{color:"#F0354B",fontWeight:800}}>F{failed}</span>}
+                    </span>}
+                  </span>;
                 })()}
               </span>
               <span style={{fontSize:9,color:"rgba(255,255,255,.35)",textTransform:"uppercase",letterSpacing:"0.04em"}}>{meta.name}</span>
@@ -319,6 +360,7 @@ export default function App(){
           </div>;
         })}
       </div>
+      <PdfDownloads month={month} year={year}/>
     </div>
   </div>;
 }

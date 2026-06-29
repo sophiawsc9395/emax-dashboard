@@ -150,10 +150,13 @@ CRITICAL RULES:
 2. EXCLUDE item codes: S00005, S00006, S00007, M00894.
 3. "profit": sum Profit of non-excluded items. "repair_profit": sum of S00005,S00006,S00007.
 4. Return ONLY JSON array: [{"promoter_id":"EM0XXX","name":"FULL NAME","profit":123.45,"repair_profit":0.00}]`;
-  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:4000,system:sys,
-      messages:[{role:"user",content:[{type:"document",source:{type:"base64",media_type:"application/pdf",data:b64}},{type:"text",text:"Extract all promoter profits as JSON only."}]}]})});
-  const data=await res.json();
+  let res,data;
+  try{
+    res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:4000,system:sys,
+        messages:[{role:"user",content:[{type:"document",source:{type:"base64",media_type:"application/pdf",data:b64}},{type:"text",text:"Extract all promoter profits as JSON only."}]}]})});
+    data=await res.json();
+  }catch(e){throw new Error("PDF parsing requires the admin dashboard to be opened from the Claude artifact link. Error: "+e.message);}
   if(data.error) throw new Error(data.error.message||"API error");
   const raw=(data.content||[]).filter(c=>c.type==="text"&&c.text).map(c=>c.text).join("").replace(/```json|```/g,"").trim();
   if(!raw) throw new Error("No response from Claude. Try again.");
@@ -942,8 +945,9 @@ function UploadPanel({records,setRecords,srList,defaultBranch,recordsKey:rKey}){
     if(!aeFile){setErr("Select an Invoice PDF file.");return;}
     setErr("");setParsing(true);setPreview(null);
     try{
-      const ae=await parsePDF(await fileToB64(aeFile),"aeon");
-      setPreview({ae,date});
+      const pdfB64=await fileToB64(aeFile);
+      const ae=await parsePDF(pdfB64,"aeon");
+      setPreview({ae,date,pdfB64});
     }catch(e){setErr(e.message);}finally{setParsing(false);}
   };
 
@@ -957,7 +961,20 @@ function UploadPanel({records,setRecords,srList,defaultBranch,recordsKey:rKey}){
       day[sr.id].repair=(day[sr.id].repair||0)+(item.repair_profit||0);
     });
     const nr={...records,[preview.date]:day};
-    await saveData(rKey||STORE_KEY,nr);setRecords(nr);setSaved(true);
+    await saveData(rKey||STORE_KEY,nr);
+    // Store PDF for viewer download
+    if(aeFile&&preview.pdfB64){
+      try{
+        const pdfKey=`emax_v5_pdf_${preview.date.replace(/\//g,"_")}`;
+        await saveData(pdfKey,{name:aeFile.name,date:preview.date,b64:preview.pdfB64});
+        // Store index of available PDFs
+        const idxKey="emax_v5_pdf_index";
+        const existing=await loadData(idxKey)||[];
+        if(!existing.includes(pdfKey))existing.push(pdfKey);
+        await saveData(idxKey,existing);
+      }catch(e){console.warn("PDF storage failed:",e);}
+    }
+    setRecords(nr);setSaved(true);
     setTimeout(()=>{setSaved(false);setAeFile(null);setPreview(null);},1500);
   };
 
