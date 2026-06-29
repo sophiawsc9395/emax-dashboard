@@ -1,10 +1,10 @@
 // EMAX NETWORK — Branch Viewer
 // Change BRANCH_ID below for each branch link
 // KM | T1 | TW2 | TW1 | LD | KB | T5 | ITCC | TENOM | HQ
-const BRANCH_ID = "T1";
-
 import { useState, useEffect, useMemo } from "react";
 import { loadData } from "../../storage/index.js";
+
+const BRANCH_ID = "T1";
 
 const DEFAULT_BRANCH_META = {
   KM:{name:"EMAX Kota Marudu",manager:"SUHAINIZAM",mStatus:"Confirmed (Passed 5)"},
