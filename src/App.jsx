@@ -230,8 +230,8 @@ function EC({value,onSave,color="#1E6FDB"}){
   const [val,setVal]=useState("");
   if(editing)return <td style={{padding:"2px 6px",background:"#FFFBEB",textAlign:"right"}}>
     <input autoFocus type="number" value={val} step="0.01" onChange={e=>setVal(e.target.value)}
-      onBlur={()=>{onSave(parseFloat(val)||0);setEditing(false);}}
-      onKeyDown={e=>{if(e.key==="Enter"){onSave(parseFloat(val)||0);setEditing(false);}if(e.key==="Escape")setEditing(false);}}
+      onBlur={()=>{onSave(isNaN(parseFloat(val))?0:parseFloat(val));setEditing(false);}}
+      onKeyDown={e=>{if(e.key==="Enter"){onSave(isNaN(parseFloat(val))?0:parseFloat(val));setEditing(false);}if(e.key==="Escape")setEditing(false);}}
       style={{width:80,padding:"3px 8px",border:"1.5px solid #F5A623",borderRadius:6,fontSize:11,outline:"none",fontFamily:"'Inter',sans-serif",textAlign:"right"}}/></td>;
   return <td onClick={()=>{setVal(value!==0?value:"");setEditing(true);}} title="Click to edit"
     style={{padding:"6px 12px",textAlign:"right",cursor:"pointer",color:value>0?color:value<0?"#F0354B":"#E4EAF2",fontWeight:value!==0?600:400,fontSize:11,whiteSpace:"nowrap"}}
@@ -1287,14 +1287,14 @@ function DailyEntry({records,setRecords,srList,branchMeta,month,year,days,record
     useEffect(()=>{
       if(prev.current!==value){
         prev.current=value;
-        setStr(value===0?"":String(value));
+        setStr(value===0?"":String(value));  // negative values: String(-15.51) = "-15.51" ✓
       }
     },[value]);
     return <input type="number" step="0.01"
       value={str}
       onChange={e=>{setStr(e.target.value);}}
       onBlur={e=>{
-        const v=parseFloat(e.target.value)||0;
+        const v=isNaN(parseFloat(e.target.value))?0:parseFloat(e.target.value);
         prev.current=v;
         setStr(v===0?"":String(v));
         onChange(String(v));
