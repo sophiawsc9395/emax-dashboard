@@ -79,7 +79,7 @@ function achBg(p,t){const r=pctN(p,t);return r>=100?"#00C89612":r>=80?"#F5A62312
 function calcAchievementBonus(pct,role="sr"){if(pct<121)return 0;const t=Math.floor((pct-121)/10);return role==="bm"?500+t*500:300+t*50;}
 function calcRewardPoints(pct,bPct){if(bPct<100||pct<110)return 0;const T=[[200,12000],[190,9000],[180,7500],[170,6000],[160,4500],[150,3000],[140,2000],[130,1500],[120,1000],[110,500]];for(const[t,p]of T)if(pct>=t)return p;return 0;}
 
-// loadData imported from storage module
+// loadData imported
 
 function StatusTag({status}){
   if(!status)return null;
@@ -251,6 +251,8 @@ export default function App(){
   const days=Array.from({length:daysInMonth(month,year)},(_,i)=>i+1);
   const [selStartDay,setSelStartDay]=useState(1);
   const [selEndDay,setSelEndDay]=useState(daysInMonth(now.getMonth()+1,now.getFullYear()));
+  const [draftStart,setDraftStart]=useState(1);
+  const [draftEnd,setDraftEnd]=useState(daysInMonth(now.getMonth()+1,now.getFullYear()));
   const periodDays=days.filter(d=>d>=selStartDay&&d<=selEndDay);
   const [selBranch,setSelBranch]=useState(BRANCH_ORDER[0]);
 
@@ -267,6 +269,7 @@ export default function App(){
   useEffect(()=>{
     setLoading(true);setRecords({});
     setSelStartDay(1);setSelEndDay(daysInMonth(selMonth,selYear));
+    setDraftStart(1);setDraftEnd(daysInMonth(selMonth,selYear));
     const snapKey=`emax_v5_status_${year}_${month}`;
     const repairKey=`emax_v5_repair_${year}_${month}`;
     Promise.all([loadData(recordsKey),loadData(TARGET_KEY),loadData(SR_KEY),loadData(BM_KEY),loadData(snapKey),loadData(repairKey)])
@@ -442,12 +445,20 @@ export default function App(){
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",borderBottom:"1px solid #E4EAF2"}}>
             <div>
               <h3 style={{fontWeight:800,fontSize:13,color:"#0A1628",margin:0}}>Branch Performance Report</h3>
-              <div style={{display:"flex",alignItems:"center",gap:4,marginTop:3,flexWrap:"wrap"}}>
-                <span style={{fontSize:11,color:"#8A96A8"}}>Period: 1/{month}/{year} –</span>
-                <select value={selEndDay} onChange={e=>{setSelStartDay(1);setSelEndDay(Number(e.target.value));}}
-                  style={{fontSize:11,color:"#1E6FDB",fontWeight:700,border:"none",background:"transparent",outline:"none",cursor:"pointer",padding:0,fontFamily:"Inter,sans-serif"}}>
-                  {days.map(d=><option key={d} value={d}>{d}/{month}/{year}</option>)}
+              <div style={{display:"flex",alignItems:"center",gap:6,marginTop:3,flexWrap:"wrap"}}>
+                <span style={{fontSize:11,color:"#8A96A8"}}>Period:</span>
+                <select value={draftStart} onChange={e=>setDraftStart(Number(e.target.value))}
+                  style={{fontSize:11,color:"#1E6FDB",fontWeight:700,border:"1px solid #E4EAF2",borderRadius:5,background:"#fff",outline:"none",cursor:"pointer",padding:"2px 4px",fontFamily:"Inter,sans-serif"}}>
+                  {days.filter(d=>d<=draftEnd).map(d=><option key={d} value={d}>{d}/{month}/{year}</option>)}
                 </select>
+                <span style={{fontSize:11,color:"#8A96A8"}}>–</span>
+                <select value={draftEnd} onChange={e=>setDraftEnd(Number(e.target.value))}
+                  style={{fontSize:11,color:"#1E6FDB",fontWeight:700,border:"1px solid #E4EAF2",borderRadius:5,background:"#fff",outline:"none",cursor:"pointer",padding:"2px 4px",fontFamily:"Inter,sans-serif"}}>
+                  {days.filter(d=>d>=draftStart).map(d=><option key={d} value={d}>{d}/{month}/{year}</option>)}
+                </select>
+                <button onClick={()=>{setSelStartDay(draftStart);setSelEndDay(draftEnd);}} 
+                  style={{padding:"3px 10px",background:"#1E6FDB",color:"#fff",border:"none",borderRadius:5,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"Inter,sans-serif"}}>Filter</button>
+                {(selStartDay!==1||selEndDay!==days[days.length-1])&&<button onClick={()=>{setDraftStart(1);setDraftEnd(days[days.length-1]);setSelStartDay(1);setSelEndDay(days[days.length-1]);}} style={{padding:"3px 10px",background:"#F7F9FC",color:"#8A96A8",border:"1px solid #E4EAF2",borderRadius:5,fontSize:11,cursor:"pointer",fontFamily:"Inter,sans-serif"}}>Reset</button>}
               </div>
             </div>
             <div style={{textAlign:"right"}}>

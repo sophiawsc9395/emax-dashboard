@@ -599,7 +599,11 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
           <th style={TH()}>Balance</th>
           <th style={TH()}>Achievement</th>
         </tr></thead>
-        <tbody>{BRANCH_ORDER.map((b,i)=>{
+        <tbody>{[...BRANCH_ORDER].sort((a,b2)=>{
+            const pa=pctN(bt[a]?.total||0,targets?.bm?.[a]||0);
+            const pb=pctN(bt[b2]?.total||0,targets?.bm?.[b2]||0);
+            return pb-pa;
+          }).map((b,i)=>{
           const wi=bt[b]?.wi||0,ae=bt[b]?.ae||0,total=wi+ae;
           const target=targets?.bm?.[b]||0,bal=target>0?total-target:null,over=target>0&&total>=target;
           return <tr key={b} className="shine-row" style={{background:i%2===0?"#fff":"#F7F9FC"}}>
@@ -646,68 +650,65 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
 }
 
 // ─── RANKING TABLE ─────────────────────────────────────────
-function RankingTable({title,rows,showBonus,showPoints,branchMeta}){
-  // Status tag — 1 line: Type · P5 F2
-  const StatusTagR = ({status}) => {
-    if(!status) return null;
-    const s = status.toLowerCase();
-    const isDir = s.includes("director");
-    const isConf = s.includes("confirmed");
-    const bg = isDir?"#F5F3FF":isConf?"#F0FDF4":"#EFF6FF";
-    const color = isDir?"#6D28D9":isConf?"#15803D":"#1D4ED8";
-    const base = isDir?"Director":isConf?"Confirmed":"Probation";
-    // Extract pass/fail counts
-    const pm = status.match(/Passed\s*(\d+)/i);
-    const fm = status.match(/Failed\s*(\d+)/i);
-    const passed = pm ? parseInt(pm[1]) : null;
-    const failed = fm ? parseInt(fm[1]) : null;
-    return <span style={{display:"inline-flex",alignItems:"center",gap:5,background:bg,color,padding:"2px 10px",borderRadius:20,fontSize:10,fontWeight:600,whiteSpace:"nowrap"}}>
+function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
+  const StatusTagR=({status})=>{
+    if(!status)return null;
+    const s=status.toLowerCase(),isDir=s.includes("director"),isConf=s.includes("confirmed");
+    const bg=isDir?"#F5F3FF":isConf?"#F0FDF4":"#EFF6FF",color=isDir?"#6D28D9":isConf?"#15803D":"#1D4ED8";
+    const base=isDir?"Director":isConf?"Confirmed":"Probation";
+    const pm=status.match(/Passed\s*(\d+)/i),fm=status.match(/Failed\s*(\d+)/i);
+    const passed=pm?parseInt(pm[1]):null,failed=fm?parseInt(fm[1]):null;
+    return <span style={{display:"inline-flex",alignItems:"center",gap:4,background:bg,color,padding:"1px 8px",borderRadius:20,fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>
       {base}
-      {(passed!==null||failed!==null)&&<span style={{display:"flex",gap:3,alignItems:"center"}}>
-        <span style={{width:1,height:10,background:color+"50"}}/>
-        {passed!==null&&<span style={{color:"#00C896",fontWeight:700}}>P{passed}</span>}
-        {failed!==null&&<span style={{color:"#F0354B",fontWeight:700}}>F{failed}</span>}
+      {(passed!==null||failed!==null)&&<span style={{display:"flex",gap:2}}>
+        <span style={{width:1,height:9,background:color+"50"}}/>
+        {passed!==null&&<span style={{color:"#00C896",fontWeight:800}}>P{passed}</span>}
+        {failed!==null&&<span style={{color:"#F0354B",fontWeight:800}}>F{failed}</span>}
       </span>}
     </span>;
   };
 
-  return <div style={{marginBottom:28}}>
-    <SectionHeader title={title} subtitle="Ranked by achievement percentage"/>
-    <div className="card" style={{overflow:"auto"}}>
-      <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,minWidth:480}}>
-        <thead><tr style={{background:"#0A1628"}}>
-          {["Rank","Name","Branch","Personal Achievement",...(showBonus?["Branch Achievement Bonus"]:[]),...(showPoints?["Reward Points"]:[])].map(h=>(
-            <th key={h} style={{padding:"10px 14px",textAlign:h==="Rank"||h==="Name"||h==="Branch"?"left":"right",fontWeight:700,fontSize:10,color:"rgba(255,255,255,.7)",textTransform:"uppercase",letterSpacing:"0.06em",whiteSpace:"nowrap"}}>{h}</th>
-          ))}
-        </tr></thead>
-        <tbody>{rows.map((r,i)=>{
-          const p=pctN(r.profit,r.target),color=achColor(r.profit,r.target);
-          const branchPct=r.branchPct||p;
-          const achBonus=branchPct>=121&&p>=100?calcAchievementBonus(branchPct,r.role||"sr"):0;
-          const pts=calcRewardPoints(p,branchPct);
-          return (
-            <tr key={i} className="shine-row" style={{borderBottom:"1px solid #E4EAF2",background:i%2===0?"#fff":"#F7F9FC"}}>
-              <td style={{padding:"10px 14px",width:48}}><RankMedal rank={i+1}/></td>
-              <td style={{padding:"10px 14px",minWidth:160}}>
-                <div style={{fontWeight:700,color:"#0A1628",fontSize:12,marginBottom:4}}>{r.name}</div>
-                <StatusTagR status={r.status}/>
-              </td>
-              <td style={{padding:"10px 14px",minWidth:120}}>
-                <div style={{fontSize:11,color:"#4A5568",fontWeight:600,textTransform:"uppercase"}}>{branchMeta?.[r.branch]?.name||r.sub||r.branch||"—"}</div>
-              </td>
-              <td style={{padding:"10px 14px",textAlign:"right"}}>
-                {r.target>0?<AchBadge profit={r.profit} target={r.target} size="md"/>:<span style={{color:"#8A96A8"}}>—</span>}
-              </td>
-              {showBonus&&<td style={{padding:"10px 14px",textAlign:"right",fontSize:12}}>
-                {achBonus>0?<span style={{fontWeight:700,color:"#F5A623"}}>{fRM(achBonus)}</span>:<span style={{color:"#8A96A8"}}>—</span>}
-              </td>}
-              {showPoints&&<td style={{padding:"10px 14px",textAlign:"right",fontSize:12}}>
-                {pts>0?<span style={{fontWeight:700,color:"#1E6FDB"}}>{pts.toLocaleString()} pts</span>:<span style={{color:"#8A96A8"}}>—</span>}
-              </td>}
-            </tr>
-          );
-        })}</tbody>
-      </table>
+  const medals=["🥇","🥈","🥉"];
+  return <div style={{marginBottom:24}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:10}}>
+      <h3 style={{fontSize:13,fontWeight:800,color:"#0A1628",textTransform:"uppercase",letterSpacing:"0.05em"}}>{title}</h3>
+      {period&&<span style={{fontSize:10,color:"#8A96A8",fontWeight:500}}>Period: {period}</span>}
+    </div>
+    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+      {rows.map((r,i)=>{
+        const p=pctN(r.profit,r.target),branchPct=r.branchPct||p,color=achColor(r.profit,r.target);
+        const achBonus=branchPct>=121&&p>=100?calcAchievementBonus(branchPct,r.role||"sr"):0;
+        const pts=calcRewardPoints(p,branchPct);
+        const isTop=i<3;
+        return <div key={i} style={{
+          background:isTop?"linear-gradient(135deg,#0A1628,#162B52)":"#fff",
+          border:isTop?"none":"1px solid #E4EAF2",
+          borderRadius:10,padding:"10px 14px",
+          boxShadow:isTop?"0 2px 8px rgba(10,22,40,.2)":"0 1px 3px rgba(10,22,40,.04)",
+          display:"flex",alignItems:"center",gap:12,
+        }}>
+          {/* Rank */}
+          <div style={{flexShrink:0,width:32,textAlign:"center"}}>
+            {i<3
+              ? <span style={{fontSize:20,lineHeight:1}}>{medals[i]}</span>
+              : <span style={{fontWeight:800,fontSize:13,color:"#8A96A8"}}>#{i+1}</span>}
+          </div>
+          {/* Name + status */}
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontWeight:700,fontSize:12,color:isTop?"#fff":"#0A1628",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.name}</div>
+            <div style={{marginTop:2,display:"flex",gap:4,alignItems:"center",flexWrap:"wrap"}}>
+              <StatusTagR status={r.status}/>
+              {r.branch&&branchMeta&&<span style={{fontSize:9,color:isTop?"rgba(255,255,255,.4)":"#8A96A8",textTransform:"uppercase"}}>{(branchMeta[r.branch]?.name||r.branch).replace("EMAX ","")}</span>}
+            </div>
+          </div>
+          {/* Achievement */}
+          <div style={{flexShrink:0,textAlign:"right"}}>
+            {r.target>0&&<div style={{fontWeight:800,fontSize:14,color:isTop?color:color}}>{pctN(r.profit,r.target).toFixed(1)}%</div>}
+            {showBonus&&achBonus>0&&<div style={{fontSize:10,color:"#F5A623",fontWeight:700}}>{fRM(achBonus)}</div>}
+            {showPoints&&pts>0&&<div style={{fontSize:10,color:isTop?"#93C5FD":"#1E6FDB",fontWeight:700}}>{pts.toLocaleString()} pts</div>}
+          </div>
+        </div>;
+      })}
     </div>
   </div>;
 }
@@ -1485,6 +1486,15 @@ export default function App(){
   const [selStartDay,setSelStartDay] = useState(1);
   const [selEndDay,setSelEndDay]   = useState(()=>daysInMonth(new Date().getMonth()+1,new Date().getFullYear()));
   const periodDays = days.filter(d=>d>=selStartDay&&d<=selEndDay);
+  // Last day with any records entered (for ranking period label)
+  const lastDataDay = useMemo(()=>{
+    for(let d=days[days.length-1];d>=1;d--){
+      const k=`${d}/${month}/${year}`;
+      if(records[k]&&Object.keys(records[k]).length>0) return d;
+    }
+    return null;
+  },[records,days,month,year]);
+  const rankingPeriod = lastDataDay ? `1/${month}/${year} – ${lastDataDay}/${month}/${year}` : `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][month-1]} ${year}`;
   const [repairRefresh,setRepairRefresh] = useState(0);
   const [showTargetModal,setShowTargetModal] = useState(false);
   const [showSRModal,setShowSRModal]         = useState(false);
@@ -1618,23 +1628,24 @@ export default function App(){
     <style>{CSS}</style>
     {/* NAV */}
     <div style={{background:"#0A1628",borderBottom:"1px solid #162B52",position:"sticky",top:0,zIndex:100}}>
-      <div style={{maxWidth:1400,margin:"0 auto",padding:"0 20px",display:"flex",alignItems:"center",justifyContent:"space-between",height:54,gap:12}}>
-        <div style={{display:"flex",alignItems:"center",gap:14,flexShrink:0}}>
+      <div style={{maxWidth:1400,margin:"0 auto",padding:"0 12px"}}>
+        {/* Row 1: Logo + Tabs + Controls */}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",minHeight:48,gap:8,flexWrap:"wrap"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
           <div>
-            <div style={{fontWeight:900,fontSize:13,color:"#fff",letterSpacing:"0.06em",lineHeight:1}}>EMAX NETWORK</div>
-            <div style={{fontSize:9,color:"rgba(255,255,255,.3)",letterSpacing:"0.14em",textTransform:"uppercase",marginTop:1}}>Analytics Platform</div>
+            <div style={{fontWeight:900,fontSize:12,color:"#fff",letterSpacing:"0.06em",lineHeight:1}}>EMAX NETWORK</div>
           </div>
-          <div style={{width:1,height:22,background:"rgba(255,255,255,.1)"}}/>
-          <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+          <div style={{width:1,height:18,background:"rgba(255,255,255,.1)"}}/>
+          <div style={{display:"flex",gap:2,flexWrap:"wrap"}}>
             {TABS.map(t=>(
-              <button key={t.id} onClick={()=>setTab(t.id)} className="nav-item" style={{padding:"5px 12px",border:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600,fontSize:11,
-                background:tab===t.id?"rgba(255,255,255,.1)":"transparent",color:tab===t.id?"#fff":"rgba(255,255,255,.4)",borderRadius:6}}>
+              <button key={t.id} onClick={()=>setTab(t.id)} className="nav-item" style={{padding:"4px 10px",border:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600,fontSize:10,
+                background:tab===t.id?"rgba(255,255,255,.1)":"transparent",color:tab===t.id?"#fff":"rgba(255,255,255,.4)",borderRadius:6,whiteSpace:"nowrap"}}>
                 {t.label}
               </button>
             ))}
           </div>
         </div>
-        <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0}}>
+        <div style={{display:"flex",gap:4,alignItems:"center",flexShrink:0}}>
           {/* Month/Year/EndDay Picker */}
           <div style={{display:"flex",gap:4,alignItems:"center"}}>
             <select value={selMonth} onChange={e=>setSelMonth(Number(e.target.value))}
@@ -1662,6 +1673,7 @@ export default function App(){
           <button className="btn btn-ghost" onClick={()=>setShowTargetModal(true)} style={{fontSize:11,color:"rgba(255,255,255,.6)",borderColor:"rgba(255,255,255,.15)",padding:"5px 11px"}}>Set Targets</button>
           <button className="btn btn-ghost" onClick={()=>setShowSRModal(true)} style={{fontSize:11,color:"rgba(255,255,255,.6)",borderColor:"rgba(255,255,255,.15)",padding:"5px 11px"}}>Manage SR</button>
         </div>
+        </div>{/* Row 1 end */}
       </div>
     </div>
 
@@ -1684,9 +1696,9 @@ export default function App(){
 
       {/* RANKINGS */}
       {tab==="rankings"&&<div className="fade-in">
-        <RankingTable title="Branch Manager Ranking" rows={bmRanking} showBonus showPoints branchMeta={branchMeta}/>
-        <RankingTable title="Online SR Ranking" rows={mkSRRank("Online")} showBonus showPoints branchMeta={branchMeta}/>
-        <RankingTable title="Offline SR Ranking" rows={mkSRRank("Offline")} showBonus showPoints branchMeta={branchMeta}/>
+        <RankingTable title="Branch Manager Ranking" rows={bmRanking} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
+        <RankingTable title="Online SR Ranking" rows={mkSRRank("Online")} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
+        <RankingTable title="Offline SR Ranking" rows={mkSRRank("Offline")} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
       </div>}
 
       {/* MONTHLY REPORT */}
