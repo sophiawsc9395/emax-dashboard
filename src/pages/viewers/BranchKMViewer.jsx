@@ -249,117 +249,135 @@ export default function App(){
       <h3 style={{fontSize:12,fontWeight:800,color:"#0A1628",marginBottom:12,textTransform:"uppercase",letterSpacing:"0.08em"}}>SR Performance</h3>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:14,alignItems:"start"}}>
         {srList.sort((a,b)=>pctN(srTotals[b.id]?.total||0,targets?.sr?.[b.id]?.target||0)-pctN(srTotals[a.id]?.total||0,targets?.sr?.[a.id]?.target||0)).map(sr=>{
-          const tot=srTotals[sr.id]?.total||0,wi=srTotals[sr.id]?.wi||0,ae=srTotals[sr.id]?.ae||0;
           const target=targets?.sr?.[sr.id]?.target||0,bonus=targets?.sr?.[sr.id]?.bonus||0;
-          const p=pctN(tot,target),color=achColor(tot,target);
-          const bonusEarned=branchPct>=100&&p>=100&&bonus>0;
+          const tWI=Object.values(records).reduce((s,day)=>s+(day[sr.id]?.walkin||0),0);
+          const tAE=Object.values(records).reduce((s,day)=>s+(day[sr.id]?.aeon||0),0);
+          const total=tWI+tAE;
+          const p=pctN(total,target),color=achColor(total,target);
+          const bonusEarned=branchPct>=100&&total>=target&&bonus>0;
           const achBonus=branchPct>=121&&p>=100?calcAchievementBonus(branchPct,"sr"):0;
           const pts=calcRewardPoints(p,branchPct);
-          const typeCls=sr.type==="Online"?"#EFF6FF:#1D4ED8":"#FEFCE8:#854D0E";
-          const [typeBg,typeColor]=typeCls.split(":");
-          return <div key={sr.id} className="card" style={{overflow:"hidden"}}>
+          const thS={padding:"6px 12px",fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",background:"#F7F9FC",borderBottom:"1px solid #E4EAF2",whiteSpace:"nowrap"};
+          return <div key={sr.id} style={{border:"1px solid #E4EAF2",borderRadius:10,overflow:"hidden",background:"#fff",boxShadow:"0 1px 4px rgba(10,22,40,.05)"}}>
             <div style={{background:"#0A1628",padding:"10px 14px"}}>
-              <div style={{fontSize:9,fontWeight:700,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.08em"}}>EMAX NETWORK</div>
+              <div style={{fontSize:9,fontWeight:700,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.08em"}}>EMAX NETWORK SDN BHD</div>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:3}}>
                 <span style={{fontWeight:800,fontSize:13,color:"#fff"}}>{sr.canon}</span>
-                <span className="tag" style={{background:sr.type==="Online"?"#EFF6FF":"#FEFCE8",color:sr.type==="Online"?"#1D4ED8":"#854D0E"}}>{sr.type}</span>
+                <span style={{background:sr.type==="Online"?"#EFF6FF":"#FEFCE8",color:sr.type==="Online"?"#1D4ED8":"#854D0E",padding:"2px 9px",borderRadius:20,fontSize:10,fontWeight:600}}>{sr.type}</span>
               </div>
             </div>
-            <div style={{padding:"6px 14px",background:"#0F2040",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <span className="tag" style={{background:sr.status?.toLowerCase().includes("confirmed")?"#F0FDF4":sr.status?.toLowerCase().includes("director")?"#F5F3FF":"#EFF6FF",
-                color:sr.status?.toLowerCase().includes("confirmed")?"#15803D":sr.status?.toLowerCase().includes("director")?"#6D28D9":"#1D4ED8",fontSize:9}}>
-                {(()=>{
-                  const s=(sr.status||"").toLowerCase();
-                  const isDir=s.includes("director"),isConf=s.includes("confirmed");
-                  const bg=isDir?"#F5F3FF":isConf?"#F0FDF4":"#EFF6FF";
-                  const color=isDir?"#6D28D9":isConf?"#15803D":"#1D4ED8";
-                  const base=isDir?"Director":isConf?"Confirmed":"Probation";
-                  const pm=(sr.status||"").match(/Passed\s*(\d+)/i),fm=(sr.status||"").match(/Failed\s*(\d+)/i);
-                  const passed=pm?parseInt(pm[1]):null,failed=fm?parseInt(fm[1]):null;
-                  return <span style={{display:"inline-flex",alignItems:"center",gap:5,background:bg,color,padding:"2px 10px",borderRadius:20,fontSize:10,fontWeight:600,whiteSpace:"nowrap"}}>
-                    {base}
-                    {(passed!==null||failed!==null)&&<span style={{display:"flex",gap:3,alignItems:"center"}}>
-                      <span style={{width:1,height:10,background:color+"50"}}/>
-                      {passed!==null&&<span style={{color:"#00C896",fontWeight:700}}>P{passed}</span>}
-                      {failed!==null&&<span style={{color:"#F0354B",fontWeight:700}}>F{failed}</span>}
-                    </span>}
-                  </span>;
-                })()}
-              </span>
-              <span style={{fontSize:9,color:"rgba(255,255,255,.35)",textTransform:"uppercase",letterSpacing:"0.04em"}}>{meta.name}</span>
+            <div style={{padding:"5px 14px",background:"#0F2040",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              {(()=>{
+                const s=(sr.status||"").toLowerCase();
+                const isDir=s.includes("director"),isConf=s.includes("confirmed");
+                const bg=isDir?"#F5F3FF":isConf?"#F0FDF4":"#EFF6FF";
+                const col=isDir?"#6D28D9":isConf?"#15803D":"#1D4ED8";
+                const base=isDir?"Director":isConf?"Confirmed":"Probation";
+                const pm=(sr.status||"").match(/Passed\s*(\d+)/i),fm=(sr.status||"").match(/Failed\s*(\d+)/i);
+                const passed=pm?parseInt(pm[1]):null,failed=fm?parseInt(fm[1]):null;
+                return <span style={{display:"inline-flex",alignItems:"center",gap:5,background:bg,color:col,padding:"2px 10px",borderRadius:20,fontSize:10,fontWeight:600,whiteSpace:"nowrap"}}>
+                  {base}
+                  {(passed!==null||failed!==null)&&<span style={{display:"flex",gap:3,alignItems:"center"}}>
+                    <span style={{width:1,height:10,background:col+"50"}}/>
+                    {passed!==null&&<span style={{color:"#00C896",fontWeight:700}}>P{passed}</span>}
+                    {failed!==null&&<span style={{color:"#F0354B",fontWeight:700}}>F{failed}</span>}
+                  </span>}
+                </span>;
+              })()}
+              <span style={{fontSize:10,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.04em"}}>{(bMeta[sr.branch]?.name||sr.branch).replace("EMAX ","")}</span>
             </div>
-
-            {/* Daily table */}
             <table style={{width:"100%",borderCollapse:"collapse"}}>
-              <thead>
-                <tr style={{background:"#F7F9FC"}}>
-                  <th style={{padding:"5px 10px",fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"center",borderBottom:"1px solid #E4EAF2",width:48}}>Date</th>
-                  <th style={{padding:"5px 10px",fontSize:10,fontWeight:700,color:"#1E6FDB",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",borderBottom:"1px solid #E4EAF2"}}>Walk In</th>
-                  <th style={{padding:"5px 10px",fontSize:10,fontWeight:700,color:"#7C5CFC",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",borderBottom:"1px solid #E4EAF2"}}>Invoice</th>
-                  <th style={{padding:"5px 10px",fontSize:10,fontWeight:700,color:"#0A1628",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",borderBottom:"1px solid #E4EAF2"}}>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {days.map(d=>{
-                  const k=`${d}/${month}/${year}`,v=records[k]?.[sr.id]||{};
-                  const dwi=v.walkin||0,dae=v.aeon||0,dt=dwi+dae;
-                  if(dwi===0&&dae===0)return null;
-                  return <tr key={d} className="shine" style={{borderBottom:"1px solid rgba(228,234,242,.7)"}}>
-                    <td style={{padding:"5px 10px",fontSize:11,textAlign:"center",fontWeight:600,color:"#4A5568",borderRight:"1px solid rgba(228,234,242,.5)"}}>{d}/{month}</td>
-                    <td style={{padding:"5px 10px",fontSize:11,textAlign:"right",color:dwi>0?"#1E6FDB":"#E4EAF2"}}>{dwi>0?f2(dwi):"—"}</td>
-                    <td style={{padding:"5px 10px",fontSize:11,textAlign:"right",color:dae>0?"#7C5CFC":"#E4EAF2"}}>{dae>0?f2(dae):"—"}</td>
-                    <td style={{padding:"5px 10px",fontSize:11,textAlign:"right",fontWeight:600,color:"#0A1628"}}>{f2(dt)}</td>
-                  </tr>;
-                })}
-              </tbody>
+              <thead><tr>
+                <th style={{...thS,textAlign:"center",width:48}}>Date</th>
+                <th style={{...thS,color:"#1E6FDB"}}>Walk In</th>
+                <th style={{...thS,color:"#7C5CFC"}}>Invoice</th>
+                <th style={{...thS,color:"#0A1628"}}>Total</th>
+              </tr></thead>
+              <tbody>{days.map(d=>{
+                const k=`${d}/${month}/${year}`,v=records[k]?.[sr.id]||{};
+                const wi=v.walkin||0,ae=v.aeon||0,rt=wi+ae;
+                if(wi===0&&ae===0)return null;
+                return <tr key={d} style={{borderBottom:"1px solid rgba(228,234,242,.8)",background:d%2===0?"#fff":"#F7F9FC"}}>
+                  <td style={{padding:"4px 8px",color:"#4A5568",fontWeight:600,textAlign:"center",fontSize:11,borderRight:"1px solid rgba(228,234,242,.6)"}}>{d}/{month}</td>
+                  <td style={{padding:"4px 12px",textAlign:"right",fontSize:11,color:wi!==0?"#4A5568":"#E4EAF2",fontWeight:wi!==0?500:300}}>{wi!==0?f2(wi):"—"}</td>
+                  <td style={{padding:"4px 12px",textAlign:"right",fontSize:11,color:ae!==0?"#7C5CFC":"#E4EAF2",fontWeight:ae!==0?500:300}}>{ae!==0?f2(ae):"—"}</td>
+                  <td style={{padding:"4px 12px",textAlign:"right",fontWeight:rt!==0?600:300,fontSize:11,color:rt>0?"#0A1628":rt<0?"#F0354B":"#E4EAF2"}}>{rt!==0?f2(rt):"—"}</td>
+                </tr>;
+              })}</tbody>
             </table>
-
-            {/* Monthly total footer */}
-            <div style={{padding:"8px 14px",background:"#F7F9FC",borderTop:"2px solid #E4EAF2"}}>
-              {[["Walk In",fRM(wi),"#1E6FDB"],["Invoice",fRM(ae),"#7C5CFC"],["Total",fRM(tot),"#0A1628"]].map(([l,v,c])=>(
-                <div key={l} style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
+            <div style={{padding:"10px 14px",background:"#F7F9FC",borderTop:"2px solid #E4EAF2"}}>
+              {[["Walk In",fRM(tWI),"#1E6FDB"],["Invoice",fRM(tAE),"#7C5CFC"],["Total Profit",fRM(total),"#0A1628"]].map(([l,v,c])=>(
+                <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"2px 0",fontSize:11}}>
                   <span style={{color:"#8A96A8"}}>{l}</span>
-                  <span style={{fontWeight:l==="Total"?700:500,color:c}}>{v}</span>
+                  <span style={{fontWeight:700,color:c,fontSize:11}}>{v}</span>
                 </div>
               ))}
-
+              <div style={{height:1,background:"#E4EAF2",margin:"7px 0"}}/>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
+                <span style={{color:"#8A96A8"}}>Target</span>
+                <span style={{fontWeight:700,fontSize:11}}>{target>0?fRM(target):"Not set"}</span>
+              </div>
               {target>0&&<>
-                <div style={{height:1,background:"#E4EAF2",margin:"8px 0"}}/>
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:4}}>
-                  <span style={{color:"#8A96A8"}}>Target</span>
-                  <span style={{fontWeight:500}}>{fRM(target)}</span>
-                </div>
-                <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:5}}>
                   <span style={{color:"#8A96A8"}}>Personal Achievement</span>
-                  <AchBadge profit={tot} target={target}/>
+                  <span style={{background:achBg(total,target),color:achColor(total,target),padding:"2px 10px",borderRadius:20,fontSize:11,fontWeight:700}}>{p.toFixed(2)}%</span>
                 </div>
-                <ProgressBar pct={p} color={color}/>
+                <div style={{height:5,background:"#E4EAF2",borderRadius:5,overflow:"hidden",marginBottom:5}}>
+                  <div style={{height:"100%",width:Math.min(p,100)+"%",background:color,transition:"width .6s"}}/>
+                </div>
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginTop:5}}>
-                  <span style={{color:"#8A96A8"}}>Balance</span>
-                  <span style={{fontWeight:700,color:Math.max(target-tot,0)>0?"#F0354B":"#00C896",fontSize:11}}>
-                    {Math.max(target-tot,0)>0?fRM(Math.max(target-tot,0)):"Target Met"}
+                  <span style={{color:"#8A96A8"}}>Balance to Hit</span>
+                  <span style={{fontWeight:700,color:Math.max(target-total,0)>0?"#F0354B":"#00C896",fontSize:11}}>
+                    {Math.max(target-total,0)>0?fRM(Math.max(target-total,0)):"Target Met"}
                   </span>
                 </div>
               </>}
-
               <div style={{height:1,background:"#E4EAF2",margin:"8px 0"}}/>
-              <div style={{fontSize:9,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:5}}>Incentives</div>
-              {bonus>0&&<div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:3}}>
-                <span style={{color:"#8A96A8"}}>Personal Bonus</span>
-                <span style={{fontWeight:700,color:bonusEarned?"#00C896":"#8A96A8"}}>{bonusEarned?fRM(bonus):fRM(bonus)+" — Pending"}</span>
+              <div style={{fontSize:9,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Incentives</div>
+              {bonus>0&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,marginBottom:4}}>
+                <span style={{color:"#8A96A8"}}>Personal Achievement Bonus</span>
+                <span style={{fontWeight:700,color:bonusEarned?"#00C896":"#8A96A8",whiteSpace:"nowrap"}}>
+                  {bonusEarned?fRM(bonus):`${fRM(bonus)} (Pending)`}
+                </span>
               </div>}
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:3}}>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
                 <span style={{color:"#8A96A8"}}>Branch Achievement Bonus</span>
                 {achBonus>0?<span style={{fontWeight:700,color:"#F5A623"}}>{fRM(achBonus)}</span>:<span style={{color:"#8A96A8"}}>—</span>}
               </div>
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:11}}>
+              {achBonus>0&&(()=>{
+                const tier=Math.floor((branchPct-121)/10);
+                const nextTierPct=121+(tier+1)*10;
+                const isMaxTier=nextTierPct>200;
+                return <div style={{background:"linear-gradient(135deg,#FFF9EB,#FFFBF0)",borderRadius:8,padding:"8px 10px",marginBottom:4,border:"1px solid #FDE68A",boxShadow:"0 1px 3px rgba(245,166,35,.1)"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                    <span style={{fontSize:10,fontWeight:700,color:"#92400E",display:"flex",alignItems:"center",gap:4}}>
+                      <span style={{background:"#F5A623",color:"#fff",borderRadius:20,padding:"1px 7px",fontSize:9,fontWeight:800}}>Tier {tier+1}</span>
+                      Branch {branchPct.toFixed(1)}%
+                    </span>
+                    <span style={{fontWeight:800,fontSize:12,color:"#D97706"}}>{fRM(achBonus)}</span>
+                  </div>
+                  {!isMaxTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:4,borderTop:"1px dashed #FDE68A"}}>
+                    <span style={{fontSize:9,color:"#B45309"}}>Next: Tier {tier+2} at {nextTierPct}%</span>
+                    <span style={{fontSize:9,fontWeight:700,color:"#B45309"}}>{fRM(calcAchievementBonus(nextTierPct,"sr"))}</span>
+                  </div>}
+                  {isMaxTier&&<div style={{fontSize:9,color:"#D97706",fontWeight:600,paddingTop:4,borderTop:"1px dashed #FDE68A"}}>🏆 Maximum tier reached</div>}
+                </div>;
+              })()}
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2,marginTop:2}}>
                 <span style={{color:"#8A96A8"}}>Reward Points</span>
                 {pts>0?<span style={{fontWeight:700,color:"#1E6FDB"}}>{pts.toLocaleString()} pts</span>:<span style={{color:"#8A96A8"}}>—</span>}
               </div>
+              {pts>0&&(()=>{
+                const TIERS=[[110,500],[120,1000],[130,1500],[140,2000],[150,3000],[160,4500],[170,6000],[180,7500],[190,9000],[200,12000]];
+                const nextTier=TIERS.find(([t])=>p<t);
+                return <div style={{background:"#EFF6FF",borderRadius:6,padding:"4px 8px",marginBottom:3,fontSize:10,color:"#1E40AF",border:"1px solid #BFDBFE"}}>
+                  {pts.toLocaleString()} pts at SR {p.toFixed(1)}%{nextTier?` · Next: ${nextTier[1].toLocaleString()} pts at ${nextTier[0]}%`:" · Max tier"}
+                </div>;
+              })()}
             </div>
           </div>;
         })}
-      </div>
+
       <PdfDownloads month={month} year={year}/>
     </div>
   </div>;
