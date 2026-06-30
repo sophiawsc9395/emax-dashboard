@@ -377,7 +377,7 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
       </div>}
 
       {/* RANKINGS */}
-      {tab==="rankings"&&<div className="fade-in">
+      {tab==="rankings"&&<div className="fade-in" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:20}}>
         <RankingTable title="Branch Manager Ranking" rows={bmRank} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
         <RankingTable title="Online SR Ranking" rows={mkSRRank("Online")} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
         <RankingTable title="Offline SR Ranking" rows={mkSRRank("Offline")} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
@@ -453,6 +453,14 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
       </div>}
 
     </div>
+  </div>;
+}
+
+function KpiCard({label,value,sub,accent="#1E6FDB"}){
+  return <div className="card fade-in" style={{padding:"18px 20px",borderTop:`3px solid ${accent}`}}>
+    <div style={{fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>{label}</div>
+    <div style={{fontSize:16,fontWeight:700,color:"#0A1628",letterSpacing:"-0.01em",lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{value}</div>
+    {sub&&<div style={{fontSize:11,color:"#8A96A8",marginTop:4}}>{sub}</div>}
   </div>;
 }
 
@@ -635,15 +643,12 @@ export default function App(){
 
       {/* OVERVIEW */}
       {tab==="overview"&&<div className="fade-in">
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:12,marginBottom:20}}>
-          {[["Network Total",fRM(grandTotal),"#0A1628"],["Monthly Target",grandTarget>0?fRM(grandTarget):"Not Set","#4A5568"],
-            ["Achievement",grandTarget>0?pctN(grandTotal,grandTarget).toFixed(1)+"%":"—",achColor(grandTotal,grandTarget)]
-          ].map(([l,v,c])=>(
-            <div key={l} className="card" style={{padding:"16px 18px",borderTop:`3px solid ${c}`}}>
-              <div style={{fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4}}>{l}</div>
-              <div style={{fontSize:16,fontWeight:700,color:"#0A1628",letterSpacing:"-0.01em",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{v}</div>
-            </div>
-          ))}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:12,marginBottom:20}}>
+          <KpiCard label="Total Profit" value={fRM(grandTotal)} accent="#1E6FDB"/>
+          <KpiCard label="Monthly Target" value={grandTarget>0?fRM(grandTarget):"Not Set"} accent="#162B52"/>
+          <KpiCard label="Achievement" value={grandTarget>0?pctN(grandTotal,grandTarget).toFixed(1)+"%":"—"} accent={achColor(grandTotal,grandTarget)}/>
+          <KpiCard label="Target Balance" value={grandTarget>0?(grandTotal-grandTarget>=0?"+"+fRM(grandTotal-grandTarget):fRM(grandTotal-grandTarget)):"—"} accent={grandTarget>0&&grandTotal>=grandTarget?"#00C896":"#F0354B"} sub={grandTarget>0&&grandTotal>=grandTarget?"Target exceeded":"Remaining"}/>
+          <KpiCard label="On Target" value={`${BRANCH_ORDER.filter(b=>{const t=targets?.bm?.[b]||0;return t>0&&(branchTotals[b]?.total||0)>=t;}).length}/${BRANCH_ORDER.filter(b=>(targets?.bm?.[b]||0)>0).length}`} accent="#F5A623" sub="Branches with target set"/>
         </div>
         <div className="card" style={{overflow:"hidden"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",borderBottom:"1px solid #E4EAF2"}}>

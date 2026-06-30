@@ -920,7 +920,7 @@ function UploadPanel({records,setRecords,srList,defaultBranch,recordsKey:rKey}){
       const existing=await loadData(idxKey)||[];
       const arr=Array.isArray(existing)?existing:[];
       if(!arr.includes(pdfKey))arr.push(pdfKey);
-      await saveData(idxKey,arr);
+      await saveData(idxKey,[...new Set(arr)]);
       setSaved(true);setTimeout(()=>{setSaved(false);setFile(null);},2000);
     }catch(e){setErr(e.message);}
     setSaving(false);
