@@ -414,7 +414,6 @@ export default function App(){
           </div>;
         })()}
       </div>
-      </div>
 
       {/* SR Cards */}
       <h3 style={{fontSize:12,fontWeight:800,color:"#0A1628",marginBottom:12,textTransform:"uppercase",letterSpacing:"0.08em"}}>SR Performance</h3>
