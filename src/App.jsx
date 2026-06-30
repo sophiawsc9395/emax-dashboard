@@ -405,15 +405,15 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
   const bmBonusEarned=target>0&&total>=target&&bmBonus>0;
   const achBonus=calcAchievementBonus(p,"bm"),points=calcRewardPoints(p,p);
   const thS={padding:"6px 10px",fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",background:"#F7F9FC",borderBottom:"1px solid #E4EAF2",whiteSpace:"nowrap"};
-  return <div style={{border:"1px solid rgba(0,200,150,.3)",borderRadius:10,overflow:"hidden",background:"#fff",boxShadow:printMode?"none":"0 1px 4px rgba(0,200,150,.06)"}}>
-    <div style={{background:"#052E20",padding:"10px 14px"}}>
+  return <div style={{border:"1px solid #E4EAF2",borderRadius:10,overflow:"hidden",background:"#fff",boxShadow:printMode?"none":"0 1px 4px rgba(10,22,40,.05)"}}>
+    <div style={{background:"#0A1628",padding:"10px 14px"}}>
       <div style={{fontSize:9,fontWeight:700,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.08em"}}>EMAX NETWORK SDN BHD</div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:3}}>
         <span style={{fontWeight:800,fontSize:13,color:"#fff"}}>Branch Manager</span>
-        <span style={{fontSize:11,fontWeight:700,color:"#00C896"}}>{meta.manager}</span>
+        <span style={{fontSize:11,fontWeight:700,color:"#fff"}}>{meta.manager}</span>
       </div>
     </div>
-    <div style={{padding:"5px 14px",background:"#073B28",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+    <div style={{padding:"5px 14px",background:"#0F2040",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
       <StatusTag status={meta.mStatus}/><span style={{fontSize:10,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.04em"}}>{meta.name}</span>
     </div>
     <table style={{width:"100%",borderCollapse:"collapse"}}>
@@ -694,11 +694,11 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
 
   const medals=["🥇","🥈","🥉"];
   return <div style={{marginBottom:24,display:"flex",flexDirection:"column",height:"100%"}}>
-    <div style={{marginBottom:10,minHeight:36}}>
+    <div style={{marginBottom:10,minHeight:36,flexShrink:0}}>
       <h3 style={{fontSize:13,fontWeight:800,color:"#0A1628",textTransform:"uppercase",letterSpacing:"0.05em",margin:0}}>{title}</h3>
       <div style={{fontSize:10,color:"#8A96A8",fontWeight:500,marginTop:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{period?`Period: ${period}`:"\u00A0"}</div>
     </div>
-    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+    <div style={{display:"flex",flexDirection:"column",gap:6,flex:1}}>
       {rows.map((r,i)=>{
         const p=pctN(r.profit,r.target),branchPct=r.branchPct||p,color=achColor(r.profit,r.target);
         const achBonus=branchPct>=121&&p>=100?calcAchievementBonus(branchPct,r.role||"sr"):0;
@@ -1091,7 +1091,6 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBala
             </select>
             <div style={{flex:1}}/>
             {srSaved&&<span style={{color:"#00C896",fontWeight:600,fontSize:12}}>Changes saved</span>}
-            <button className="btn btn-ghost" onClick={async()=>{const now=new Date();const snapKey=`emax_v5_status_${now.getFullYear()}_${now.getMonth()+1}`;const snap={};localSR.forEach(sr=>{snap[sr.id]={status:sr.status,active:true};});await saveData(snapKey,snap);alert("Status snapshot saved for "+now.toLocaleString("en",{month:"long",year:"numeric"}));}} style={{fontSize:11}}>Save Month Snapshot</button>
             <button className="btn btn-success" onClick={()=>setEditSR("new")}>Add New SR</button>
           </div>
           {editSR==="new"&&<div style={{background:"rgba(0,200,150,.06)",borderRadius:12,padding:16,border:"1px solid rgba(0,200,150,.3)",marginBottom:16}}>
@@ -1501,6 +1500,7 @@ export default function App(){
   const rankingPeriod = lastDataDay ? `${pad2(1)}/${pad2(month)}/${year}-${pad2(lastDataDay)}/${pad2(month)}/${year}` : `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][month-1]} ${year}`;
   const [repairRefresh,setRepairRefresh] = useState(0);
   const [rewardBalances,setRewardBalances] = useState({});
+  const [rewardHistory,setRewardHistory] = useState({});
   const [lockedMonths,setLockedMonths] = useState({});
   const [showTargetModal,setShowTargetModal] = useState(false);
   const [showSRModal,setShowSRModal]         = useState(false);
@@ -1530,7 +1530,7 @@ export default function App(){
     setSelEndDay(daysInMonth(selMonth,selYear));
     const snapKey=`emax_v5_status_${selYear}_${selMonth}`;
     const monthKey=`${selYear}_${selMonth}`;
-    Promise.all([loadData(recordsKey),loadData(TARGET_KEY),loadData(SR_KEY),loadData(BM_KEY),loadData(snapKey),loadData("emax_v5_reward_balance"),loadData("emax_v5_locked_months")]).then(([r,t,srData,bmData,snap,rb,lm])=>{
+    Promise.all([loadData(recordsKey),loadData(TARGET_KEY),loadData(SR_KEY),loadData(BM_KEY),loadData(snapKey),loadData("emax_v5_reward_balance"),loadData("emax_v5_locked_months"),loadData("emax_v5_reward_history")]).then(([r,t,srData,bmData,snap,rb,lm,rh])=>{
       setRecords(r||{});
       const baseSR=(srData&&Array.isArray(srData)&&srData.length>0)?srData:DEFAULT_SR;
       // Overlay historical status snapshot if viewing a past month
@@ -1545,6 +1545,7 @@ export default function App(){
       else setTargets(DEFAULT_TARGETS);
       setRewardBalances(rb||{});
       setLockedMonths(lm||{});
+      setRewardHistory(rh||{});
       setLoading(false);
     });
   },[selMonth,selYear]);
@@ -1566,6 +1567,9 @@ export default function App(){
     const bTarget=targets?.bm?.[branchId]||0,bTotal=fullMonthBranchTotals[branchId]?.total||0;
     const branchPct=pctN(bTotal,bTarget);
     const updates={...rewardBalances};
+    const historyUpdates={...rewardHistory};
+    const MONTHS_FULL=["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const noteMonth=`${MONTHS_FULL[selMonth-1]} ${selYear}`;
     // SR points
     bSRs.forEach(sr=>{
       const srTarget=targets?.sr?.[sr.id]?.target||0;
@@ -1575,24 +1579,38 @@ export default function App(){
       const earned=calcRewardPoints(srPct,branchPct);
       const cur=updates[sr.id]||{balance:0,asOf:""};
       updates[sr.id]={...cur,balance:(cur.balance||0)+earned};
+      const hist=historyUpdates[sr.id]||[];
+      historyUpdates[sr.id]=[...hist,{date:new Date().toISOString(),type:"credit",amount:earned,note:`${noteMonth} performance (${srPct.toFixed(1)}%)`}];
     });
     // BM points
     const bmEarned=calcRewardPoints(branchPct,branchPct);
     const bmKey=`BM_${branchId}`;
     const curBM=updates[bmKey]||{balance:0,asOf:""};
     updates[bmKey]={...curBM,balance:(curBM.balance||0)+bmEarned};
+    const bmHist=historyUpdates[bmKey]||[];
+    historyUpdates[bmKey]=[...bmHist,{date:new Date().toISOString(),type:"credit",amount:bmEarned,note:`${noteMonth} branch performance (${branchPct.toFixed(1)}%)`}];
 
     setRewardBalances(updates);
     await saveData("emax_v5_reward_balance",updates);
+    setRewardHistory(historyUpdates);
+    await saveData("emax_v5_reward_history",historyUpdates);
     const newLocked={...lockedMonths,[monthKeyStr]:{...(lockedMonths[monthKeyStr]||{}),[branchId]:true}};
     setLockedMonths(newLocked);
     await saveData("emax_v5_locked_months",newLocked);
     alert(`${branchId} — ${selMonth}/${selYear} locked. Reward points credited to balance.`);
   };
   const setOpeningBalance=async(personId,balance,asOf)=>{
-    const updates={...rewardBalances,[personId]:{balance:Number(balance)||0,asOf}};
+    const prevBalance=rewardBalances[personId]?.balance||0;
+    const newBalance=Number(balance)||0;
+    const updates={...rewardBalances,[personId]:{balance:newBalance,asOf}};
     setRewardBalances(updates);
     await saveData("emax_v5_reward_balance",updates);
+    if(newBalance!==prevBalance){
+      const hist=rewardHistory[personId]||[];
+      const newHist={...rewardHistory,[personId]:[...hist,{date:new Date().toISOString(),type:"adjustment",amount:newBalance-prevBalance,note:asOf?`Opening balance as at ${asOf}`:"Manual balance adjustment"}]};
+      setRewardHistory(newHist);
+      await saveData("emax_v5_reward_history",newHist);
+    }
   };
   const handleSaveTargets=async(t)=>{setTargets(t);await saveData(TARGET_KEY,t);};
 
@@ -1664,7 +1682,7 @@ export default function App(){
       const wi=branchTotals[b]?.wi||0,ae=branchTotals[b]?.ae||0,tot=wi+ae,tgt=targets?.bm?.[b]||0,bal=tgt>0?tot-tgt:null,p=pctN(tot,tgt);
       return `<tr><td class="L">${branchMeta[b]?.name||b}</td><td class="L" style="font-weight:400;color:#4A5568">${branchMeta[b]?.manager||""}</td>
         <td>${tgt>0?nc(tgt):"—"}</td><td style="font-weight:800;color:${tot>=tgt?"#00C896":"#0A1628"}">${tot>0?"RM "+nc(tot):"—"}</td>
-        <td style="color:#1E6FDB">${wi>0?"RM "+nc(wi):"—"}</td><td style="color:#7C5CFC">${ae>0?"RM "+nc(ae):"—"}</td>
+        <td style="color:#4A5568">${wi>0?"RM "+nc(wi):"—"}</td><td style="color:#4A5568">${ae>0?"RM "+nc(ae):"—"}</td>
         <td style="font-weight:700;color:${bal===null?"#8A96A8":bal>=0?"#00C896":"#F0354B"}">${bal===null?"—":bal>=0?"+"+nc(bal):nc(Math.abs(bal))}</td>
         <td style="font-weight:800;color:${tgt>0?achColor(tot,tgt):"#8A96A8"}">${tgt>0?p.toFixed(2)+"%":"—"}</td></tr>`;
     }).join("")}</tbody>
@@ -1711,44 +1729,43 @@ export default function App(){
             ))}
           </div>
         </div>
-        <div style={{display:"flex",gap:4,alignItems:"center",flexShrink:0}}>
+        <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",rowGap:6}}>
           {/* Reward Points Summary */}
           {(()=>{
             const totalPts=Object.values(rewardBalances).reduce((s,r)=>s+(r?.balance||0),0);
-            return <div style={{display:"flex",alignItems:"center",gap:5,padding:"4px 10px",background:"rgba(245,166,35,.12)",border:"1px solid rgba(245,166,35,.3)",borderRadius:7,marginRight:4}}>
+            return <div style={{display:"flex",alignItems:"center",gap:5,padding:"4px 8px",background:"rgba(245,166,35,.12)",border:"1px solid rgba(245,166,35,.3)",borderRadius:7}}>
               <span style={{fontSize:13}}>🏆</span>
               <div>
-                <div style={{fontSize:8,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.08em",lineHeight:1}}>Network Points</div>
+                <div style={{fontSize:8,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.08em",lineHeight:1,whiteSpace:"nowrap"}}>Network Points</div>
                 <div style={{fontSize:12,fontWeight:800,color:"#F5A623",lineHeight:1.3}}>{totalPts.toLocaleString()}</div>
               </div>
             </div>;
           })()}
-          {/* Month/Year/EndDay Picker */}
+          {/* Month/Year Picker */}
           <div style={{display:"flex",gap:4,alignItems:"center"}}>
             <select value={selMonth} onChange={e=>setSelMonth(Number(e.target.value))}
-              style={{padding:"4px 8px",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,fontSize:11,
+              style={{padding:"4px 6px",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,fontSize:11,
                 background:"rgba(255,255,255,.1)",color:"#fff",outline:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600}}>
               {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m,i)=>(
                 <option key={i+1} value={i+1} style={{background:"#0A1628",color:"#fff"}}>{m}</option>
               ))}
             </select>
             <select value={selYear} onChange={e=>setSelYear(Number(e.target.value))}
-              style={{padding:"4px 8px",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,fontSize:11,
+              style={{padding:"4px 6px",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,fontSize:11,
                 background:"rgba(255,255,255,.1)",color:"#fff",outline:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600}}>
               {[2024,2025,2026,2027,2028].map(y=>(
                 <option key={y} value={y} style={{background:"#0A1628",color:"#fff"}}>{y}</option>
               ))}
             </select>
-
           </div>
-          <div style={{textAlign:"right",marginRight:6}}>
-            <div style={{fontSize:9,color:"rgba(255,255,255,.35)",textTransform:"uppercase",letterSpacing:"0.1em"}}>
+          <div style={{textAlign:"right"}}>
+            <div style={{fontSize:9,color:"rgba(255,255,255,.35)",textTransform:"uppercase",letterSpacing:"0.1em",whiteSpace:"nowrap"}}>
               {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][month-1]} {year}
             </div>
-            <div style={{fontWeight:800,fontSize:13,color:"#fff"}}>{fRM(grandTotal)}</div>
+            <div style={{fontWeight:800,fontSize:13,color:"#fff",whiteSpace:"nowrap"}}>{fRM(grandTotal)}</div>
           </div>
-          <button className="btn btn-ghost" onClick={()=>setShowTargetModal(true)} style={{fontSize:11,color:"rgba(255,255,255,.6)",borderColor:"rgba(255,255,255,.15)",padding:"5px 11px"}}>Set Targets</button>
-          <button className="btn btn-ghost" onClick={()=>setShowSRModal(true)} style={{fontSize:11,color:"rgba(255,255,255,.6)",borderColor:"rgba(255,255,255,.15)",padding:"5px 11px"}}>Manage SR</button>
+          <button className="btn btn-ghost" onClick={()=>setShowTargetModal(true)} style={{fontSize:11,color:"rgba(255,255,255,.6)",borderColor:"rgba(255,255,255,.15)",padding:"5px 11px",whiteSpace:"nowrap"}}>Set Targets</button>
+          <button className="btn btn-ghost" onClick={()=>setShowSRModal(true)} style={{fontSize:11,color:"rgba(255,255,255,.6)",borderColor:"rgba(255,255,255,.15)",padding:"5px 11px",whiteSpace:"nowrap"}}>Manage SR</button>
         </div>
         </div>{/* Row 1 end */}
       </div>
@@ -1772,7 +1789,7 @@ export default function App(){
       </div>}
 
       {/* RANKINGS */}
-      {tab==="rankings"&&<div className="fade-in" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:20}}>
+      {tab==="rankings"&&<div className="fade-in" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:20,alignItems:"stretch"}}>
         <RankingTable title="Branch Manager Ranking" rows={bmRanking} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
         <RankingTable title="Online SR Ranking" rows={mkSRRank("Online")} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
         <RankingTable title="Offline SR Ranking" rows={mkSRRank("Offline")} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>

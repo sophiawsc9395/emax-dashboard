@@ -117,15 +117,14 @@ function RankMedal({rank}){
   return <span style={{fontWeight:700,color:"#8A96A8"}}>#{rank}</span>;
 }
 
-function SRCard({sr,records,targets,branchPct,month,year,days,bMeta}){
+function SRCard({sr,records,targets,branchPct,month,year,days,bMeta,rewardBalance=0}){
   const target=targets?.sr?.[sr.id]?.target||0,bonus=targets?.sr?.[sr.id]?.bonus||0;
   const rows=days.map(d=>{const k=`${d}/${month}/${year}`,v=records[k]?.[sr.id]||{};return{day:d,wi:v.walkin||0,ae:v.aeon||0};});
   const tWI=rows.reduce((s,r)=>s+r.wi,0),tAE=rows.reduce((s,r)=>s+r.ae,0),total=tWI+tAE;
   const p=pctN(total,target),color=achColor(total,target);
   const bonusEarned=branchPct>=100&&total>=target&&bonus>0;
-  const achBonus=branchPct>=121&&p>=100?calcAchievementBonus(branchPct,"sr"):0;
-  const pts=calcRewardPoints(p,branchPct);
-  const thS={padding:"5px 10px",fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",background:"#F7F9FC",borderBottom:"1px solid #E4EAF2"};
+  const achBonus=calcAchievementBonus(p),points=calcRewardPoints(p,branchPct);
+  const thS={padding:"6px 12px",fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",background:"#F7F9FC",borderBottom:"1px solid #E4EAF2",whiteSpace:"nowrap"};
   return <div style={{border:"1px solid #E4EAF2",borderRadius:10,overflow:"hidden",background:"#fff",boxShadow:"0 1px 4px rgba(10,22,40,.05)"}}>
     <div style={{background:"#0A1628",padding:"10px 14px"}}>
       <div style={{fontSize:9,fontWeight:700,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.08em"}}>EMAX NETWORK SDN BHD</div>
@@ -136,116 +135,129 @@ function SRCard({sr,records,targets,branchPct,month,year,days,bMeta}){
     </div>
     <div style={{padding:"5px 14px",background:"#0F2040",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
       <StatusTag status={sr.status}/>
-      <span style={{fontSize:9,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.04em"}}>{(bMeta[sr.branch]?.name||sr.branch).toUpperCase()}</span>
+      <span style={{fontSize:10,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.04em"}}>{(bMeta[sr.branch]?.name||sr.branch).toUpperCase()}</span>
     </div>
     <table style={{width:"100%",borderCollapse:"collapse"}}>
       <thead><tr>
         <th style={{...thS,textAlign:"center",width:48}}>Date</th>
         <th style={{...thS,color:"#4A5568"}}>Walk In</th>
         <th style={{...thS,color:"#4A5568"}}>Invoice</th>
-        <th style={{...thS,color:"#0A1628"}}>Total</th>
+        <th style={{...thS,color:"#4A5568"}}>Total</th>
       </tr></thead>
-      <tbody>{rows.filter(r=>r.wi>0||r.ae>0).map(({day,wi,ae})=>(
-        <tr key={day} style={{borderBottom:"1px solid rgba(228,234,242,.7)"}}>
-          <td style={{padding:"5px 8px",fontSize:11,textAlign:"center",fontWeight:600,color:"#4A5568",borderRight:"1px solid rgba(228,234,242,.5)"}}>{day}/{month}</td>
-          <td style={{padding:"5px 10px",fontSize:11,textAlign:"right",color:wi>0?"#1E6FDB":"#E4EAF2"}}>{wi>0?f2(wi):"—"}</td>
-          <td style={{padding:"5px 10px",fontSize:11,textAlign:"right",color:ae>0?"#7C5CFC":"#E4EAF2"}}>{ae>0?f2(ae):"—"}</td>
-          <td style={{padding:"5px 10px",fontSize:11,textAlign:"right",fontWeight:600,color:"#0A1628"}}>{f2(wi+ae)}</td>
-        </tr>
-      ))}</tbody>
+      <tbody>{rows.map(({day,wi,ae})=>{
+        const rt=wi+ae;
+        return <tr key={day} className="shine-row" style={{borderBottom:"1px solid rgba(228,234,242,.8)",background:day%2===0?"#fff":"#F7F9FC"}}>
+          <td style={{padding:"4px 8px",color:"#4A5568",fontWeight:600,textAlign:"center",fontSize:11,borderRight:"1px solid rgba(228,234,242,.6)"}}>{day}/{month}</td>
+          <td style={{padding:"4px 12px",textAlign:"right",fontSize:11,color:wi!==0?"#4A5568":"#E4EAF2",fontWeight:wi!==0?500:300}}>{wi!==0?f2(wi):"—"}</td>
+          <td style={{padding:"4px 12px",textAlign:"right",fontSize:11,color:ae!==0?"#4A5568":"#E4EAF2",fontWeight:ae!==0?500:300}}>{ae!==0?f2(ae):"—"}</td>
+          <td style={{padding:"4px 12px",textAlign:"right",fontWeight:rt!==0?600:300,fontSize:11,color:rt>0?"#0A1628":rt<0?"#F0354B":"#E4EAF2"}}>{rt!==0?f2(rt):"—"}</td>
+        </tr>;
+      })}</tbody>
     </table>
     <div style={{padding:"10px 14px",background:"#F7F9FC",borderTop:"2px solid #E4EAF2"}}>
-      {[["Walk In",fRM(tWI),"#4A5568"],["Invoice",fRM(tAE),"#4A5568"],["Total",fRM(total),"#0A1628"]].map(([l,v,c])=>(
-        <div key={l} style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
-          <span style={{color:"#8A96A8"}}>{l}</span><span style={{fontWeight:l==="Total"?700:500,color:c}}>{v}</span>
+      {[["Walk In",fRM(tWI),"#4A5568"],["Invoice",fRM(tAE),"#4A5568"],["Total Profit",fRM(total),"#0A1628"]].map(([l,v,c])=>(
+        <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"2px 0",fontSize:11}}>
+          <span style={{color:"#8A96A8"}}>{l}</span>
+          <span style={{fontWeight:700,color:c,fontSize:11}}>{v}</span>
         </div>
       ))}
+      <div style={{height:1,background:"#E4EAF2",margin:"7px 0"}}/>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
+        <span style={{color:"#8A96A8"}}>Target</span>
+        <span style={{fontWeight:700,fontSize:11}}>{target>0?fRM(target):"Not set"}</span>
+      </div>
       {target>0&&<>
-        <div style={{height:1,background:"#E4EAF2",margin:"7px 0"}}/>
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:3}}>
-          <span style={{color:"#8A96A8"}}>Target</span><span style={{fontWeight:500}}>{fRM(target)}</span>
-        </div>
         <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:4}}>
-          <span style={{color:"#8A96A8"}}>Personal Achievement</span><AchBadge profit={total} target={target}/>
+          <span style={{color:"#8A96A8"}}>Personal Achievement</span>
+          <AchBadge profit={total} target={target}/>
         </div>
         <ProgressBar pct={p} color={color}/>
         <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginTop:5}}>
           <span style={{color:"#8A96A8"}}>Balance to Hit</span>
-          <span style={{fontWeight:700,color:Math.max(target-total,0)>0?"#F0354B":"#00C896"}}>
+          <span style={{fontWeight:700,color:Math.max(target-total,0)>0?"#F0354B":"#00C896",fontSize:11}}>
             {Math.max(target-total,0)>0?fRM(Math.max(target-total,0)):"Target Met"}
           </span>
         </div>
       </>}
-      <div style={{height:1,background:"#E4EAF2",margin:"7px 0"}}/>
-      <div style={{fontSize:9,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:5}}>Incentives</div>
-      {bonus>0&&<div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:3}}>
+      {/* ── BRANCH ACHIEVEMENT BONUS & REWARD POINTS ── */}
+      <div style={{height:1,background:"#E4EAF2",margin:"8px 0"}}/>
+      <div style={{fontSize:9,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Incentives</div>
+
+      {/* Personal Achievement Bonus */}
+      {bonus>0&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,marginBottom:4}}>
         <span style={{color:"#8A96A8"}}>Personal Achievement Bonus</span>
-        <span style={{fontWeight:700,color:bonusEarned?"#00C896":"#8A96A8"}}>{bonusEarned?fRM(bonus):fRM(bonus)+" — Pending"}</span>
+        <span style={{fontWeight:700,color:bonusEarned?"#00C896":"#8A96A8",whiteSpace:"nowrap"}}>
+          {bonusEarned?fRM(bonus):`${fRM(bonus)} (Pending)`}
+        </span>
       </div>}
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:3}}>
+
+      {/* Branch Achievement Bonus */}
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
         <span style={{color:"#8A96A8"}}>Branch Achievement Bonus</span>
-        {achBonus>0?<span style={{fontWeight:700,color:"#F5A623"}}>{fRM(achBonus)}</span>:<span style={{color:"#8A96A8"}}>—</span>}
+        {(branchPct>=121&&p>=100)
+          ? <span style={{fontWeight:700,color:"#F5A623"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
+          : <span style={{color:"#8A96A8"}}>—</span>
+        }
       </div>
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:11}}>
+      {(branchPct>=121&&p>=100)&&(()=>{
+        const tier=Math.floor((branchPct-121)/10);
+        const nextTierPct=121+(tier+1)*10;
+        const isMaxTier=nextTierPct>200;
+        return <div style={{background:"linear-gradient(135deg,#FFF9EB,#FFFBF0)",borderRadius:8,padding:"8px 10px",marginBottom:4,border:"1px solid #FDE68A",boxShadow:"0 1px 3px rgba(245,166,35,.1)"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+            <span style={{fontSize:10,fontWeight:700,color:"#92400E",display:"flex",alignItems:"center",gap:4}}>
+              <span style={{background:"#F5A623",color:"#fff",borderRadius:20,padding:"1px 7px",fontSize:9,fontWeight:800}}>Tier {tier+1}</span>
+              Branch {branchPct.toFixed(1)}%
+            </span>
+            <span style={{fontWeight:800,fontSize:12,color:"#D97706"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
+          </div>
+          {!isMaxTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:4,borderTop:"1px dashed #FDE68A"}}>
+            <span style={{fontSize:9,color:"#B45309"}}>Next: Tier {tier+2} at {nextTierPct}%</span>
+            <span style={{fontSize:9,fontWeight:700,color:"#B45309"}}>{fRM(calcAchievementBonus(nextTierPct,"sr"))}</span>
+          </div>}
+          {isMaxTier&&<div style={{fontSize:9,color:"#D97706",fontWeight:600,paddingTop:4,borderTop:"1px dashed #FDE68A"}}>🏆 Maximum tier reached</div>}
+        </div>;
+      })()}
+
+      {/* Reward Points */}
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2,marginTop:2}}>
         <span style={{color:"#8A96A8"}}>Reward Points (This Month)</span>
-        {pts>0?<span style={{fontWeight:700,color:"#1E6FDB"}}>{pts.toLocaleString()} pts</span>:<span style={{color:"#8A96A8"}}>—</span>}
+        {(branchPct>=100&&p>=110)
+          ? <span style={{fontWeight:700,color:"#1E6FDB"}}>{calcRewardPoints(p,branchPct).toLocaleString()} pts</span>
+          : <span style={{color:"#8A96A8"}}>—</span>
+        }
       </div>
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginTop:2}}>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
         <span style={{color:"#8A96A8"}}>Reward Points Balance</span>
         <span style={{fontWeight:800,color:"#0A1628"}}>{rewardBalance.toLocaleString()} pts</span>
       </div>
-      {/* REPAIR */}
-      {tab==="repair"&&<div className="fade-in">
-        <div style={{background:"#0A1628",borderRadius:12,padding:"14px 18px",marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
-          <div>
-            <h2 style={{fontWeight:800,fontSize:14,color:"#fff",margin:0}}>Repair & Service</h2>
-            <p style={{fontSize:11,color:"rgba(255,255,255,.45)",margin:0,marginTop:2}}>Excluded from sales targets</p>
+      {(branchPct>=100&&p>=110)&&(()=>{
+        const pts=calcRewardPoints(p,branchPct);
+        const TIERS=[[110,500],[120,1000],[130,1500],[140,2000],[150,3000],[160,4500],[170,6000],[180,7500],[190,9000],[200,12000]];
+        const curTierIdx=TIERS.reduce((acc,[t],i)=>p>=t?i:acc,-1);
+        const nextTierEntry=TIERS[curTierIdx+1]||null;
+        const isMaxTier=!nextTierEntry;
+        return <div style={{background:"linear-gradient(135deg,#EFF6FF,#F0F7FF)",borderRadius:8,padding:"8px 10px",marginBottom:4,border:"1px solid #BFDBFE",boxShadow:"0 1px 3px rgba(30,111,219,.08)"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+            <span style={{fontSize:10,fontWeight:700,color:"#1E40AF",display:"flex",alignItems:"center",gap:4}}>
+              <span style={{background:"#1E6FDB",color:"#fff",borderRadius:20,padding:"1px 7px",fontSize:9,fontWeight:800}}>
+                {curTierIdx>=0?`Tier ${curTierIdx+1}`:"Tier 1"}
+              </span>
+              SR {p.toFixed(1)}%
+            </span>
+            <span style={{fontWeight:800,fontSize:12,color:"#1E6FDB"}}>{pts.toLocaleString()} pts</span>
           </div>
-          <div style={{fontWeight:700,fontSize:14,color:"#7C5CFC"}}>{fRM(Object.values(repairData).reduce((s,v)=>s+(v||0),0))}</div>
-        </div>
-        <div className="card" style={{overflow:"hidden",maxWidth:480}}>
-          <div style={{padding:"12px 16px",borderBottom:"1px solid #E4EAF2",fontWeight:700,fontSize:12,color:"#0A1628",display:"flex",justifyContent:"space-between"}}>
-            <span>{MONTHS[month-1]} {year}</span>
-            <span style={{fontSize:11,color:"#8A96A8",fontWeight:400}}>{Object.keys(repairData).filter(k=>repairData[k]>0).length} days active</span>
-          </div>
-          <table style={{width:"100%",borderCollapse:"collapse"}}>
-            <thead><tr style={{background:"#F7F9FC"}}>
-              <th style={{padding:"8px 16px",fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left",borderBottom:"1px solid #E4EAF2",width:100}}>Date</th>
-              <th style={{padding:"8px 16px",fontSize:10,fontWeight:700,color:"#7C5CFC",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",borderBottom:"1px solid #E4EAF2"}}>Amount (RM)</th>
-            </tr></thead>
-            <tbody>
-              {days.filter(d=>repairData[d]>0).map(d=>(
-                <tr key={d} className="shine" style={{borderBottom:"1px solid rgba(228,234,242,.7)"}}>
-                  <td style={{padding:"7px 16px",fontSize:12,color:"#4A5568",fontWeight:600}}>{d}/{month}/{year}</td>
-                  <td style={{padding:"7px 16px",fontSize:12,textAlign:"right",fontWeight:700,color:"#7C5CFC"}}>{f2(repairData[d])}</td>
-                </tr>
-              ))}
-              {days.filter(d=>repairData[d]>0).length===0&&(
-                <tr><td colSpan={2} style={{padding:24,textAlign:"center",color:"#8A96A8",fontSize:12}}>No repair records this month</td></tr>
-              )}
-            </tbody>
-          </table>
-          <div style={{padding:"9px 16px",background:"#F7F9FC",borderTop:"2px solid #E4EAF2",display:"flex",justifyContent:"space-between",fontSize:12}}>
-            <span style={{color:"#8A96A8",fontWeight:600}}>Total</span>
-            <span style={{fontWeight:700,color:"#7C5CFC"}}>{fRM(Object.values(repairData).reduce((s,v)=>s+(v||0),0))}</span>
-          </div>
-        </div>
-      </div>}
+          {!isMaxTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:4,borderTop:"1px dashed #BFDBFE"}}>
+            <span style={{fontSize:9,color:"#1E40AF"}}>Next: Tier {curTierIdx+2} at {nextTierEntry[0]}%</span>
+            <span style={{fontSize:9,fontWeight:700,color:"#1E40AF"}}>{nextTierEntry[1].toLocaleString()} pts</span>
+          </div>}
+          {isMaxTier&&<div style={{fontSize:9,color:"#1E6FDB",fontWeight:600,paddingTop:4,borderTop:"1px dashed #BFDBFE"}}>🏆 Maximum tier reached</div>}
+        </div>;
+      })()}
 
     </div>
   </div>;
 }
-
-const CSS=`
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Inter',-apple-system,sans-serif;background:#F7F9FC;color:#0A1628;}
-::-webkit-scrollbar{width:5px;height:5px;}::-webkit-scrollbar-thumb{background:#CDD5E0;border-radius:3px;}
-.card{background:#fff;border:1px solid #E4EAF2;border-radius:12px;box-shadow:0 1px 3px rgba(10,22,40,.06);}
-.shine:hover{background:#F7F9FC!important;}
-.fade-in{animation:fadeIn .25s ease forwards;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-`;
 
 function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
   const StatusTagR=({status})=>{
@@ -415,6 +427,22 @@ export default function App(){
     return t;
   },[records,srList,selStartDay,selEndDay,month,year]);
 
+  // Full-month branch totals — Monthly Report always uses this (not period-filtered)
+  const fullMonthBranchTotals=useMemo(()=>{
+    const t={};
+    BRANCH_ORDER.forEach(b=>{
+      const bSRs=srList.filter(s=>s.branch===b);
+      let wi=0,ae=0;
+      days.forEach(d=>{
+        const k=`${d}/${month}/${year}`,day=records[k]||{};
+        bSRs.forEach(sr=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});
+        wi+=(day[`BM_${b}`]?.walkin||0);ae+=(day[`BM_${b}`]?.aeon||0);wi+=(day[`BM_${b}`]?.unalloc||0);
+      });
+      t[b]={wi,ae,total:wi+ae};
+    });
+    return t;
+  },[records,srList,days,month,year]);
+
   const srTotals=useMemo(()=>{
     const t={};
     srList.forEach(sr=>{
@@ -479,7 +507,7 @@ export default function App(){
               ))}
             </div>
           </div>
-          <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0}}>
+          <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",rowGap:6}}>
             {(()=>{
               const totalPts=Object.values(rewardBalances).reduce((s,r)=>s+(r?.balance||0),0);
               return <div style={{display:"flex",alignItems:"center",gap:5,padding:"4px 10px",background:"rgba(245,166,35,.12)",border:"1px solid rgba(245,166,35,.3)",borderRadius:7,marginRight:2}}>
@@ -499,8 +527,8 @@ export default function App(){
               {[2024,2025,2026,2027,2028].map(y=><option key={y} value={y} style={{background:"#0A1628",color:"#fff"}}>{y}</option>)}
             </select>
             <div style={{textAlign:"right",marginLeft:4}}>
-              <div style={{fontSize:9,color:"rgba(255,255,255,.35)",textTransform:"uppercase",letterSpacing:"0.1em"}}>{MONTHS[month-1]} {year}</div>
-              <div style={{fontWeight:800,fontSize:13,color:"#fff"}}>{grandTotal>0?fRM(grandTotal):"—"}</div>
+              <div style={{fontSize:9,color:"rgba(255,255,255,.35)",textTransform:"uppercase",letterSpacing:"0.1em",whiteSpace:"nowrap"}}>{MONTHS[month-1]} {year}</div>
+              <div style={{fontWeight:800,fontSize:13,color:"#fff",whiteSpace:"nowrap"}}>{grandTotal>0?fRM(grandTotal):"—"}</div>
             </div>
           </div>
         </div>
@@ -606,13 +634,16 @@ export default function App(){
             </button>
           ))}
         </div>
+        <div style={{padding:"8px 14px",background:"#F7F9FC",borderRadius:8,fontSize:11,color:"#4A5568",border:"1px solid #E4EAF2",marginBottom:14}}>
+          Monthly Report always shows the full month, regardless of the Overview period filter.
+        </div>
         {(()=>{
           const bSRs=srList.filter(s=>s.branch===selBranch);
           const bTarget=targets?.bm?.[selBranch]||0;
-          const bTot=BRANCH_ORDER.includes(selBranch)?branchTotals[selBranch]?.total||0:0;
+          const bTot=BRANCH_ORDER.includes(selBranch)?fullMonthBranchTotals[selBranch]?.total||0:0;
           const branchPct=pctN(bTot,bTarget);
           return <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14,alignItems:"start"}}>
-            {bSRs.map(sr=><SRCard key={sr.id} sr={sr} records={records} targets={targets} branchPct={branchPct} month={month} year={year} days={periodDays} bMeta={bMeta} rewardBalance={rewardBalances[sr.id]?.balance||0}/>)}
+            {bSRs.map(sr=><SRCard key={sr.id} sr={sr} records={records} targets={targets} branchPct={branchPct} month={month} year={year} days={days} bMeta={bMeta} rewardBalance={rewardBalances[sr.id]?.balance||0}/>)}
           </div>;
         })()}
         <PdfDownloads month={month} year={year}/>

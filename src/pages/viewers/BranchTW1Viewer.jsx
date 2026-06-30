@@ -167,6 +167,54 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
 }
 
 
+function PointsHistoryModal({srList,bMeta,rewardBalances,rewardHistory,onClose}){
+  const people=[
+    {id:`BM_${BRANCH_ID}`,name:bMeta[BRANCH_ID]?.manager||"Branch Manager",role:"Branch Manager"},
+    ...srList.map(sr=>({id:sr.id,name:sr.canon,role:sr.type+" SR"}))
+  ];
+  const [selPerson,setSelPerson]=useState(people[0]?.id);
+  const person=people.find(p=>p.id===selPerson);
+  const balance=rewardBalances[selPerson]?.balance||0;
+  const history=(rewardHistory[selPerson]||[]).slice().reverse();
+
+  return <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+    <div style={{background:"#fff",borderRadius:16,width:"100%",maxWidth:560,maxHeight:"85vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"18px 24px",borderBottom:"1px solid #E4EAF2"}}>
+        <h2 style={{fontSize:15,fontWeight:800,color:"#0A1628",margin:0}}>🏆 Reward Points Balance</h2>
+        <button className="btn btn-ghost" onClick={onClose} style={{padding:"6px 14px"}}>Close</button>
+      </div>
+      <div style={{padding:"16px 24px",borderBottom:"1px solid #E4EAF2"}}>
+        <select className="input select" value={selPerson} onChange={e=>setSelPerson(e.target.value)} style={{fontSize:13,padding:"8px 28px 8px 12px"}}>
+          {people.map(p=><option key={p.id} value={p.id}>{p.name} — {p.role}</option>)}
+        </select>
+      </div>
+      <div style={{padding:"16px 24px",background:"linear-gradient(135deg,#0A1628,#162B52)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <div style={{fontSize:10,color:"rgba(255,255,255,.5)",textTransform:"uppercase",letterSpacing:"0.08em"}}>{person?.name}</div>
+          <div style={{fontSize:11,color:"rgba(255,255,255,.35)",marginTop:2}}>Current Balance</div>
+        </div>
+        <div style={{fontSize:24,fontWeight:800,color:"#F5A623"}}>{balance.toLocaleString()} pts</div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"12px 24px"}}>
+        {history.length===0
+          ? <div style={{padding:"32px 0",textAlign:"center",color:"#8A96A8",fontSize:12}}>No transaction history yet.</div>
+          : history.map((h,i)=>(
+            <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:i<history.length-1?"1px solid #F0F2F5":"none"}}>
+              <div>
+                <div style={{fontSize:12,fontWeight:600,color:"#0A1628"}}>{h.note}</div>
+                <div style={{fontSize:10,color:"#8A96A8",marginTop:2}}>{new Date(h.date).toLocaleString("en-MY",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})}</div>
+              </div>
+              <div style={{fontSize:13,fontWeight:800,color:h.amount>=0?"#00C896":"#F0354B",whiteSpace:"nowrap"}}>
+                {h.amount>=0?"+":""}{h.amount.toLocaleString()} pts
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </div>;
+}
+
 function PdfDownloads({month,year}){
   const [pdfList,setPdfList]=useState([]);
   useEffect(()=>{
@@ -215,16 +263,19 @@ export default function App(){
   const [loading,setLoading]=useState(true);
   const [tab,setTab]=useState('overview');
   const [rewardBalances,setRewardBalances]=useState({});
+  const [rewardHistory,setRewardHistory]=useState({});
+  const [showPointsModal,setShowPointsModal]=useState(false);
   const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
   useEffect(()=>{
     setLoading(true);setRecords({});
-    Promise.all([loadData(recordsKey),loadData(TARGET_KEY),loadData(SR_KEY),loadData(BM_KEY),loadData("emax_v5_reward_balance")]).then(([r,t,srData,bmData,rb])=>{
+    Promise.all([loadData(recordsKey),loadData(TARGET_KEY),loadData(SR_KEY),loadData(BM_KEY),loadData("emax_v5_reward_balance"),loadData("emax_v5_reward_history")]).then(([r,t,srData,bmData,rb,rh])=>{
       setRecords(r||{});
       if(t?.bm)setTargets({bm:{...DEFAULT_TARGETS.bm,...t.bm},bmBonus:{...DEFAULT_TARGETS.bmBonus,...(t.bmBonus||{})},sr:{...DEFAULT_TARGETS.sr,...t.sr}});
       if(srData&&Array.isArray(srData)&&srData.length>0)setSrList(srData.filter(s=>s.branch===BRANCH_ID));
       if(bmData&&Object.keys(bmData).length>0)setBMeta(p=>({...p,...bmData}));
       setRewardBalances(rb||{});
+      setRewardHistory(rh||{});
       setLoading(false);
     });
   },[selMonth,selYear]);
@@ -234,7 +285,7 @@ export default function App(){
     let wi=0,ae=0;
     Object.values(records).forEach(day=>{
       srList.forEach(sr=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});
-      wi+=(day[`BM_${BRANCH_ID}`]?.walkin||0);ae+=(day[`BM_${BRANCH_ID}`]?.aeon||0);
+      wi+=(day[`BM_${BRANCH_ID}`]?.walkin||0);ae+=(day[`BM_${BRANCH_ID}`]?.aeon||0);wi+=(day[`BM_${BRANCH_ID}`]?.unalloc||0);
     });
     return{wi,ae,total:wi+ae};
   },[records,srList]);
@@ -304,42 +355,41 @@ export default function App(){
 
     {/* Nav */}
     <div style={{background:"#0A1628",borderBottom:"1px solid #162B52",position:"sticky",top:0,zIndex:100}}>
-      <div style={{maxWidth:1400,margin:"0 auto",padding:"0 20px",display:"flex",alignItems:"center",justifyContent:"space-between",height:50,gap:12}}>
-        <div>
-          <div style={{fontWeight:900,fontSize:13,color:"#fff",letterSpacing:"0.06em",textTransform:"uppercase"}}>{meta.name||DEFAULT_BRANCH_META[BRANCH_ID]?.name}</div>
-          <div style={{fontSize:9,color:"rgba(255,255,255,.3)",letterSpacing:"0.12em",textTransform:"uppercase"}}>Branch Performance · Read Only</div>
+      <div style={{maxWidth:1400,margin:"0 auto",padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap",rowGap:8}}>
+        <div style={{flexShrink:0}}>
+          <div style={{fontWeight:900,fontSize:13,color:"#fff",letterSpacing:"0.06em",textTransform:"uppercase",whiteSpace:"nowrap"}}>{meta.name||DEFAULT_BRANCH_META[BRANCH_ID]?.name}</div>
+          <div style={{fontSize:9,color:"rgba(255,255,255,.3)",letterSpacing:"0.12em",textTransform:"uppercase",whiteSpace:"nowrap"}}>Branch Performance · Read Only</div>
         </div>
-        <div style={{display:"flex",gap:4,alignItems:"center"}}>
+        <div style={{display:"flex",gap:4,alignItems:"center",flexShrink:0}}>
           {["overview","rankings"].map(t=>(
             <button key={t} onClick={()=>setTab(t)} style={{padding:"4px 10px",border:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600,fontSize:11,
-              background:tab===t?"rgba(255,255,255,.12)":"transparent",color:tab===t?"#fff":"rgba(255,255,255,.4)",borderRadius:6,textTransform:"capitalize"}}>
+              background:tab===t?"rgba(255,255,255,.12)":"transparent",color:tab===t?"#fff":"rgba(255,255,255,.4)",borderRadius:6,textTransform:"capitalize",whiteSpace:"nowrap"}}>
               {t==="overview"?"Performance":"Rankings"}
             </button>
           ))}
-          <div style={{width:1,height:16,background:"rgba(255,255,255,.1)",margin:"0 4px"}}/>
         </div>
-        <div style={{display:"flex",gap:4,alignItems:"center"}}>
+        <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",rowGap:6}}>
           {(()=>{
             const totalPts=(rewardBalances[`BM_${BRANCH_ID}`]?.balance||0)+srList.reduce((s,sr)=>s+(rewardBalances[sr.id]?.balance||0),0);
-            return <div style={{display:"flex",alignItems:"center",gap:5,padding:"4px 10px",background:"rgba(245,166,35,.12)",border:"1px solid rgba(245,166,35,.3)",borderRadius:7,marginRight:2}}>
+            return <button onClick={()=>setShowPointsModal(true)} style={{display:"flex",alignItems:"center",gap:5,padding:"4px 8px",background:"rgba(245,166,35,.12)",border:"1px solid rgba(245,166,35,.3)",borderRadius:7,cursor:"pointer",fontFamily:"Inter,sans-serif"}}>
               <span style={{fontSize:13}}>🏆</span>
-              <div>
-                <div style={{fontSize:8,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.08em",lineHeight:1}}>{BRANCH_ID} Points</div>
+              <div style={{textAlign:"left"}}>
+                <div style={{fontSize:8,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.08em",lineHeight:1,whiteSpace:"nowrap"}}>{BRANCH_ID} Points</div>
                 <div style={{fontSize:12,fontWeight:800,color:"#F5A623",lineHeight:1.3}}>{totalPts.toLocaleString()}</div>
               </div>
-            </div>;
+            </button>;
           })()}
           <select value={selMonth} onChange={e=>setSelMonth(Number(e.target.value))}
-            style={{padding:"4px 8px",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,fontSize:11,background:"rgba(255,255,255,.1)",color:"#fff",outline:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600}}>
+            style={{padding:"4px 6px",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,fontSize:11,background:"rgba(255,255,255,.1)",color:"#fff",outline:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600}}>
             {MONTHS.map((m,i)=><option key={i+1} value={i+1} style={{background:"#0A1628",color:"#fff"}}>{m}</option>)}
           </select>
           <select value={selYear} onChange={e=>setSelYear(Number(e.target.value))}
-            style={{padding:"4px 8px",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,fontSize:11,background:"rgba(255,255,255,.1)",color:"#fff",outline:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600}}>
+            style={{padding:"4px 6px",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,fontSize:11,background:"rgba(255,255,255,.1)",color:"#fff",outline:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600}}>
             {[2024,2025,2026,2027,2028].map(y=><option key={y} value={y} style={{background:"#0A1628",color:"#fff"}}>{y}</option>)}
           </select>
-          <div style={{textAlign:"right",marginLeft:6}}>
-            <div style={{fontSize:9,color:"rgba(255,255,255,.35)",textTransform:"uppercase",letterSpacing:"0.1em"}}>{MONTHS[month-1]} {year}</div>
-            <div style={{fontWeight:800,fontSize:13,color:"#fff"}}>{fRM(bTotal.total)}</div>
+          <div style={{textAlign:"right"}}>
+            <div style={{fontSize:9,color:"rgba(255,255,255,.35)",textTransform:"uppercase",letterSpacing:"0.1em",whiteSpace:"nowrap"}}>{MONTHS[month-1]} {year}</div>
+            <div style={{fontWeight:800,fontSize:13,color:"#fff",whiteSpace:"nowrap"}}>{fRM(bTotal.total)}</div>
           </div>
         </div>
       </div>
@@ -442,13 +492,13 @@ export default function App(){
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:14,alignItems:"start"}}>
         {srList.sort((a,b)=>pctN(srTotals[b.id]?.total||0,targets?.sr?.[b.id]?.target||0)-pctN(srTotals[a.id]?.total||0,targets?.sr?.[a.id]?.target||0)).map(sr=>{
           const target=targets?.sr?.[sr.id]?.target||0,bonus=targets?.sr?.[sr.id]?.bonus||0;
-          const tWI=Object.values(records).reduce((s,day)=>s+(day[sr.id]?.walkin||0),0);
-          const tAE=Object.values(records).reduce((s,day)=>s+(day[sr.id]?.aeon||0),0);
-          const total=tWI+tAE;
+          const rows=days.map(d=>{const k=`${d}/${month}/${year}`,v=records[k]?.[sr.id]||{};return{day:d,wi:v.walkin||0,ae:v.aeon||0};});
+          const tWI=rows.reduce((s,r)=>s+r.wi,0),tAE=rows.reduce((s,r)=>s+r.ae,0),total=tWI+tAE;
           const p=pctN(total,target),color=achColor(total,target);
           const bonusEarned=branchPct>=100&&total>=target&&bonus>0;
           const achBonus=branchPct>=121&&p>=100?calcAchievementBonus(branchPct,"sr"):0;
           const pts=calcRewardPoints(p,branchPct);
+          const rewardBalance=rewardBalances[sr.id]?.balance||0;
           const thS={padding:"6px 12px",fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",background:"#F7F9FC",borderBottom:"1px solid #E4EAF2",whiteSpace:"nowrap"};
           return <div key={sr.id} style={{border:"1px solid #E4EAF2",borderRadius:10,overflow:"hidden",background:"#fff",boxShadow:"0 1px 4px rgba(10,22,40,.05)"}}>
             <div style={{background:"#0A1628",padding:"10px 14px"}}>
@@ -478,28 +528,27 @@ export default function App(){
                   </span>}
                 </span>;
               })()}
-              <span style={{fontSize:10,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.04em"}}>{(bMeta[sr.branch]?.name||sr.branch).replace("EMAX ","")}</span>
+              <span style={{fontSize:10,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.04em"}}>{(bMeta[sr.branch]?.name||sr.branch).toUpperCase()}</span>
             </div>
             <table style={{width:"100%",borderCollapse:"collapse"}}>
               <thead><tr>
                 <th style={{...thS,textAlign:"center",width:48}}>Date</th>
-                <th style={{...thS,color:"#1E6FDB"}}>Walk In</th>
-                <th style={{...thS,color:"#7C5CFC"}}>Invoice</th>
-                <th style={{...thS,color:"#0A1628"}}>Total</th>
+                <th style={{...thS,color:"#4A5568"}}>Walk In</th>
+                <th style={{...thS,color:"#4A5568"}}>Invoice</th>
+                <th style={{...thS,color:"#4A5568"}}>Total</th>
               </tr></thead>
-              <tbody>{days.map(d=>{
-                const k=`${d}/${month}/${year}`,v=records[k]?.[sr.id]||{};
-                const wi=v.walkin||0,ae=v.aeon||0,rt=wi+ae;
-                return <tr key={d} style={{borderBottom:"1px solid rgba(228,234,242,.7)",background:d%2===0?"#fff":"#F7F9FC"}}>
-                  <td style={{padding:"4px 8px",color:"#4A5568",fontWeight:600,textAlign:"center",fontSize:11,borderRight:"1px solid rgba(228,234,242,.6)"}}>{d}/{month}</td>
+              <tbody>{rows.map(({day,wi,ae})=>{
+                const rt=wi+ae;
+                return <tr key={day} className="shine-row" style={{borderBottom:"1px solid rgba(228,234,242,.8)",background:day%2===0?"#fff":"#F7F9FC"}}>
+                  <td style={{padding:"4px 8px",color:"#4A5568",fontWeight:600,textAlign:"center",fontSize:11,borderRight:"1px solid rgba(228,234,242,.6)"}}>{day}/{month}</td>
                   <td style={{padding:"4px 12px",textAlign:"right",fontSize:11,color:wi!==0?"#4A5568":"#E4EAF2",fontWeight:wi!==0?500:300}}>{wi!==0?f2(wi):"—"}</td>
-                  <td style={{padding:"4px 12px",textAlign:"right",fontSize:11,color:ae!==0?"#7C5CFC":"#E4EAF2",fontWeight:ae!==0?500:300}}>{ae!==0?f2(ae):"—"}</td>
+                  <td style={{padding:"4px 12px",textAlign:"right",fontSize:11,color:ae!==0?"#4A5568":"#E4EAF2",fontWeight:ae!==0?500:300}}>{ae!==0?f2(ae):"—"}</td>
                   <td style={{padding:"4px 12px",textAlign:"right",fontWeight:rt!==0?600:300,fontSize:11,color:rt>0?"#0A1628":rt<0?"#F0354B":"#E4EAF2"}}>{rt!==0?f2(rt):"—"}</td>
                 </tr>;
               })}</tbody>
             </table>
             <div style={{padding:"10px 14px",background:"#F7F9FC",borderTop:"2px solid #E4EAF2"}}>
-              {[["Walk In",fRM(tWI),"#1E6FDB"],["Invoice",fRM(tAE),"#7C5CFC"],["Total Profit",fRM(total),"#0A1628"]].map(([l,v,c])=>(
+              {[["Walk In",fRM(tWI),"#4A5568"],["Invoice",fRM(tAE),"#4A5568"],["Total Profit",fRM(total),"#0A1628"]].map(([l,v,c])=>(
                 <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"2px 0",fontSize:11}}>
                   <span style={{color:"#8A96A8"}}>{l}</span>
                   <span style={{fontWeight:700,color:c,fontSize:11}}>{v}</span>
@@ -535,9 +584,12 @@ export default function App(){
               </div>}
               <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
                 <span style={{color:"#8A96A8"}}>Branch Achievement Bonus</span>
-                {achBonus>0?<span style={{fontWeight:700,color:"#F5A623"}}>{fRM(achBonus)}</span>:<span style={{color:"#8A96A8"}}>—</span>}
+                {(branchPct>=121&&p>=100)
+                  ? <span style={{fontWeight:700,color:"#F5A623"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
+                  : <span style={{color:"#8A96A8"}}>—</span>
+                }
               </div>
-              {achBonus>0&&(()=>{
+              {(branchPct>=121&&p>=100)&&(()=>{
                 const tier=Math.floor((branchPct-121)/10);
                 const nextTierPct=121+(tier+1)*10;
                 const isMaxTier=nextTierPct>200;
@@ -547,7 +599,7 @@ export default function App(){
                       <span style={{background:"#F5A623",color:"#fff",borderRadius:20,padding:"1px 7px",fontSize:9,fontWeight:800}}>Tier {tier+1}</span>
                       Branch {branchPct.toFixed(1)}%
                     </span>
-                    <span style={{fontWeight:800,fontSize:12,color:"#D97706"}}>{fRM(achBonus)}</span>
+                    <span style={{fontWeight:800,fontSize:12,color:"#D97706"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
                   </div>
                   {!isMaxTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:4,borderTop:"1px dashed #FDE68A"}}>
                     <span style={{fontSize:9,color:"#B45309"}}>Next: Tier {tier+2} at {nextTierPct}%</span>
@@ -558,17 +610,36 @@ export default function App(){
               })()}
               <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2,marginTop:2}}>
                 <span style={{color:"#8A96A8"}}>Reward Points (This Month)</span>
-                {pts>0?<span style={{fontWeight:700,color:"#1E6FDB"}}>{pts.toLocaleString()} pts</span>:<span style={{color:"#8A96A8"}}>—</span>}
+                {(branchPct>=100&&p>=110)
+                  ? <span style={{fontWeight:700,color:"#1E6FDB"}}>{calcRewardPoints(p,branchPct).toLocaleString()} pts</span>
+                  : <span style={{color:"#8A96A8"}}>—</span>
+                }
               </div>
               <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
                 <span style={{color:"#8A96A8"}}>Reward Points Balance</span>
-                <span style={{fontWeight:800,color:"#0A1628"}}>{(rewardBalances[sr.id]?.balance||0).toLocaleString()} pts</span>
+                <span style={{fontWeight:800,color:"#0A1628"}}>{rewardBalance.toLocaleString()} pts</span>
               </div>
-              {pts>0&&(()=>{
+              {(branchPct>=100&&p>=110)&&(()=>{
+                const pts2=calcRewardPoints(p,branchPct);
                 const TIERS=[[110,500],[120,1000],[130,1500],[140,2000],[150,3000],[160,4500],[170,6000],[180,7500],[190,9000],[200,12000]];
-                const nextTier=TIERS.find(([t])=>p<t);
-                return <div style={{background:"#EFF6FF",borderRadius:6,padding:"4px 8px",marginBottom:3,fontSize:10,color:"#1E40AF",border:"1px solid #BFDBFE"}}>
-                  {pts.toLocaleString()} pts at SR {p.toFixed(1)}%{nextTier?` · Next: ${nextTier[1].toLocaleString()} pts at ${nextTier[0]}%`:" · Max tier"}
+                const curTierIdx=TIERS.reduce((acc,[t],i)=>p>=t?i:acc,-1);
+                const nextTierEntry=TIERS[curTierIdx+1]||null;
+                const isMaxTier=!nextTierEntry;
+                return <div style={{background:"linear-gradient(135deg,#EFF6FF,#F0F7FF)",borderRadius:8,padding:"8px 10px",marginBottom:4,border:"1px solid #BFDBFE",boxShadow:"0 1px 3px rgba(30,111,219,.08)"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                    <span style={{fontSize:10,fontWeight:700,color:"#1E40AF",display:"flex",alignItems:"center",gap:4}}>
+                      <span style={{background:"#1E6FDB",color:"#fff",borderRadius:20,padding:"1px 7px",fontSize:9,fontWeight:800}}>
+                        {curTierIdx>=0?`Tier ${curTierIdx+1}`:"Tier 1"}
+                      </span>
+                      SR {p.toFixed(1)}%
+                    </span>
+                    <span style={{fontWeight:800,fontSize:12,color:"#1E6FDB"}}>{pts2.toLocaleString()} pts</span>
+                  </div>
+                  {!isMaxTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:4,borderTop:"1px dashed #BFDBFE"}}>
+                    <span style={{fontSize:9,color:"#1E40AF"}}>Next: Tier {curTierIdx+2} at {nextTierEntry[0]}%</span>
+                    <span style={{fontSize:9,fontWeight:700,color:"#1E40AF"}}>{nextTierEntry[1].toLocaleString()} pts</span>
+                  </div>}
+                  {isMaxTier&&<div style={{fontSize:9,color:"#1E6FDB",fontWeight:600,paddingTop:4,borderTop:"1px dashed #BFDBFE"}}>🏆 Maximum tier reached</div>}
                 </div>;
               })()}
             </div>
@@ -579,5 +650,6 @@ export default function App(){
       <PdfDownloads month={month} year={year}/>
       </div>}{/* end overview tab */}
     </div>
+    {showPointsModal&&<PointsHistoryModal srList={srList} bMeta={bMeta} rewardBalances={rewardBalances} rewardHistory={rewardHistory} onClose={()=>setShowPointsModal(false)}/>}
   </div>;
 }
