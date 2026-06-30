@@ -455,3 +455,331 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
     </div>
   </div>;
 }
+
+function PdfDownloads({month,year}){
+  const [pdfList,setPdfList]=useState([]);
+  useEffect(()=>{
+    loadData("emax_v5_pdf_index").then(idx=>{
+      const list=Array.isArray(idx)?idx:[];
+      Promise.all(list.map(k=>loadData(k))).then(pdfs=>{
+        const valid=pdfs.filter(p=>p&&p.date&&p.b64);
+        const filtered=valid.filter(p=>{const parts=p.date.split("/");return parseInt(parts[1])===month&&parseInt(parts[2])===year;});
+        setPdfList(filtered);
+      });
+    });
+  },[month,year]);
+  if(!pdfList.length)return null;
+  return <div style={{marginTop:20}}>
+    <h3 style={{fontSize:12,fontWeight:800,color:"#0A1628",marginBottom:10,textTransform:"uppercase",letterSpacing:"0.08em"}}>AEON Profit Reports</h3>
+    <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+      {pdfList.map((pdf,i)=>(
+        <a key={i} href={`data:application/pdf;base64,${pdf.b64}`} download={pdf.name||`AEON_${pdf.date}.pdf`}
+          style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 14px",background:"#7C5CFC",color:"#fff",borderRadius:8,fontSize:12,fontWeight:600,textDecoration:"none"}}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          {pdf.name||`AEON ${pdf.date}`}
+        </a>
+      ))}
+    </div>
+  </div>;
+}
+
+export default function App(){
+  const now=new Date();
+  const [selMonth,setSelMonth]=useState(now.getMonth()+1);
+  const [selYear,setSelYear]=useState(now.getFullYear());
+  const month=selMonth,year=selYear;
+  const days=Array.from({length:daysInMonth(month,year)},(_,i)=>i+1);
+  const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+  const [selStartDay,setSelStartDay]=useState(1);
+  const [selEndDay,setSelEndDay]=useState(daysInMonth(now.getMonth()+1,now.getFullYear()));
+  const [draftStart,setDraftStart]=useState(1);
+  const [draftEnd,setDraftEnd]=useState(daysInMonth(now.getMonth()+1,now.getFullYear()));
+  const periodDays=days.filter(d=>d>=selStartDay&&d<=selEndDay);
+  const [selBranch,setSelBranch]=useState(BRANCH_ORDER[0]);
+  const [tab,setTab]=useState("overview");
+
+  const [records,setRecords]=useState({});
+  const [targets,setTargets]=useState(DEFAULT_TARGETS);
+  const [srList,setSrList]=useState(DEFAULT_SR);
+  const [bMeta,setBMeta]=useState(DEFAULT_BRANCH_META);
+  const [loading,setLoading]=useState(true);
+  const [repairData,setRepairData]=useState({});
+
+  useEffect(()=>{
+    setLoading(true);setRecords({});
+    setSelStartDay(1);setSelEndDay(daysInMonth(selMonth,selYear));
+    setDraftStart(1);setDraftEnd(daysInMonth(selMonth,selYear));
+    const snapKey=`emax_v5_status_${selYear}_${selMonth}`;
+    const repKey=`emax_v5_repair_${selYear}_${selMonth}`;
+    Promise.all([
+      loadData(`emax_v5_records_${selYear}_${selMonth}`),
+      loadData("emax_v5_targets"),
+      loadData("emax_v5_sr_list"),
+      loadData("emax_v5_branch_meta"),
+      loadData(snapKey),
+      loadData(repKey),
+    ]).then(([r,t,srData,bmData,snap,rep])=>{
+      setRecords(r||{});
+      const baseSR=(srData&&Array.isArray(srData)&&srData.length>0)?srData:DEFAULT_SR;
+      if(snap&&Object.keys(snap).length>0){
+        const merged=baseSR.map(sr=>snap[sr.id]?{...sr,status:snap[sr.id].status,active:snap[sr.id].active!==false}:{...sr});
+        setSrList(merged.filter(sr=>sr.active!==false));
+      } else setSrList(baseSR);
+      if(bmData&&Object.keys(bmData).length>0)setBMeta({...DEFAULT_BRANCH_META,...bmData});
+      if(t?.bm)setTargets({bm:{...DEFAULT_TARGETS.bm,...t.bm},bmBonus:{...DEFAULT_TARGETS.bmBonus,...(t.bmBonus||{})},sr:{...DEFAULT_TARGETS.sr,...t.sr}});
+      else setTargets(DEFAULT_TARGETS);
+      setRepairData(rep||{});
+      setLoading(false);
+    });
+  },[selMonth,selYear]);
+
+  const branchTotals=useMemo(()=>{
+    const t={};
+    BRANCH_ORDER.forEach(b=>{
+      const bSRs=srList.filter(s=>s.branch===b);
+      let wi=0,ae=0;
+      for(let d=selStartDay;d<=selEndDay;d++){
+        const k=`${d}/${month}/${year}`,day=records[k]||{};
+        bSRs.forEach(sr=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});
+        wi+=(day[`BM_${b}`]?.walkin||0);ae+=(day[`BM_${b}`]?.aeon||0);wi+=(day[`BM_${b}`]?.unalloc||0);
+      }
+      t[b]={wi,ae,total:wi+ae};
+    });
+    return t;
+  },[records,srList,selStartDay,selEndDay,month,year]);
+
+  const srTotals=useMemo(()=>{
+    const t={};
+    srList.forEach(sr=>{
+      let wi=0,ae=0;
+      periodDays.forEach(d=>{const k=`${d}/${month}/${year}`;wi+=(records[k]?.[sr.id]?.walkin||0);ae+=(records[k]?.[sr.id]?.aeon||0);});
+      t[sr.id]={wi,ae,total:wi+ae};
+    });
+    return t;
+  },[records,srList,periodDays,month,year]);
+
+  const grandTotal=BRANCH_ORDER.reduce((s,b)=>s+(branchTotals[b]?.total||0),0);
+  const grandTarget=BRANCH_ORDER.reduce((s,b)=>s+(targets?.bm?.[b]||0),0);
+
+  const lastDataDay=useMemo(()=>{
+    const allDays=Array.from({length:daysInMonth(month,year)},(_,i)=>i+1);
+    for(let i=allDays.length-1;i>=0;i--){
+      const k=`${allDays[i]}/${month}/${year}`;
+      if(records[k]&&Object.keys(records[k]).length>0)return allDays[i];
+    }return null;
+  },[records,month,year]);
+  const rankingPeriod=lastDataDay?`1/${month}/${year} – ${lastDataDay}/${month}/${year}`:`${MONTHS[month-1]} ${year}`;
+
+  const branchMeta=bMeta;
+  const bmRank=[...BRANCH_ORDER].map(b=>{
+    const profit=branchTotals[b]?.total||0,target=targets?.bm?.[b]||0,p=pctN(profit,target);
+    return{name:bMeta[b]?.manager,status:bMeta[b]?.mStatus,branch:b,sub:(bMeta[b]?.name||b).toUpperCase(),profit,target,p,branchPct:p,role:"bm"};
+  }).sort((a,b)=>b.p-a.p);
+
+  const mkSRRank=type=>srList.filter(s=>s.type===type).map(s=>{
+    const profit=srTotals[s.id]?.total||0,target=targets?.sr?.[s.id]?.target||0;
+    const bTotal=branchTotals[s.branch]?.total||0,bTarget=targets?.bm?.[s.branch]||0;
+    const branchPct=pctN(bTotal,bTarget),p=pctN(profit,target);
+    return{name:s.canon,status:s.status,branch:s.branch,sub:(bMeta[s.branch]?.name||s.branch).toUpperCase(),profit,target,p,branchPct,role:"sr"};
+  }).sort((a,b)=>b.p-a.p);
+
+  const TABS=[{id:"overview",label:"Overview"},{id:"rankings",label:"Rankings"},{id:"report",label:"Monthly Report"},{id:"repair",label:"Repair & Service"}];
+
+  if(loading)return <div style={{height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#0A1628",fontFamily:"Inter,sans-serif"}}>
+    <div style={{textAlign:"center"}}>
+      <div style={{fontWeight:900,fontSize:18,color:"#fff",letterSpacing:"0.06em"}}>EMAX NETWORK</div>
+      <div style={{fontSize:11,color:"rgba(255,255,255,.3)",letterSpacing:"0.15em",textTransform:"uppercase",marginTop:8}}>Loading...</div>
+    </div>
+  </div>;
+
+  return <div style={{minHeight:"100vh",background:"#F7F9FC",fontFamily:"Inter,-apple-system,sans-serif"}}>
+    <style>{CSS}</style>
+    <div style={{background:"#0A1628",borderBottom:"1px solid #162B52",position:"sticky",top:0,zIndex:100}}>
+      <div style={{maxWidth:1400,margin:"0 auto",padding:"0 12px"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",minHeight:48,gap:8,flexWrap:"wrap"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+            <div>
+              <div style={{fontWeight:900,fontSize:12,color:"#fff",letterSpacing:"0.06em",lineHeight:1}}>EMAX NETWORK</div>
+              <div style={{fontSize:9,color:"rgba(255,255,255,.3)",letterSpacing:"0.14em",textTransform:"uppercase",marginTop:1}}>Boss View · All Branches</div>
+            </div>
+            <div style={{width:1,height:18,background:"rgba(255,255,255,.1)"}}/>
+            <div style={{display:"flex",gap:2,flexWrap:"wrap"}}>
+              {TABS.map(t=>(
+                <button key={t.id} onClick={()=>setTab(t.id)} style={{padding:"4px 10px",border:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600,fontSize:10,
+                  background:tab===t.id?"rgba(255,255,255,.1)":"transparent",color:tab===t.id?"#fff":"rgba(255,255,255,.4)",borderRadius:6,whiteSpace:"nowrap"}}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0}}>
+            <select value={selMonth} onChange={e=>setSelMonth(Number(e.target.value))}
+              style={{padding:"4px 8px",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,fontSize:11,background:"rgba(255,255,255,.1)",color:"#fff",outline:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600}}>
+              {MONTHS.map((m,i)=><option key={i+1} value={i+1} style={{background:"#0A1628",color:"#fff"}}>{m}</option>)}
+            </select>
+            <select value={selYear} onChange={e=>setSelYear(Number(e.target.value))}
+              style={{padding:"4px 8px",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,fontSize:11,background:"rgba(255,255,255,.1)",color:"#fff",outline:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600}}>
+              {[2024,2025,2026,2027,2028].map(y=><option key={y} value={y} style={{background:"#0A1628",color:"#fff"}}>{y}</option>)}
+            </select>
+            <div style={{textAlign:"right",marginLeft:4}}>
+              <div style={{fontSize:9,color:"rgba(255,255,255,.35)",textTransform:"uppercase",letterSpacing:"0.1em"}}>{MONTHS[month-1]} {year}</div>
+              <div style={{fontWeight:800,fontSize:13,color:"#fff"}}>{grandTotal>0?fRM(grandTotal):"—"}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style={{maxWidth:1400,margin:"0 auto",padding:"20px 12px"}}>
+
+      {/* OVERVIEW */}
+      {tab==="overview"&&<div className="fade-in">
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:12,marginBottom:20}}>
+          {[["Network Total",fRM(grandTotal),"#0A1628"],["Monthly Target",grandTarget>0?fRM(grandTarget):"Not Set","#4A5568"],
+            ["Achievement",grandTarget>0?pctN(grandTotal,grandTarget).toFixed(1)+"%":"—",achColor(grandTotal,grandTarget)]
+          ].map(([l,v,c])=>(
+            <div key={l} className="card" style={{padding:"16px 18px",borderTop:`3px solid ${c}`}}>
+              <div style={{fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4}}>{l}</div>
+              <div style={{fontSize:16,fontWeight:700,color:"#0A1628",letterSpacing:"-0.01em",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{v}</div>
+            </div>
+          ))}
+        </div>
+        <div className="card" style={{overflow:"hidden"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",borderBottom:"1px solid #E4EAF2"}}>
+            <div>
+              <h3 style={{fontWeight:800,fontSize:13,color:"#0A1628",margin:0}}>Branch Performance Report</h3>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginTop:3,flexWrap:"wrap"}}>
+                <span style={{fontSize:11,color:"#8A96A8"}}>Period:</span>
+                <select value={draftStart} onChange={e=>setDraftStart(Number(e.target.value))}
+                  style={{fontSize:11,color:"#1E6FDB",fontWeight:700,border:"1px solid #E4EAF2",borderRadius:5,background:"#fff",outline:"none",cursor:"pointer",padding:"2px 4px",fontFamily:"Inter,sans-serif"}}>
+                  {days.filter(d=>d<=draftEnd).map(d=><option key={d} value={d}>{d}/{month}/{year}</option>)}
+                </select>
+                <span style={{fontSize:11,color:"#8A96A8"}}>–</span>
+                <select value={draftEnd} onChange={e=>setDraftEnd(Number(e.target.value))}
+                  style={{fontSize:11,color:"#1E6FDB",fontWeight:700,border:"1px solid #E4EAF2",borderRadius:5,background:"#fff",outline:"none",cursor:"pointer",padding:"2px 4px",fontFamily:"Inter,sans-serif"}}>
+                  {days.filter(d=>d>=draftStart).map(d=><option key={d} value={d}>{d}/{month}/{year}</option>)}
+                </select>
+                <button onClick={()=>{setSelStartDay(draftStart);setSelEndDay(draftEnd);}}
+                  style={{padding:"3px 10px",background:"#1E6FDB",color:"#fff",border:"none",borderRadius:5,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"Inter,sans-serif"}}>Filter</button>
+                {(selStartDay!==1||selEndDay!==days[days.length-1])&&<button onClick={()=>{setDraftStart(1);setDraftEnd(days[days.length-1]);setSelStartDay(1);setSelEndDay(days[days.length-1]);}}
+                  style={{padding:"3px 10px",background:"#F7F9FC",color:"#8A96A8",border:"1px solid #E4EAF2",borderRadius:5,fontSize:11,cursor:"pointer",fontFamily:"Inter,sans-serif"}}>Reset</button>}
+              </div>
+            </div>
+          </div>
+          <div style={{overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",minWidth:600}}>
+              <thead><tr style={{background:"#0A1628"}}>
+                <th style={{padding:"10px 16px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.6)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left"}}>Branch</th>
+                <th style={{padding:"10px 16px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.6)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right"}}>Target</th>
+                <th style={{padding:"10px 16px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.85)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right"}}>Total Profit</th>
+                <th style={{padding:"10px 16px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.65)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right"}}>Walk In</th>
+                <th style={{padding:"10px 16px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.65)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right"}}>Invoice</th>
+                <th style={{padding:"10px 16px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.6)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right"}}>Achievement</th>
+              </tr></thead>
+              <tbody>
+                {[...BRANCH_ORDER].sort((a,b2)=>{
+                  const pa=pctN(branchTotals[a]?.total||0,targets?.bm?.[a]||0);
+                  const pb=pctN(branchTotals[b2]?.total||0,targets?.bm?.[b2]||0);
+                  return pb-pa;
+                }).map((b,i)=>{
+                  const wi=branchTotals[b]?.wi||0,ae=branchTotals[b]?.ae||0,total=wi+ae;
+                  const target=targets?.bm?.[b]||0,over=target>0&&total>=target;
+                  const p=pctN(total,target);
+                  return <tr key={b} className="shine-row" style={{borderBottom:"1px solid #E4EAF2",background:"#fff"}}>
+                    <td style={{padding:"10px 16px"}}>
+                      <div style={{fontWeight:700,fontSize:12,color:"#0A1628"}}>{bMeta[b]?.name||b}</div>
+                      <div style={{fontSize:10,color:"#8A96A8"}}>{bMeta[b]?.manager||"—"}</div>
+                    </td>
+                    <td style={{padding:"10px 16px",textAlign:"right",fontSize:12,color:"#8A96A8"}}>{target>0?fRM(target):"—"}</td>
+                    <td style={{padding:"10px 16px",textAlign:"right"}}><span style={{fontWeight:700,fontSize:12,color:over?"#00C896":"#0A1628"}}>{total>0?`RM ${nc(total)}`:"—"}</span></td>
+                    <td style={{padding:"10px 16px",textAlign:"right",fontSize:12,color:"#4A5568"}}>{wi>0?`RM ${nc(wi)}`:"—"}</td>
+                    <td style={{padding:"10px 16px",textAlign:"right",fontSize:12,color:"#4A5568"}}>{ae>0?`RM ${nc(ae)}`:"—"}</td>
+                    <td style={{padding:"10px 16px",textAlign:"right"}}>
+                      {target>0&&<span style={{background:achBg(total,target),color:achColor(total,target),padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700}}>{p.toFixed(1)}%</span>}
+                    </td>
+                  </tr>;
+                })}
+              </tbody>
+              <tfoot><tr style={{background:"#0A1628"}}>
+                <td style={{padding:"10px 16px",fontWeight:600,color:"rgba(255,255,255,.6)",fontSize:12}}>Total</td>
+                <td style={{padding:"10px 16px",textAlign:"right",fontSize:12,color:"rgba(255,255,255,.5)"}}>{grandTarget>0?fRM(grandTarget):"—"}</td>
+                <td style={{padding:"10px 16px",textAlign:"right",fontWeight:700,color:"rgba(255,255,255,.9)",fontSize:12}}>{grandTotal>0?fRM(grandTotal):"—"}</td>
+                <td style={{padding:"10px 16px",textAlign:"right",fontSize:12,color:"rgba(255,255,255,.6)"}}>{BRANCH_ORDER.reduce((s,b)=>s+(branchTotals[b]?.wi||0),0)>0?fRM(BRANCH_ORDER.reduce((s,b)=>s+(branchTotals[b]?.wi||0),0)):"—"}</td>
+                <td style={{padding:"10px 16px",textAlign:"right",fontSize:12,color:"rgba(255,255,255,.6)"}}>{BRANCH_ORDER.reduce((s,b)=>s+(branchTotals[b]?.ae||0),0)>0?fRM(BRANCH_ORDER.reduce((s,b)=>s+(branchTotals[b]?.ae||0),0)):"—"}</td>
+                <td style={{padding:"10px 16px",textAlign:"right",fontSize:12,color:grandTarget>0?(pctN(grandTotal,grandTarget)>=100?"#00C896":"rgba(255,255,255,.6)"):"rgba(255,255,255,.3)"}}>{grandTarget>0?pctN(grandTotal,grandTarget).toFixed(1)+"%":"—"}</td>
+              </tr></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>}
+
+      {/* RANKINGS */}
+      {tab==="rankings"&&<div className="fade-in" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:20}}>
+        <RankingTable title="Branch Manager Ranking" rows={bmRank} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
+        <RankingTable title="Online SR Ranking" rows={mkSRRank("Online")} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
+        <RankingTable title="Offline SR Ranking" rows={mkSRRank("Offline")} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
+      </div>}
+
+      {/* MONTHLY REPORT */}
+      {tab==="report"&&<div className="fade-in">
+        <div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:14,alignItems:"center"}}>
+          <span style={{fontSize:11,fontWeight:700,color:"#8A96A8",marginRight:4,textTransform:"uppercase",letterSpacing:"0.06em"}}>Branch</span>
+          {BRANCH_ORDER.map(b=>(
+            <button key={b} onClick={()=>setSelBranch(b)} style={{padding:"4px 12px",cursor:"pointer",borderRadius:6,fontWeight:700,fontSize:11,fontFamily:"Inter,sans-serif",
+              background:selBranch===b?"#0A1628":"#fff",color:selBranch===b?"#fff":"#4A5568",
+              border:selBranch===b?"none":"1px solid #E4EAF2",transition:"all .15s"}}>
+              {b}
+            </button>
+          ))}
+        </div>
+        {(()=>{
+          const bSRs=srList.filter(s=>s.branch===selBranch);
+          const bTarget=targets?.bm?.[selBranch]||0;
+          const bTot=BRANCH_ORDER.includes(selBranch)?branchTotals[selBranch]?.total||0:0;
+          const branchPct=pctN(bTot,bTarget);
+          return <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14,alignItems:"start"}}>
+            {bSRs.map(sr=><SRCard key={sr.id} sr={sr} records={records} targets={targets} branchPct={branchPct} month={month} year={year} days={periodDays} bMeta={bMeta}/>)}
+          </div>;
+        })()}
+        <PdfDownloads month={month} year={year}/>
+      </div>}
+
+      {/* REPAIR */}
+      {tab==="repair"&&<div className="fade-in" style={{maxWidth:520}}>
+        <div className="card" style={{overflow:"hidden"}}>
+          <div style={{padding:"14px 18px",borderBottom:"1px solid #E4EAF2",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div>
+              <div style={{fontWeight:700,fontSize:13,color:"#0A1628"}}>Network Repair & Service</div>
+              <div style={{fontSize:11,color:"#8A96A8",marginTop:2}}>{MONTHS[month-1]} {year}</div>
+            </div>
+            <div style={{textAlign:"right"}}>
+              <div style={{fontSize:10,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em"}}>Total</div>
+              <div style={{fontWeight:700,fontSize:15,color:"#0A1628"}}>{Object.values(repairData).reduce((s,v)=>s+(v||0),0)>0?fRM(Object.values(repairData).reduce((s,v)=>s+(v||0),0)):"—"}</div>
+            </div>
+          </div>
+          <table style={{width:"100%",borderCollapse:"collapse"}}>
+            <thead><tr style={{background:"#F7F9FC",borderBottom:"1px solid #E4EAF2"}}>
+              <th style={{padding:"8px 16px",fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left"}}>Date</th>
+              <th style={{padding:"8px 16px",fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right"}}>Amount (RM)</th>
+            </tr></thead>
+            <tbody>
+              {days.map(d=>{
+                const val=repairData[d]||0;
+                return <tr key={d} style={{borderBottom:"1px solid rgba(228,234,242,.6)"}}>
+                  <td style={{padding:"7px 16px",fontSize:12,color:"#4A5568"}}>{d}/{month}/{year}</td>
+                  <td style={{padding:"7px 16px",textAlign:"right",fontSize:12,color:val>0?"#0A1628":val<0?"#F0354B":"#CDD5E0",fontWeight:val!==0?600:400}}>{val!==0?fRM(val):"—"}</td>
+                </tr>;
+              })}
+            </tbody>
+            <tfoot><tr style={{background:"#0A1628"}}>
+              <td style={{padding:"9px 16px",fontWeight:700,color:"rgba(255,255,255,.7)",fontSize:12}}>Total</td>
+              <td style={{padding:"9px 16px",textAlign:"right",fontWeight:700,color:"rgba(255,255,255,.9)",fontSize:12}}>{Object.values(repairData).reduce((s,v)=>s+(v||0),0)>0?fRM(Object.values(repairData).reduce((s,v)=>s+(v||0),0)):"—"}</td>
+            </tr></tfoot>
+          </table>
+        </div>
+      </div>}
+
+    </div>
+  </div>;
+}
