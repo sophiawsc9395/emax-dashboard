@@ -985,7 +985,7 @@ function TargetModal({targets,setTargets,srList,branchMeta,onClose}){
 }
 
 // ─── SR/BM MANAGEMENT MODAL ────────────────────────────────
-function StatusEditWidget({status,onSave}){
+function StatusEditWidget({status,onSave,onViewHistory}){
   const [editing,setEditing]=useState(false);
   const ps=parseStatus(status);
   const [base,setBase]=useState(ps.base);
@@ -1005,11 +1005,14 @@ function StatusEditWidget({status,onSave}){
   };
 
   if(!editing){
-    return <div style={{display:"flex",alignItems:"center",gap:8}}>
+    return <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
       <span style={{fontSize:11,fontWeight:600,color:"#0A1628"}}>{status||"—"}</span>
       <button onClick={startEdit} style={{padding:"3px 8px",fontSize:10,fontWeight:700,border:"1px solid #E4EAF2",borderRadius:6,background:"#F7F9FC",color:"#4A5568",cursor:"pointer",fontFamily:"Inter,sans-serif",whiteSpace:"nowrap"}}>
         Edit
       </button>
+      {onViewHistory&&<button onClick={onViewHistory} style={{padding:"3px 8px",fontSize:10,fontWeight:700,border:"1px solid #E4EAF2",borderRadius:6,background:"#fff",color:"#1E6FDB",cursor:"pointer",fontFamily:"Inter,sans-serif",whiteSpace:"nowrap"}}>
+        History
+      </button>}
     </div>;
   }
 
@@ -1067,7 +1070,7 @@ function AdjustBalanceWidget({personId,balance,adjustBalance}){
   </div>;
 }
 
-function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBalances,adjustBalance,statusHistory,setStatusHistory,month,year}){
+function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBalances,adjustBalance,statusHistory,setStatusHistory,month,year,setShowStatusHistoryModal,setStatusModalPerson}){
   const [tab,setTab]=useState("bm");
   const [localBM,setLocalBM]=useState(JSON.parse(JSON.stringify(branchMeta)));
   const [localSR,setLocalSR]=useState(JSON.parse(JSON.stringify(srList)));
@@ -1131,7 +1134,7 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBala
                 <input className="input" value={localBM[b]?.manager||""} onChange={e=>setLocalBM(p=>({...p,[b]:{...p[b],manager:e.target.value}}))} style={{marginBottom:8,fontSize:12}}/>
                 <label style={{fontSize:10,fontWeight:700,color:"#8A96A8",display:"block",marginBottom:5,textTransform:"uppercase",letterSpacing:"0.05em"}}>Employment Status{month&&year?` (${["JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"][month-1]} ${year})`:""}</label>
                 <div style={{marginBottom:8}}>
-                  <StatusEditWidget status={localBM[b]?.mStatus||""} onSave={(newStatus,desc)=>saveBMStatus(b,newStatus,desc)}/>
+                  <StatusEditWidget status={localBM[b]?.mStatus||""} onSave={(newStatus,desc)=>saveBMStatus(b,newStatus,desc)} onViewHistory={setShowStatusHistoryModal?()=>{setStatusModalPerson(`BM_${b}`);setShowStatusHistoryModal(true);}:null}/>
                 </div>
                 <label style={{fontSize:10,fontWeight:700,color:"#F5A623",display:"block",marginBottom:5,textTransform:"uppercase",letterSpacing:"0.05em"}}>🏆 Reward Points Balance</label>
                 <AdjustBalanceWidget personId={`BM_${b}`} balance={rewardBalances?.[`BM_${b}`]?.balance||0} adjustBalance={adjustBalance}/>
@@ -1202,7 +1205,7 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBala
             <div style={{overflowX:"auto"}}>
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,minWidth:900}}>
               <thead><tr style={{background:"#0A1628"}}>
-                {["ID","Name","Branch","Type","Status","Points Balance",""].map(h=>(
+                {["ID","Name","Branch","Type",`Employment Status${month&&year?` (${["JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"][month-1]} ${year})`:""}`,"Points Balance",""].map(h=>(
                   <th key={h} style={{padding:"9px 14px",textAlign:"left",fontWeight:700,fontSize:10,color:"rgba(255,255,255,.7)",textTransform:"uppercase",letterSpacing:"0.06em"}}>{h}</th>
                 ))}
               </tr></thead>
@@ -1229,7 +1232,7 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBala
                     </select>
                   </td>
                   <td style={{padding:"8px 14px"}}>
-                    <StatusEditWidget status={sr.status} onSave={(newStatus,desc)=>saveSRStatus(sr.id,newStatus,desc)}/>
+                    <StatusEditWidget status={sr.status} onSave={(newStatus,desc)=>saveSRStatus(sr.id,newStatus,desc)} onViewHistory={setShowStatusHistoryModal?()=>{setStatusModalPerson(sr.id);setShowStatusHistoryModal(true);}:null}/>
                   </td>
                   <td style={{padding:"8px 14px"}}>
                     <AdjustBalanceWidget personId={sr.id} balance={rewardBalances?.[sr.id]?.balance||0} adjustBalance={adjustBalance}/>
@@ -1514,6 +1517,52 @@ function PdfDownloads({month,year,branch}){
   </div>;
 }
 
+function StatusHistoryModal({srList,branchMeta,statusHistory,onClose,initialPerson}){
+  const people=[
+    ...BRANCH_ORDER.map(b=>({id:`BM_${b}`,name:branchMeta[b]?.manager||b,role:`${b} — Branch Manager`})),
+    ...srList.map(sr=>({id:sr.id,name:sr.canon,role:`${sr.branch} — ${sr.type} SR`}))
+  ];
+  const [selPerson,setSelPerson]=useState(initialPerson||people[0]?.id);
+  const person=people.find(p=>p.id===selPerson);
+  const currentStatus=(selPerson&&selPerson.startsWith("BM_"))?branchMeta[selPerson.replace("BM_","")]?.mStatus:srList.find(s=>s.id===selPerson)?.status;
+  const history=(statusHistory[selPerson]||[]).slice().reverse();
+
+  return <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+    <div style={{background:"#fff",borderRadius:16,width:"100%",maxWidth:600,maxHeight:"85vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"18px 24px",borderBottom:"1px solid #E4EAF2"}}>
+        <h2 style={{fontSize:15,fontWeight:800,color:"#0A1628",margin:0}}>📋 Employment Status History</h2>
+        <button className="btn btn-ghost" onClick={onClose} style={{padding:"6px 14px"}}>Close</button>
+      </div>
+      <div style={{padding:"16px 24px",borderBottom:"1px solid #E4EAF2"}}>
+        <select className="input select" value={selPerson} onChange={e=>setSelPerson(e.target.value)} style={{fontSize:13,padding:"8px 28px 8px 12px"}}>
+          {people.map(p=><option key={p.id} value={p.id}>{p.name} — {p.role}</option>)}
+        </select>
+      </div>
+      <div style={{padding:"16px 24px",background:"linear-gradient(135deg,#0A1628,#162B52)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <div style={{fontSize:10,color:"rgba(255,255,255,.5)",textTransform:"uppercase",letterSpacing:"0.08em"}}>{person?.name}</div>
+          <div style={{fontSize:11,color:"rgba(255,255,255,.35)",marginTop:2}}>Current Status</div>
+        </div>
+        <div style={{fontSize:18,fontWeight:800,color:"#fff"}}>{currentStatus||"—"}</div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"12px 24px"}}>
+        {history.length===0
+          ? <div style={{padding:"32px 0",textAlign:"center",color:"#8A96A8",fontSize:12}}>No status change history yet.</div>
+          : history.map((h,i)=>(
+            <div key={i} style={{padding:"10px 0",borderBottom:i<history.length-1?"1px solid #F0F2F5":"none"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <span style={{fontSize:13,fontWeight:800,color:"#0A1628"}}>{h.status}</span>
+                <span style={{fontSize:10,color:"#8A96A8"}}>{new Date(h.date).toLocaleString("en-MY",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})}</span>
+              </div>
+              <div style={{fontSize:12,color:"#5A6472",marginTop:3}}>{h.note}</div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </div>;
+}
+
 function PointsHistoryModal({srList,branchMeta,rewardBalances,rewardHistory,onClose,initialPerson}){
   const people=[
     ...BRANCH_ORDER.map(b=>({id:`BM_${b}`,name:branchMeta[b]?.manager||b,role:`${b} — Branch Manager`})),
@@ -1581,6 +1630,8 @@ export default function App(){
   const [tab,setTab]               = useState("overview");
   const [sidebarOpen,setSidebarOpen] = useState(false);
   const [showPointsModal,setShowPointsModal] = useState(false);
+  const [showStatusHistoryModal,setShowStatusHistoryModal] = useState(false);
+  const [statusModalPerson,setStatusModalPerson] = useState(null);
   const [pointsModalPerson,setPointsModalPerson] = useState(null);
   const [selBranch,setSelBranch]   = useState("KM");
   const [selStartDay,setSelStartDay] = useState(1);
@@ -2004,9 +2055,6 @@ export default function App(){
             <button className="btn btn-primary" onClick={()=>setPrintBranch(selBranch)} style={{fontSize:11}}>Download {selBranch} Report</button>
           </div>
         </div>
-        <div style={{padding:"8px 14px",background:"#F7F9FC",borderRadius:8,fontSize:11,color:"#4A5568",border:"1px solid #E4EAF2",marginBottom:14}}>
-          Click any Walk In or Invoice figure to edit inline. Press Enter or click outside to save.
-        </div>
         {(()=>{
           const bSRs=srList.filter(s=>s.branch===selBranch);
           const bTarget=targets?.bm?.[selBranch]||0,bTotal=fullMonthBranchTotals[selBranch]?.total||0;
@@ -2068,13 +2116,21 @@ export default function App(){
           }}>
             Manage SR
           </button>
+          <button onClick={()=>{setShowStatusHistoryModal(true);setSidebarOpen(false);}} style={{
+            display:"flex",alignItems:"center",width:"100%",textAlign:"left",padding:"9px 12px",marginBottom:3,
+            border:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600,fontSize:12,borderRadius:8,
+            background:"transparent",color:"rgba(255,255,255,.45)",transition:"background .15s",
+          }}>
+            Status History
+          </button>
         </div>
       </div>
     </div>{/* end flex layout */}
 
     {showTargetModal&&<TargetModal targets={targets} setTargets={handleSaveTargets} srList={srList} branchMeta={branchMeta} onClose={()=>setShowTargetModal(false)}/>}
-    {showSRModal&&<SRBMModal srList={srList} setSrList={setSrList} branchMeta={branchMeta} setBranchMeta={setBranchMeta} onClose={()=>setShowSRModal(false)} rewardBalances={rewardBalances} adjustBalance={adjustBalance} statusHistory={statusHistory} setStatusHistory={setStatusHistory} month={month} year={year}/>}
+    {showSRModal&&<SRBMModal srList={srList} setSrList={setSrList} branchMeta={branchMeta} setBranchMeta={setBranchMeta} onClose={()=>setShowSRModal(false)} rewardBalances={rewardBalances} adjustBalance={adjustBalance} statusHistory={statusHistory} setStatusHistory={setStatusHistory} month={month} year={year} setShowStatusHistoryModal={setShowStatusHistoryModal} setStatusModalPerson={setStatusModalPerson}/>}
     {printBranch&&<PrintBranchReport branchId={printBranch} records={records} targets={targets} srList={srList} branchMeta={branchMeta} onClose={()=>setPrintBranch(null)} month={month} year={year} days={days}/>}
     {showPointsModal&&<PointsHistoryModal srList={srList} branchMeta={branchMeta} rewardBalances={rewardBalances} rewardHistory={rewardHistory} initialPerson={pointsModalPerson} onClose={()=>{setShowPointsModal(false);setPointsModalPerson(null);}}/>}
+    {showStatusHistoryModal&&<StatusHistoryModal srList={srList} branchMeta={branchMeta} statusHistory={statusHistory} initialPerson={statusModalPerson} onClose={()=>{setShowStatusHistoryModal(false);setStatusModalPerson(null);}}/>}
   </div>;
 }
