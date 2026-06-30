@@ -120,11 +120,12 @@ function calcRewardPoints(pct,bPct){if(bPct<100||pct<110)return 0;const T=[[200,
 function StatusTag({status}){
   if(!status)return null;
   const s=status.toLowerCase();
-  const isDir=s.includes("director"),isConf=s.includes("confirmed");
-  const bg=isDir?"#F5F3FF":isConf?"#F0FDF4":"#EFF6FF";
-  const color=isDir?"#6D28D9":isConf?"#15803D":"#1D4ED8";
-  const base=isDir?"Director":isConf?"Confirmed":"Probation";
-  const pm=status.match(/Passed\s*(\d+)/i),fm=status.match(/Failed\s*(\d+)/i);
+  const isDir=s.includes("director"),isConf=s.includes("confirmed"),isRes=s.includes("resigned");
+  const bg=isRes?"#FEF2F2":isDir?"#F5F3FF":isConf?"#F0FDF4":"#EFF6FF";
+  const color=isRes?"#B91C1C":isDir?"#6D28D9":isConf?"#15803D":"#1D4ED8";
+  const base=isRes?"Resigned":isDir?"Director":isConf?"Confirmed":"Probation";
+  const pm=status.match(/\bP(\d+)\b/)||status.match(/Passed\s*(\d+)/i);
+  const fm=status.match(/\bF(\d+)\b/)||status.match(/Failed\s*(\d+)/i);
   const passed=pm?parseInt(pm[1]):null,failed=fm?parseInt(fm[1]):null;
   return <span style={{display:"inline-flex",alignItems:"center",gap:5,background:bg,color,padding:"2px 10px",borderRadius:20,fontSize:10,fontWeight:600,whiteSpace:"nowrap"}}>
     {base}
