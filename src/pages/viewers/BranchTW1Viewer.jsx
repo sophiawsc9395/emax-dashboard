@@ -524,9 +524,9 @@ export default function App(){
           const achBonus=branchPct>=120?calcAchievementBonus(branchPct,"bm"):0;
           const pts=calcRewardPoints(branchPct,branchPct);
           return <div style={{marginTop:14,display:"flex",flexDirection:"column",gap:8}}>
-            <div style={{display:"flex",justifyContent:"space-between",fontSize:11}}>
-              <span style={{color:"#5A6472"}}>🏆 Earned Reward Points{pointsAsOf?` (as at ${pointsAsOf})`:""}</span>
-              <span style={{fontWeight:800,color:"#0A1628"}}>{(rewardBalances[`BM_${BRANCH_ID}`]?.balance||0).toLocaleString()} pts</span>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,gap:6,flexWrap:"nowrap"}}>
+              <span style={{color:"#5A6472",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>🏆 Earned Reward Points{pointsAsOf?` (as at ${pointsAsOf})`:""}</span>
+              <span style={{fontWeight:700,fontSize:11,color:"#0A1628",whiteSpace:"nowrap",flexShrink:0}}>{(rewardBalances[`BM_${BRANCH_ID}`]?.balance||0).toLocaleString()} pts</span>
             </div>
             {/* Branch Achievement Bonus tier */}
             {achBonus>0&&(()=>{
@@ -645,33 +645,33 @@ export default function App(){
       <div style={{fontSize:9,fontWeight:700,color:"#5A6472",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Incentives</div>
 
       {/* Personal Achievement Bonus */}
-      {bonus>0&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,marginBottom:4}}>
-        <span style={{color:"#5A6472"}}>Personal Achievement Bonus</span>
-        <span style={{fontWeight:700,fontSize:11,color:"#0A1628",whiteSpace:"nowrap"}}>
+      {bonus>0&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,marginBottom:4,gap:6,flexWrap:"nowrap"}}>
+        <span style={{color:"#5A6472",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>Personal Achievement Bonus</span>
+        <span style={{fontWeight:700,fontSize:11,color:"#0A1628",whiteSpace:"nowrap",flexShrink:0}}>
           {bonusEarned?fRM(bonus):`${fRM(bonus)} (Pending)`}
         </span>
       </div>}
 
       {/* Branch Achievement Bonus */}
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
-        <span style={{color:"#5A6472"}}>Branch Achievement Bonus</span>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2,gap:6,flexWrap:"nowrap"}}>
+        <span style={{color:"#5A6472",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>Branch Achievement Bonus</span>
         {(branchPct>=120&&p>=100)
-          ? <span style={{fontWeight:700,fontSize:11,color:"#0A1628"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
-          : <span style={{color:"#5A6472"}}>—</span>
+          ? <span style={{fontWeight:700,fontSize:11,color:"#0A1628",whiteSpace:"nowrap",flexShrink:0}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
+          : <span style={{color:"#5A6472",flexShrink:0}}>—</span>
         }
       </div>
 
       {/* Reward Points */}
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2,marginTop:2}}>
-        <span style={{color:"#5A6472"}}>Reward Points (This Month)</span>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2,marginTop:2,gap:6,flexWrap:"nowrap"}}>
+        <span style={{color:"#5A6472",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>Reward Points (This Month)</span>
         {(branchPct>=100&&p>=110)
-          ? <span style={{fontWeight:700,fontSize:11,color:"#0A1628"}}>{calcRewardPoints(p,branchPct).toLocaleString()} pts</span>
-          : <span style={{color:"#5A6472"}}>—</span>
+          ? <span style={{fontWeight:700,fontSize:11,color:"#0A1628",whiteSpace:"nowrap",flexShrink:0}}>{calcRewardPoints(p,branchPct).toLocaleString()} pts</span>
+          : <span style={{color:"#5A6472",flexShrink:0}}>—</span>
         }
       </div>
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:6}}>
-        <span style={{color:"#5A6472"}}>Earned Reward Points{pointsAsOf?` (as at ${pointsAsOf})`:""}</span>
-        <span style={{fontWeight:700,fontSize:11,color:"#0A1628"}}>{(rewardBalances[sr.id]?.balance||0).toLocaleString()} pts</span>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,marginBottom:6,gap:6,flexWrap:"nowrap"}}>
+        <span style={{color:"#5A6472",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>Earned Reward Points{pointsAsOf?` (as at ${pointsAsOf})`:""}</span>
+        <span style={{fontWeight:700,fontSize:11,color:"#0A1628",whiteSpace:"nowrap",flexShrink:0}}>{(rewardBalances[sr.id]?.balance||0).toLocaleString()} pts</span>
       </div>
 
       {/* Compact tier progress — only shown when at least one tier is active */}
