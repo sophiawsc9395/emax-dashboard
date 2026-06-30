@@ -1,6 +1,6 @@
 /**
  * Storage adapter — mirrors the window.storage API used in Claude artifacts.
- * In production this uses localStorage. Swap with any key-value backend (Supabase, Firebase, etc.)
+ * In production this uses localStorage.
  */
 
 export const storage = {
@@ -42,9 +42,10 @@ export const storage = {
 export async function loadData(key) {
   try {
     const r = await storage.get(key)
-    return r ? JSON.parse(r.value) : {}
+    if (!r) return null   // ← return null (not {}) so || fallbacks work correctly
+    return JSON.parse(r.value)
   } catch {
-    return {}
+    return null
   }
 }
 
