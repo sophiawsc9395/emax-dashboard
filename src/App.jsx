@@ -189,8 +189,8 @@ function StatusTag({status}){
   const bg    = isDir?"#F5F3FF":isConf?"#F0FDF4":"#EFF6FF";
   const color = isDir?"#6D28D9":isConf?"#15803D":"#1D4ED8";
   const base  = isDir?"Director":isConf?"Confirmed":"Probation";
-  const pm = status.match(/Passed\s*(\d+)/i);
-  const fm = status.match(/Failed\s*(\d+)/i);
+  const pm = status.match(/\bP(\d+)\b/) || status.match(/Passed\s*(\d+)/i);
+  const fm = status.match(/\bF(\d+)\b/) || status.match(/Failed\s*(\d+)/i);
   const passed = pm ? parseInt(pm[1]) : null;
   const failed = fm ? parseInt(fm[1]) : null;
   return <span style={{display:"inline-flex",alignItems:"center",gap:5,background:bg,color,padding:"2px 10px",borderRadius:20,fontSize:10,fontWeight:600,whiteSpace:"nowrap"}}>
@@ -244,7 +244,7 @@ function EC({value,onSave,color="#1E6FDB"}){
 }
 
 // ─── SR TABLE ──────────────────────────────────────────────
-function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days}){
+function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days,rewardBalance=0}){
   const target=targets?.sr?.[sr.id]?.target||0,bonus=targets?.sr?.[sr.id]?.bonus||0;
   const rows=days.map(d=>{const k=`${d}/${month}/${year}`,v=records[k]?.[sr.id]||{};return{day:d,wi:v.walkin||0,ae:v.aeon||0};});
   const tWI=rows.reduce((s,r)=>s+r.wi,0),tAE=rows.reduce((s,r)=>s+r.ae,0),total=tWI+tAE;
@@ -352,11 +352,15 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days}
 
       {/* Reward Points */}
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2,marginTop:2}}>
-        <span style={{color:"#8A96A8"}}>Reward Points</span>
+        <span style={{color:"#8A96A8"}}>Reward Points (This Month)</span>
         {(branchPct>=100&&p>=110)
           ? <span style={{fontWeight:700,color:"#1E6FDB"}}>{calcRewardPoints(p,branchPct).toLocaleString()} pts</span>
           : <span style={{color:"#8A96A8"}}>—</span>
         }
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
+        <span style={{color:"#8A96A8"}}>Reward Points Balance</span>
+        <span style={{fontWeight:800,color:"#0A1628"}}>{rewardBalance.toLocaleString()} pts</span>
       </div>
       {(branchPct>=100&&p>=110)&&(()=>{
         const pts=calcRewardPoints(p,branchPct);
@@ -387,7 +391,7 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days}
 }
 
 // ─── BM TABLE ──────────────────────────────────────────────
-function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,month,year,days}){
+function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,month,year,days,rewardBalance=0}){
   const meta=branchMeta[branchId]||{},bSRs=srList.filter(s=>s.branch===branchId);
   const target=targets?.bm?.[branchId]||0,bmBonus=targets?.bmBonus?.[branchId]||0;
   const rows=days.map(d=>{
@@ -500,11 +504,15 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
 
       {/* Reward Points — BM needs branch 100%+ and own achievement 110%+ */}
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2,marginTop:2}}>
-        <span style={{color:"#8A96A8"}}>Reward Points</span>
+        <span style={{color:"#8A96A8"}}>Reward Points (This Month)</span>
         {(p>=100&&p>=110)
           ? <span style={{fontWeight:700,color:"#1E6FDB"}}>{calcRewardPoints(p,p).toLocaleString()} pts</span>
           : <span style={{color:"#8A96A8"}}>—</span>
         }
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
+        <span style={{color:"#8A96A8"}}>Reward Points Balance</span>
+        <span style={{fontWeight:800,color:"#0A1628"}}>{rewardBalance.toLocaleString()} pts</span>
       </div>
       {(p>=100&&p>=110)&&(()=>{
         const pts=calcRewardPoints(p,p);
@@ -672,7 +680,7 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
     const s=status.toLowerCase(),isDir=s.includes("director"),isConf=s.includes("confirmed");
     const bg=isDir?"#F5F3FF":isConf?"#F0FDF4":"#EFF6FF",color=isDir?"#6D28D9":isConf?"#15803D":"#1D4ED8";
     const base=isDir?"Director":isConf?"Confirmed":"Probation";
-    const pm=status.match(/Passed\s*(\d+)/i),fm=status.match(/Failed\s*(\d+)/i);
+    const pm=status.match(/\bP(\d+)\b/)||status.match(/Passed\s*(\d+)/i),fm=status.match(/\bF(\d+)\b/)||status.match(/Failed\s*(\d+)/i);
     const passed=pm?parseInt(pm[1]):null,failed=fm?parseInt(fm[1]):null;
     return <span style={{display:"inline-flex",alignItems:"center",gap:4,background:bg,color,padding:"1px 8px",borderRadius:20,fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>
       {base}
@@ -1008,12 +1016,12 @@ function TargetModal({targets,setTargets,srList,branchMeta,onClose}){
 }
 
 // ─── SR/BM MANAGEMENT MODAL ────────────────────────────────
-function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose}){
+function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBalances,setOpeningBalance}){
   const [tab,setTab]=useState("bm");
   const [localBM,setLocalBM]=useState(JSON.parse(JSON.stringify(branchMeta)));
   const [localSR,setLocalSR]=useState(JSON.parse(JSON.stringify(srList)));
   const [editSR,setEditSR]=useState(null);
-  const [newSR,setNewSR]=useState({id:"",canon:"",branch:"KM",type:"Online",status:"Probation In Progress"});
+  const [newSR,setNewSR]=useState({id:"",canon:"",branch:"KM",type:"Online",status:"Probation (P0 F0)"});
   const [filterBranch,setFilterBranch]=useState("ALL");
   const [saved,setSaved]=useState(false);
   const [srSaved,setSRSaved]=useState(false);
@@ -1028,7 +1036,13 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose}){
   const updateSR=async(id,field,val)=>{const updated=localSR.map(s=>s.id===id?{...s,[field]:val}:s);setLocalSR(updated);await saveSR(updated);};
   const removeSR=async(id)=>{if(!confirm("Remove this SR?"))return;const updated=localSR.filter(s=>s.id!==id);setLocalSR(updated);await saveSR(updated);};
   const filteredSR=filterBranch==="ALL"?localSR:localSR.filter(s=>s.branch===filterBranch);
-  const statusOptions=["Probation In Progress","Probation (Passed 1)","Probation (Passed 2)","Probation (Passed 3)","Probation (Passed 4)","Probation (Passed 5)","Confirmed","Confirmed (Passed 1)","Confirmed (Passed 2)","Confirmed (Passed 3)","Confirmed (Passed 4)","Confirmed (Passed 5)","Director"];
+  const statusBaseOptions=["Probation","Confirmed","Director"];
+  const parseStatus=(s)=>{
+    const m=(s||"").match(/^(Probation|Confirmed|Director)\s*(?:\(P(\d+)\s*F(\d+)\))?/i);
+    if(!m)return{base:"Probation",p:0,f:0};
+    return{base:m[1],p:parseInt(m[2]||0),f:parseInt(m[3]||0)};
+  };
+  const buildStatus=(base,p,f)=>base==="Director"?"Director":`${base} (P${p} F${f})`;
   return <div className="modal-overlay">
     <div style={{background:"#fff",borderRadius:16,width:"100%",maxWidth:860,maxHeight:"92vh",overflow:"auto"}}>
       <div style={{padding:"18px 24px",borderBottom:"1px solid #E4EAF2",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,background:"#fff",zIndex:1}}>
@@ -1054,7 +1068,14 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose}){
                 <label style={{fontSize:10,fontWeight:700,color:"#8A96A8",display:"block",marginBottom:3,textTransform:"uppercase",letterSpacing:"0.05em"}}>Manager Name</label>
                 <input className="input" value={localBM[b]?.manager||""} onChange={e=>setLocalBM(p=>({...p,[b]:{...p[b],manager:e.target.value}}))} style={{marginBottom:8,fontSize:12}}/>
                 <label style={{fontSize:10,fontWeight:700,color:"#8A96A8",display:"block",marginBottom:3,textTransform:"uppercase",letterSpacing:"0.05em"}}>Status</label>
-                <input className="input" value={localBM[b]?.mStatus||""} onChange={e=>setLocalBM(p=>({...p,[b]:{...p[b],mStatus:e.target.value}}))} style={{fontSize:12}}/>
+                <input className="input" value={localBM[b]?.mStatus||""} onChange={e=>setLocalBM(p=>({...p,[b]:{...p[b],mStatus:e.target.value}}))} style={{fontSize:12,marginBottom:8}}/>
+                <label style={{fontSize:10,fontWeight:700,color:"#F5A623",display:"block",marginBottom:3,textTransform:"uppercase",letterSpacing:"0.05em"}}>🏆 Reward Points Balance</label>
+                <input type="number" className="input" defaultValue={rewardBalances?.[`BM_${b}`]?.balance||0}
+                  onBlur={e=>setOpeningBalance(`BM_${b}`,e.target.value,rewardBalances?.[`BM_${b}`]?.asOf||"")}
+                  style={{fontSize:12,marginBottom:4}}/>
+                <input type="text" className="input" placeholder="As at DD/MM/YYYY" defaultValue={rewardBalances?.[`BM_${b}`]?.asOf||""}
+                  onBlur={e=>setOpeningBalance(`BM_${b}`,rewardBalances?.[`BM_${b}`]?.balance||0,e.target.value)}
+                  style={{fontSize:11}}/>
               </div>
             ))}
           </div>
@@ -1097,10 +1118,21 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose}){
                 </select>
               </div>
               <div style={{gridColumn:"1/-1"}}>
-                <label style={{fontSize:10,fontWeight:700,color:"#8A96A8",display:"block",marginBottom:3,textTransform:"uppercase",letterSpacing:"0.05em"}}>Status</label>
-                <select className="input select" value={newSR.status} onChange={e=>setNewSR(p=>({...p,status:e.target.value}))} style={{fontSize:12}}>
-                  {statusOptions.map(s=><option key={s} value={s}>{s}</option>)}
-                </select>
+                <label style={{fontSize:10,fontWeight:700,color:"#8A96A8",display:"block",marginBottom:3,textTransform:"uppercase",letterSpacing:"0.05em"}}>Employment Status</label>
+                {(()=>{
+                  const ps=parseStatus(newSR.status);
+                  return <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <select className="input select" value={ps.base} onChange={e=>setNewSR(p=>({...p,status:buildStatus(e.target.value,ps.p,ps.f)}))} style={{width:"auto",minWidth:110,padding:"4px 24px 4px 8px",fontSize:12}}>
+                      {statusBaseOptions.map(s=><option key={s} value={s}>{s}</option>)}
+                    </select>
+                    {ps.base!=="Director"&&<>
+                      <label style={{fontSize:11,color:"#8A96A8"}}>P</label>
+                      <input type="number" min="0" className="input" value={ps.p} onChange={e=>setNewSR(p=>({...p,status:buildStatus(ps.base,Math.max(0,parseInt(e.target.value)||0),ps.f)}))} style={{width:54,padding:"4px 6px",fontSize:12,textAlign:"center"}}/>
+                      <label style={{fontSize:11,color:"#8A96A8"}}>F</label>
+                      <input type="number" min="0" className="input" value={ps.f} onChange={e=>setNewSR(p=>({...p,status:buildStatus(ps.base,ps.p,Math.max(0,parseInt(e.target.value)||0))}))} style={{width:54,padding:"4px 6px",fontSize:12,textAlign:"center"}}/>
+                    </>}
+                  </div>;
+                })()}
               </div>
             </div>
             <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:12}}>
@@ -1111,7 +1143,7 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose}){
           <div className="card" style={{overflow:"hidden"}}>
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
               <thead><tr style={{background:"#0A1628"}}>
-                {["ID","Name","Branch","Type","Status",""].map(h=>(
+                {["ID","Name","Branch","Type","Status","Points Balance",""].map(h=>(
                   <th key={h} style={{padding:"9px 14px",textAlign:"left",fontWeight:700,fontSize:10,color:"rgba(255,255,255,.7)",textTransform:"uppercase",letterSpacing:"0.06em"}}>{h}</th>
                 ))}
               </tr></thead>
@@ -1138,9 +1170,25 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose}){
                     </select>
                   </td>
                   <td style={{padding:"8px 14px"}}>
-                    <select className="input select" value={sr.status} onChange={e=>updateSR(sr.id,"status",e.target.value)} style={{width:"auto",minWidth:160,padding:"4px 24px 4px 8px",fontSize:11}}>
-                      {statusOptions.map(s=><option key={s} value={s}>{s}</option>)}
-                    </select>
+                    {(()=>{
+                      const ps=parseStatus(sr.status);
+                      return <div style={{display:"flex",gap:4,alignItems:"center"}}>
+                        <select className="input select" value={ps.base} onChange={e=>updateSR(sr.id,"status",buildStatus(e.target.value,ps.p,ps.f))} style={{width:"auto",minWidth:96,padding:"4px 20px 4px 6px",fontSize:11}}>
+                          {statusBaseOptions.map(s=><option key={s} value={s}>{s}</option>)}
+                        </select>
+                        {ps.base!=="Director"&&<>
+                          <span style={{fontSize:10,color:"#8A96A8"}}>P</span>
+                          <input type="number" min="0" className="input" value={ps.p} onChange={e=>updateSR(sr.id,"status",buildStatus(ps.base,Math.max(0,parseInt(e.target.value)||0),ps.f))} style={{width:40,padding:"4px 4px",fontSize:11,textAlign:"center"}}/>
+                          <span style={{fontSize:10,color:"#8A96A8"}}>F</span>
+                          <input type="number" min="0" className="input" value={ps.f} onChange={e=>updateSR(sr.id,"status",buildStatus(ps.base,ps.p,Math.max(0,parseInt(e.target.value)||0)))} style={{width:40,padding:"4px 4px",fontSize:11,textAlign:"center"}}/>
+                        </>}
+                      </div>;
+                    })()}
+                  </td>
+                  <td style={{padding:"8px 14px"}}>
+                    <input type="number" className="input" defaultValue={rewardBalances?.[sr.id]?.balance||0}
+                      onBlur={e=>setOpeningBalance(sr.id,e.target.value,rewardBalances?.[sr.id]?.asOf||"")}
+                      style={{width:90,padding:"4px 8px",fontSize:11}}/>
                   </td>
                   <td style={{padding:"8px 14px",textAlign:"right"}}>
                     <button className="btn btn-danger" onClick={()=>removeSR(sr.id)}>Remove</button>
@@ -1449,8 +1497,11 @@ export default function App(){
     }
     return null;
   },[records,days,month,year]);
-  const rankingPeriod = lastDataDay ? `1/${month}/${year} – ${lastDataDay}/${month}/${year}` : `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][month-1]} ${year}`;
+  const pad2=(n)=>String(n).padStart(2,"0");
+  const rankingPeriod = lastDataDay ? `${pad2(1)}/${pad2(month)}/${year}-${pad2(lastDataDay)}/${pad2(month)}/${year}` : `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][month-1]} ${year}`;
   const [repairRefresh,setRepairRefresh] = useState(0);
+  const [rewardBalances,setRewardBalances] = useState({});
+  const [lockedMonths,setLockedMonths] = useState({});
   const [showTargetModal,setShowTargetModal] = useState(false);
   const [showSRModal,setShowSRModal]         = useState(false);
   const [printBranch,setPrintBranch]         = useState(null);
@@ -1478,7 +1529,8 @@ export default function App(){
     setSelStartDay(1);
     setSelEndDay(daysInMonth(selMonth,selYear));
     const snapKey=`emax_v5_status_${selYear}_${selMonth}`;
-    Promise.all([loadData(recordsKey),loadData(TARGET_KEY),loadData(SR_KEY),loadData(BM_KEY),loadData(snapKey)]).then(([r,t,srData,bmData,snap])=>{
+    const monthKey=`${selYear}_${selMonth}`;
+    Promise.all([loadData(recordsKey),loadData(TARGET_KEY),loadData(SR_KEY),loadData(BM_KEY),loadData(snapKey),loadData("emax_v5_reward_balance"),loadData("emax_v5_locked_months")]).then(([r,t,srData,bmData,snap,rb,lm])=>{
       setRecords(r||{});
       const baseSR=(srData&&Array.isArray(srData)&&srData.length>0)?srData:DEFAULT_SR;
       // Overlay historical status snapshot if viewing a past month
@@ -1491,6 +1543,8 @@ export default function App(){
       if(bmData&&Object.keys(bmData).length>0)setBranchMeta({...DEFAULT_BRANCH_META,...bmData});
       if(t&&t.bm)setTargets({bm:{...DEFAULT_TARGETS.bm,...t.bm},bmBonus:{...DEFAULT_TARGETS.bmBonus,...(t.bmBonus||{})},sr:{...DEFAULT_TARGETS.sr,...t.sr}});
       else setTargets(DEFAULT_TARGETS);
+      setRewardBalances(rb||{});
+      setLockedMonths(lm||{});
       setLoading(false);
     });
   },[selMonth,selYear]);
@@ -1501,6 +1555,44 @@ export default function App(){
     if(!nr[dateKey][srId])nr[dateKey][srId]={walkin:0,aeon:0,unalloc:0,repair:0};
     nr[dateKey][srId][field]=value;
     setRecords(nr);await saveData(recordsKey,nr);
+  };
+
+  // ─── REWARD POINTS: lock a branch's month, crediting all SR + BM earned points to balance ───
+  const monthKeyStr=`${selYear}_${selMonth}`;
+  const isBranchLocked=(branchId)=>!!lockedMonths[monthKeyStr]?.[branchId];
+  const lockBranchMonth=async(branchId)=>{
+    if(isBranchLocked(branchId)){alert("This branch's "+selMonth+"/"+selYear+" report is already locked.");return;}
+    const bSRs=srList.filter(s=>s.branch===branchId);
+    const bTarget=targets?.bm?.[branchId]||0,bTotal=fullMonthBranchTotals[branchId]?.total||0;
+    const branchPct=pctN(bTotal,bTarget);
+    const updates={...rewardBalances};
+    // SR points
+    bSRs.forEach(sr=>{
+      const srTarget=targets?.sr?.[sr.id]?.target||0;
+      let wi=0,ae=0;
+      days.forEach(d=>{const k=`${d}/${selMonth}/${selYear}`;wi+=(records[k]?.[sr.id]?.walkin||0);ae+=(records[k]?.[sr.id]?.aeon||0);});
+      const srTotal=wi+ae,srPct=pctN(srTotal,srTarget);
+      const earned=calcRewardPoints(srPct,branchPct);
+      const cur=updates[sr.id]||{balance:0,asOf:""};
+      updates[sr.id]={...cur,balance:(cur.balance||0)+earned};
+    });
+    // BM points
+    const bmEarned=calcRewardPoints(branchPct,branchPct);
+    const bmKey=`BM_${branchId}`;
+    const curBM=updates[bmKey]||{balance:0,asOf:""};
+    updates[bmKey]={...curBM,balance:(curBM.balance||0)+bmEarned};
+
+    setRewardBalances(updates);
+    await saveData("emax_v5_reward_balance",updates);
+    const newLocked={...lockedMonths,[monthKeyStr]:{...(lockedMonths[monthKeyStr]||{}),[branchId]:true}};
+    setLockedMonths(newLocked);
+    await saveData("emax_v5_locked_months",newLocked);
+    alert(`${branchId} — ${selMonth}/${selYear} locked. Reward points credited to balance.`);
+  };
+  const setOpeningBalance=async(personId,balance,asOf)=>{
+    const updates={...rewardBalances,[personId]:{balance:Number(balance)||0,asOf}};
+    setRewardBalances(updates);
+    await saveData("emax_v5_reward_balance",updates);
   };
   const handleSaveTargets=async(t)=>{setTargets(t);await saveData(TARGET_KEY,t);};
 
@@ -1517,6 +1609,21 @@ export default function App(){
     });
     return t;
   },[records,srList,selStartDay,selEndDay,month,year]);
+
+  // Full-month branch totals (NOT period-filtered) — Monthly Report always uses this
+  const fullMonthBranchTotals=useMemo(()=>{
+    const t={};
+    BRANCH_ORDER.forEach(b=>{
+      const bSRs=srList.filter(s=>s.branch===b);let wi=0,ae=0;
+      days.forEach(d=>{
+        const k=`${d}/${month}/${year}`,day=records[k]||{};
+        bSRs.forEach(sr=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});
+        wi+=(day[`BM_${b}`]?.walkin||0);ae+=(day[`BM_${b}`]?.aeon||0);wi+=(day[`BM_${b}`]?.unalloc||0);
+      });
+      t[b]={wi,ae,total:wi+ae};
+    });
+    return t;
+  },[records,srList,days,month,year]);
 
   const srTotals=useMemo(()=>{
     const t={};
@@ -1605,6 +1712,17 @@ export default function App(){
           </div>
         </div>
         <div style={{display:"flex",gap:4,alignItems:"center",flexShrink:0}}>
+          {/* Reward Points Summary */}
+          {(()=>{
+            const totalPts=Object.values(rewardBalances).reduce((s,r)=>s+(r?.balance||0),0);
+            return <div style={{display:"flex",alignItems:"center",gap:5,padding:"4px 10px",background:"rgba(245,166,35,.12)",border:"1px solid rgba(245,166,35,.3)",borderRadius:7,marginRight:4}}>
+              <span style={{fontSize:13}}>🏆</span>
+              <div>
+                <div style={{fontSize:8,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.08em",lineHeight:1}}>Network Points</div>
+                <div style={{fontSize:12,fontWeight:800,color:"#F5A623",lineHeight:1.3}}>{totalPts.toLocaleString()}</div>
+              </div>
+            </div>;
+          })()}
           {/* Month/Year/EndDay Picker */}
           <div style={{display:"flex",gap:4,alignItems:"center"}}>
             <select value={selMonth} onChange={e=>setSelMonth(Number(e.target.value))}
@@ -1673,24 +1791,24 @@ export default function App(){
               </button>
             ))}
           </div>
-          <button className="btn btn-primary" onClick={()=>setPrintBranch(selBranch)} style={{fontSize:11}}>Download {selBranch} Report</button>
+          <div style={{display:"flex",gap:8}}>
+            {isBranchLocked(selBranch)
+              ? <span style={{padding:"6px 14px",background:"#F0FDF4",color:"#15803D",borderRadius:7,fontSize:11,fontWeight:700,display:"flex",alignItems:"center",gap:5}}>🔒 Locked — Points Credited</span>
+              : <button className="btn btn-ghost" onClick={()=>{if(confirm(`Lock ${selBranch} for ${selMonth}/${selYear}? This credits all SR + BM reward points earned this month to their running balance. This cannot be undone.`))lockBranchMonth(selBranch);}} style={{fontSize:11}}>🔒 Lock Month & Credit Points</button>}
+            <button className="btn btn-primary" onClick={()=>setPrintBranch(selBranch)} style={{fontSize:11}}>Download {selBranch} Report</button>
+          </div>
         </div>
-        <div style={{padding:"8px 14px",background:"#FFFBEB",borderRadius:8,fontSize:11,color:"#92400E",border:"1px solid #FDE68A",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <span>Click any Walk In or Invoice figure to edit inline. Press Enter or click outside to save.</span>
-          {(selStartDay!==1||selEndDay!==days[days.length-1])&&(
-            <span style={{fontWeight:700,color:"#1E6FDB",marginLeft:12,whiteSpace:"nowrap"}}>
-              Period: {selStartDay}/{month} – {selEndDay}/{month}
-            </span>
-          )}
+        <div style={{padding:"8px 14px",background:"#F7F9FC",borderRadius:8,fontSize:11,color:"#4A5568",border:"1px solid #E4EAF2",marginBottom:14}}>
+          Click any Walk In or Invoice figure to edit inline. Press Enter or click outside to save. Monthly Report always shows the full month, regardless of the Overview period filter.
         </div>
         {(()=>{
           const bSRs=srList.filter(s=>s.branch===selBranch);
-          const bTarget=targets?.bm?.[selBranch]||0,bTotal=branchTotals[selBranch]?.total||0;
+          const bTarget=targets?.bm?.[selBranch]||0,bTotal=fullMonthBranchTotals[selBranch]?.total||0;
           const branchPct=pctN(bTotal,bTarget);
           return <div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14,alignItems:"start"}}>
-              {bSRs.map(sr=><SRTable key={sr.id} sr={sr} records={records} targets={targets} branchPct={branchPct} onEdit={handleEdit} printMode={false} month={month} year={year} days={periodDays}/>)}
-              <BMTable branchId={selBranch} records={records} targets={targets} srList={srList} branchMeta={branchMeta} onEdit={handleEdit} printMode={false} month={month} year={year} days={periodDays}/>
+              {bSRs.map(sr=><SRTable key={sr.id} sr={sr} records={records} targets={targets} branchPct={branchPct} onEdit={handleEdit} printMode={false} month={month} year={year} days={days} rewardBalance={rewardBalances[sr.id]?.balance||0}/>)}
+              <BMTable branchId={selBranch} records={records} targets={targets} srList={srList} branchMeta={branchMeta} onEdit={handleEdit} printMode={false} month={month} year={year} days={days} rewardBalance={rewardBalances[`BM_${selBranch}`]?.balance||0}/>
             </div>
             {/* PDF Upload for all SR invoice */}
             <div style={{marginTop:22}}>
@@ -1714,7 +1832,7 @@ export default function App(){
     </div>
 
     {showTargetModal&&<TargetModal targets={targets} setTargets={handleSaveTargets} srList={srList} branchMeta={branchMeta} onClose={()=>setShowTargetModal(false)}/>}
-    {showSRModal&&<SRBMModal srList={srList} setSrList={setSrList} branchMeta={branchMeta} setBranchMeta={setBranchMeta} onClose={()=>setShowSRModal(false)}/>}
+    {showSRModal&&<SRBMModal srList={srList} setSrList={setSrList} branchMeta={branchMeta} setBranchMeta={setBranchMeta} onClose={()=>setShowSRModal(false)} rewardBalances={rewardBalances} setOpeningBalance={setOpeningBalance}/>}
     {printBranch&&<PrintBranchReport branchId={printBranch} records={records} targets={targets} srList={srList} branchMeta={branchMeta} onClose={()=>setPrintBranch(null)} month={month} year={year} days={days}/>}
   </div>;
 }

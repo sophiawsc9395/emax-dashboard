@@ -109,7 +109,7 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
     const s=status.toLowerCase(),isDir=s.includes("director"),isConf=s.includes("confirmed");
     const bg=isDir?"#F5F3FF":isConf?"#F0FDF4":"#EFF6FF",color=isDir?"#6D28D9":isConf?"#15803D":"#1D4ED8";
     const base=isDir?"Director":isConf?"Confirmed":"Probation";
-    const pm=status.match(/Passed\s*(\d+)/i),fm=status.match(/Failed\s*(\d+)/i);
+    const pm=status.match(/\bP(\d+)\b/)||status.match(/Passed\s*(\d+)/i),fm=status.match(/\bF(\d+)\b/)||status.match(/Failed\s*(\d+)/i);
     const passed=pm?parseInt(pm[1]):null,failed=fm?parseInt(fm[1]):null;
     return <span style={{display:"inline-flex",alignItems:"center",gap:4,background:bg,color,padding:"1px 8px",borderRadius:20,fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>
       {base}
@@ -214,15 +214,17 @@ export default function App(){
   const [bMeta,setBMeta]=useState(DEFAULT_BRANCH_META);
   const [loading,setLoading]=useState(true);
   const [tab,setTab]=useState('overview');
+  const [rewardBalances,setRewardBalances]=useState({});
   const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
   useEffect(()=>{
     setLoading(true);setRecords({});
-    Promise.all([loadData(recordsKey),loadData(TARGET_KEY),loadData(SR_KEY),loadData(BM_KEY)]).then(([r,t,srData,bmData])=>{
+    Promise.all([loadData(recordsKey),loadData(TARGET_KEY),loadData(SR_KEY),loadData(BM_KEY),loadData("emax_v5_reward_balance")]).then(([r,t,srData,bmData,rb])=>{
       setRecords(r||{});
       if(t?.bm)setTargets({bm:{...DEFAULT_TARGETS.bm,...t.bm},bmBonus:{...DEFAULT_TARGETS.bmBonus,...(t.bmBonus||{})},sr:{...DEFAULT_TARGETS.sr,...t.sr}});
       if(srData&&Array.isArray(srData)&&srData.length>0)setSrList(srData.filter(s=>s.branch===BRANCH_ID));
       if(bmData&&Object.keys(bmData).length>0)setBMeta(p=>({...p,...bmData}));
+      setRewardBalances(rb||{});
       setLoading(false);
     });
   },[selMonth,selYear]);
@@ -317,6 +319,16 @@ export default function App(){
           <div style={{width:1,height:16,background:"rgba(255,255,255,.1)",margin:"0 4px"}}/>
         </div>
         <div style={{display:"flex",gap:4,alignItems:"center"}}>
+          {(()=>{
+            const totalPts=(rewardBalances[`BM_${BRANCH_ID}`]?.balance||0)+srList.reduce((s,sr)=>s+(rewardBalances[sr.id]?.balance||0),0);
+            return <div style={{display:"flex",alignItems:"center",gap:5,padding:"4px 10px",background:"rgba(245,166,35,.12)",border:"1px solid rgba(245,166,35,.3)",borderRadius:7,marginRight:2}}>
+              <span style={{fontSize:13}}>🏆</span>
+              <div>
+                <div style={{fontSize:8,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.08em",lineHeight:1}}>{BRANCH_ID} Points</div>
+                <div style={{fontSize:12,fontWeight:800,color:"#F5A623",lineHeight:1.3}}>{totalPts.toLocaleString()}</div>
+              </div>
+            </div>;
+          })()}
           <select value={selMonth} onChange={e=>setSelMonth(Number(e.target.value))}
             style={{padding:"4px 8px",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,fontSize:11,background:"rgba(255,255,255,.1)",color:"#fff",outline:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600}}>
             {MONTHS.map((m,i)=><option key={i+1} value={i+1} style={{background:"#0A1628",color:"#fff"}}>{m}</option>)}
@@ -374,6 +386,10 @@ export default function App(){
           const achBonus=branchPct>=121?calcAchievementBonus(branchPct,"bm"):0;
           const pts=calcRewardPoints(branchPct,branchPct);
           return <div style={{marginTop:14,display:"flex",flexDirection:"column",gap:8}}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:11}}>
+              <span style={{color:"#8A96A8"}}>🏆 Reward Points Balance</span>
+              <span style={{fontWeight:800,color:"#0A1628"}}>{(rewardBalances[`BM_${BRANCH_ID}`]?.balance||0).toLocaleString()} pts</span>
+            </div>
             {/* Branch Achievement Bonus tier */}
             {achBonus>0&&(()=>{
               const tier=Math.floor((branchPct-121)/10);
@@ -449,8 +465,8 @@ export default function App(){
                 const bg=isDir?"#F5F3FF":isConf?"#F0FDF4":"#EFF6FF";
                 const color=isDir?"#6D28D9":isConf?"#15803D":"#1D4ED8";
                 const base=isDir?"Director":isConf?"Confirmed":"Probation";
-                const pm=(sr.status||"").match(/Passed\s*(\d+)/i);
-                const fm=(sr.status||"").match(/Failed\s*(\d+)/i);
+                const pm=(sr.status||"").match(/\bP(\d+)\b/)||(sr.status||"").match(/Passed\s*(\d+)/i);
+                const fm=(sr.status||"").match(/\bF(\d+)\b/)||(sr.status||"").match(/Failed\s*(\d+)/i);
                 const passed=pm?parseInt(pm[1]):null;
                 const failed=fm?parseInt(fm[1]):null;
                 return <span style={{display:"inline-flex",alignItems:"center",gap:5,background:bg,color,padding:"2px 10px",borderRadius:20,fontSize:10,fontWeight:600,whiteSpace:"nowrap"}}>
@@ -541,8 +557,12 @@ export default function App(){
                 </div>;
               })()}
               <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2,marginTop:2}}>
-                <span style={{color:"#8A96A8"}}>Reward Points</span>
+                <span style={{color:"#8A96A8"}}>Reward Points (This Month)</span>
                 {pts>0?<span style={{fontWeight:700,color:"#1E6FDB"}}>{pts.toLocaleString()} pts</span>:<span style={{color:"#8A96A8"}}>—</span>}
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
+                <span style={{color:"#8A96A8"}}>Reward Points Balance</span>
+                <span style={{fontWeight:800,color:"#0A1628"}}>{(rewardBalances[sr.id]?.balance||0).toLocaleString()} pts</span>
               </div>
               {pts>0&&(()=>{
                 const TIERS=[[110,500],[120,1000],[130,1500],[140,2000],[150,3000],[160,4500],[170,6000],[180,7500],[190,9000],[200,12000]];

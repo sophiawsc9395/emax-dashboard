@@ -187,8 +187,12 @@ function SRCard({sr,records,targets,branchPct,month,year,days,bMeta}){
         {achBonus>0?<span style={{fontWeight:700,color:"#F5A623"}}>{fRM(achBonus)}</span>:<span style={{color:"#8A96A8"}}>—</span>}
       </div>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11}}>
-        <span style={{color:"#8A96A8"}}>Reward Points</span>
+        <span style={{color:"#8A96A8"}}>Reward Points (This Month)</span>
         {pts>0?<span style={{fontWeight:700,color:"#1E6FDB"}}>{pts.toLocaleString()} pts</span>:<span style={{color:"#8A96A8"}}>—</span>}
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginTop:2}}>
+        <span style={{color:"#8A96A8"}}>Reward Points Balance</span>
+        <span style={{fontWeight:800,color:"#0A1628"}}>{rewardBalance.toLocaleString()} pts</span>
       </div>
       {/* REPAIR */}
       {tab==="repair"&&<div className="fade-in">
@@ -364,6 +368,7 @@ export default function App(){
   const [bMeta,setBMeta]=useState(DEFAULT_BRANCH_META);
   const [loading,setLoading]=useState(true);
   const [repairData,setRepairData]=useState({});
+  const [rewardBalances,setRewardBalances]=useState({});
 
   useEffect(()=>{
     setLoading(true);setRecords({});
@@ -378,7 +383,8 @@ export default function App(){
       loadData("emax_v5_branch_meta"),
       loadData(snapKey),
       loadData(repKey),
-    ]).then(([r,t,srData,bmData,snap,rep])=>{
+      loadData("emax_v5_reward_balance"),
+    ]).then(([r,t,srData,bmData,snap,rep,rb])=>{
       setRecords(r||{});
       const baseSR=(srData&&Array.isArray(srData)&&srData.length>0)?srData:DEFAULT_SR;
       if(snap&&Object.keys(snap).length>0){
@@ -386,6 +392,7 @@ export default function App(){
         setSrList(merged.filter(sr=>sr.active!==false));
       } else setSrList(baseSR);
       if(bmData&&Object.keys(bmData).length>0)setBMeta({...DEFAULT_BRANCH_META,...bmData});
+      setRewardBalances(rb||{});
       if(t?.bm)setTargets({bm:{...DEFAULT_TARGETS.bm,...t.bm},bmBonus:{...DEFAULT_TARGETS.bmBonus,...(t.bmBonus||{})},sr:{...DEFAULT_TARGETS.sr,...t.sr}});
       else setTargets(DEFAULT_TARGETS);
       setRepairData(rep||{});
@@ -473,6 +480,16 @@ export default function App(){
             </div>
           </div>
           <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0}}>
+            {(()=>{
+              const totalPts=Object.values(rewardBalances).reduce((s,r)=>s+(r?.balance||0),0);
+              return <div style={{display:"flex",alignItems:"center",gap:5,padding:"4px 10px",background:"rgba(245,166,35,.12)",border:"1px solid rgba(245,166,35,.3)",borderRadius:7,marginRight:2}}>
+                <span style={{fontSize:13}}>🏆</span>
+                <div>
+                  <div style={{fontSize:8,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.08em",lineHeight:1}}>Network Points</div>
+                  <div style={{fontSize:12,fontWeight:800,color:"#F5A623",lineHeight:1.3}}>{totalPts.toLocaleString()}</div>
+                </div>
+              </div>;
+            })()}
             <select value={selMonth} onChange={e=>setSelMonth(Number(e.target.value))}
               style={{padding:"4px 8px",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,fontSize:11,background:"rgba(255,255,255,.1)",color:"#fff",outline:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600}}>
               {MONTHS.map((m,i)=><option key={i+1} value={i+1} style={{background:"#0A1628",color:"#fff"}}>{m}</option>)}
@@ -595,7 +612,7 @@ export default function App(){
           const bTot=BRANCH_ORDER.includes(selBranch)?branchTotals[selBranch]?.total||0:0;
           const branchPct=pctN(bTot,bTarget);
           return <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14,alignItems:"start"}}>
-            {bSRs.map(sr=><SRCard key={sr.id} sr={sr} records={records} targets={targets} branchPct={branchPct} month={month} year={year} days={periodDays} bMeta={bMeta}/>)}
+            {bSRs.map(sr=><SRCard key={sr.id} sr={sr} records={records} targets={targets} branchPct={branchPct} month={month} year={year} days={periodDays} bMeta={bMeta} rewardBalance={rewardBalances[sr.id]?.balance||0}/>)}
           </div>;
         })()}
         <PdfDownloads month={month} year={year}/>
