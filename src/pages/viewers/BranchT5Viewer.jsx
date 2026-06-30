@@ -123,11 +123,11 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
 
   const medals=["🥇","🥈","🥉"];
   return <div style={{marginBottom:24,display:"flex",flexDirection:"column",height:"100%"}}>
-    <div style={{marginBottom:10,minHeight:36}}>
+    <div style={{marginBottom:10,minHeight:36,flexShrink:0}}>
       <h3 style={{fontSize:13,fontWeight:800,color:"#0A1628",textTransform:"uppercase",letterSpacing:"0.05em",margin:0}}>{title}</h3>
       <div style={{fontSize:10,color:"#8A96A8",fontWeight:500,marginTop:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{period?`Period: ${period}`:"\u00A0"}</div>
     </div>
-    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+    <div style={{display:"flex",flexDirection:"column",gap:6,flex:1}}>
       {rows.map((r,i)=>{
         const p=pctN(r.profit,r.target),branchPct=r.branchPct||p,color=achColor(r.profit,r.target);
         const achBonus=branchPct>=121&&p>=100?calcAchievementBonus(branchPct,r.role||"sr"):0;
@@ -139,6 +139,7 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
           borderRadius:10,padding:"10px 14px",
           boxShadow:isTop?"0 2px 8px rgba(10,22,40,.2)":"0 1px 3px rgba(10,22,40,.04)",
           display:"flex",alignItems:"center",gap:12,
+          minHeight:60,
         }}>
           {/* Rank */}
           <div style={{flexShrink:0,width:32,textAlign:"center"}}>
@@ -155,10 +156,10 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
             </div>
           </div>
           {/* Achievement */}
-          <div style={{flexShrink:0,textAlign:"right"}}>
-            {r.target>0&&<div style={{fontWeight:800,fontSize:14,color:isTop?color:color}}>{pctN(r.profit,r.target).toFixed(1)}%</div>}
-            {showBonus&&achBonus>0&&<div style={{fontSize:10,color:"#F5A623",fontWeight:700}}>{fRM(achBonus)}</div>}
-            {showPoints&&pts>0&&<div style={{fontSize:10,color:isTop?"#93C5FD":"#1E6FDB",fontWeight:700}}>{pts.toLocaleString()} pts</div>}
+          <div style={{flexShrink:0,textAlign:"right",display:"flex",flexDirection:"column",gap:2,minWidth:64}}>
+            <div style={{fontWeight:800,fontSize:14,color:isTop?color:color,lineHeight:1.2}}>{r.target>0?pctN(r.profit,r.target).toFixed(1)+"%":"—"}</div>
+            {showBonus&&<div style={{fontSize:10,fontWeight:700,lineHeight:1.2,color:achBonus>0?"#F5A623":(isTop?"rgba(255,255,255,.25)":"#CDD5E0")}}>{achBonus>0?fRM(achBonus):"—"}</div>}
+            {showPoints&&<div style={{fontSize:10,fontWeight:700,lineHeight:1.2,color:pts>0?(isTop?"#93C5FD":"#1E6FDB"):(isTop?"rgba(255,255,255,.25)":"#CDD5E0")}}>{pts>0?pts.toLocaleString()+" pts":"—"}</div>}
           </div>
         </div>;
       })}

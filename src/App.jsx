@@ -228,7 +228,7 @@ function SectionHeader({title,subtitle,action}){
 }
 
 // ─── EDITABLE CELL ─────────────────────────────────────────
-function EC({value,onSave,color="#1E6FDB"}){
+function EC({value,onSave,color="#4A5568"}){
   const [editing,setEditing]=useState(false);
   const [val,setVal]=useState("");
   if(editing)return <td style={{padding:"2px 6px",background:"#FFFBEB",textAlign:"right"}}>
@@ -278,8 +278,8 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days,
           {printMode
             ?<><td style={{padding:"4px 12px",textAlign:"right",fontSize:11,color:wi!==0?"#4A5568":"#E4EAF2",fontWeight:wi!==0?500:300}}>{wi!==0?f2(wi):"—"}</td>
                <td style={{padding:"4px 12px",textAlign:"right",fontSize:11,color:ae!==0?"#4A5568":"#E4EAF2",fontWeight:ae!==0?500:300}}>{ae!==0?f2(ae):"—"}</td></>
-            :<><EC value={wi} color="#1E6FDB" onSave={v=>onEdit(dk,sr.id,"walkin",v)}/>
-               <EC value={ae} color="#7C5CFC" onSave={v=>onEdit(dk,sr.id,"aeon",v)}/></>
+            :<><EC value={wi} color="#4A5568" onSave={v=>onEdit(dk,sr.id,"walkin",v)}/>
+               <EC value={ae} color="#4A5568" onSave={v=>onEdit(dk,sr.id,"aeon",v)}/></>
           }
           <td style={{padding:"4px 12px",textAlign:"right",fontWeight:rt!==0?600:300,fontSize:11,color:rt>0?"#0A1628":rt<0?"#F0354B":"#E4EAF2"}}>{rt!==0?f2(rt):"—"}</td>
         </tr>;
@@ -710,6 +710,7 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
           borderRadius:10,padding:"10px 14px",
           boxShadow:isTop?"0 2px 8px rgba(10,22,40,.2)":"0 1px 3px rgba(10,22,40,.04)",
           display:"flex",alignItems:"center",gap:12,
+          minHeight:60,
         }}>
           {/* Rank */}
           <div style={{flexShrink:0,width:32,textAlign:"center"}}>
@@ -726,10 +727,10 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
             </div>
           </div>
           {/* Achievement */}
-          <div style={{flexShrink:0,textAlign:"right"}}>
-            {r.target>0&&<div style={{fontWeight:800,fontSize:14,color:isTop?color:color}}>{pctN(r.profit,r.target).toFixed(1)}%</div>}
-            {showBonus&&achBonus>0&&<div style={{fontSize:10,color:"#F5A623",fontWeight:700}}>{fRM(achBonus)}</div>}
-            {showPoints&&pts>0&&<div style={{fontSize:10,color:isTop?"#93C5FD":"#1E6FDB",fontWeight:700}}>{pts.toLocaleString()} pts</div>}
+          <div style={{flexShrink:0,textAlign:"right",display:"flex",flexDirection:"column",gap:2,minWidth:64}}>
+            <div style={{fontWeight:800,fontSize:14,color:isTop?color:color,lineHeight:1.2}}>{r.target>0?pctN(r.profit,r.target).toFixed(1)+"%":"—"}</div>
+            {showBonus&&<div style={{fontSize:10,fontWeight:700,lineHeight:1.2,color:achBonus>0?"#F5A623":(isTop?"rgba(255,255,255,.25)":"#CDD5E0")}}>{achBonus>0?fRM(achBonus):"—"}</div>}
+            {showPoints&&<div style={{fontSize:10,fontWeight:700,lineHeight:1.2,color:pts>0?(isTop?"#93C5FD":"#1E6FDB"):(isTop?"rgba(255,255,255,.25)":"#CDD5E0")}}>{pts>0?pts.toLocaleString()+" pts":"—"}</div>}
           </div>
         </div>;
       })}
@@ -1467,6 +1468,54 @@ function PdfDownloads({month,year}){
   </div>;
 }
 
+function PointsHistoryModal({srList,branchMeta,rewardBalances,rewardHistory,onClose}){
+  const people=[
+    ...BRANCH_ORDER.map(b=>({id:`BM_${b}`,name:branchMeta[b]?.manager||b,role:`${b} — Branch Manager`})),
+    ...srList.map(sr=>({id:sr.id,name:sr.canon,role:`${sr.branch} — ${sr.type} SR`}))
+  ];
+  const [selPerson,setSelPerson]=useState(people[0]?.id);
+  const person=people.find(p=>p.id===selPerson);
+  const balance=rewardBalances[selPerson]?.balance||0;
+  const history=(rewardHistory[selPerson]||[]).slice().reverse();
+
+  return <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+    <div style={{background:"#fff",borderRadius:16,width:"100%",maxWidth:600,maxHeight:"85vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"18px 24px",borderBottom:"1px solid #E4EAF2"}}>
+        <h2 style={{fontSize:15,fontWeight:800,color:"#0A1628",margin:0}}>🏆 Reward Points Balance</h2>
+        <button className="btn btn-ghost" onClick={onClose} style={{padding:"6px 14px"}}>Close</button>
+      </div>
+      <div style={{padding:"16px 24px",borderBottom:"1px solid #E4EAF2"}}>
+        <select className="input select" value={selPerson} onChange={e=>setSelPerson(e.target.value)} style={{fontSize:13,padding:"8px 28px 8px 12px"}}>
+          {people.map(p=><option key={p.id} value={p.id}>{p.name} — {p.role}</option>)}
+        </select>
+      </div>
+      <div style={{padding:"16px 24px",background:"linear-gradient(135deg,#0A1628,#162B52)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <div style={{fontSize:10,color:"rgba(255,255,255,.5)",textTransform:"uppercase",letterSpacing:"0.08em"}}>{person?.name}</div>
+          <div style={{fontSize:11,color:"rgba(255,255,255,.35)",marginTop:2}}>Current Balance</div>
+        </div>
+        <div style={{fontSize:24,fontWeight:800,color:"#F5A623"}}>{balance.toLocaleString()} pts</div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"12px 24px"}}>
+        {history.length===0
+          ? <div style={{padding:"32px 0",textAlign:"center",color:"#8A96A8",fontSize:12}}>No transaction history yet.</div>
+          : history.map((h,i)=>(
+            <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:i<history.length-1?"1px solid #F0F2F5":"none"}}>
+              <div>
+                <div style={{fontSize:12,fontWeight:600,color:"#0A1628"}}>{h.note}</div>
+                <div style={{fontSize:10,color:"#8A96A8",marginTop:2}}>{new Date(h.date).toLocaleString("en-MY",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})}</div>
+              </div>
+              <div style={{fontSize:13,fontWeight:800,color:h.amount>=0?"#00C896":"#F0354B",whiteSpace:"nowrap"}}>
+                {h.amount>=0?"+":""}{h.amount.toLocaleString()} pts
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </div>;
+}
+
 export default function App(){
   // Month/year selection — default to current month
   const now = new Date();
@@ -1484,6 +1533,8 @@ export default function App(){
   const [branchMeta,setBranchMeta] = useState(DEFAULT_BRANCH_META);
   const [loading,setLoading]       = useState(true);
   const [tab,setTab]               = useState("overview");
+  const [sidebarOpen,setSidebarOpen] = useState(true);
+  const [showPointsModal,setShowPointsModal] = useState(false);
   const [selBranch,setSelBranch]   = useState("KM");
   const [selStartDay,setSelStartDay] = useState(1);
   const [selEndDay,setSelEndDay]   = useState(()=>daysInMonth(new Date().getMonth()+1,new Date().getFullYear()));
@@ -1716,30 +1767,25 @@ export default function App(){
         {/* Row 1: Logo + Tabs + Controls */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",minHeight:48,gap:8,flexWrap:"wrap"}}>
         <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+          <button onClick={()=>setSidebarOpen(o=>!o)} title={sidebarOpen?"Collapse menu":"Expand menu"}
+            style={{display:"flex",alignItems:"center",justifyContent:"center",width:30,height:30,border:"1px solid rgba(255,255,255,.15)",borderRadius:7,background:"rgba(255,255,255,.06)",cursor:"pointer",flexShrink:0}}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
           <div>
             <div style={{fontWeight:900,fontSize:12,color:"#fff",letterSpacing:"0.06em",lineHeight:1}}>EMAX NETWORK</div>
-          </div>
-          <div style={{width:1,height:18,background:"rgba(255,255,255,.1)"}}/>
-          <div style={{display:"flex",gap:2,flexWrap:"wrap"}}>
-            {TABS.map(t=>(
-              <button key={t.id} onClick={()=>setTab(t.id)} className="nav-item" style={{padding:"4px 10px",border:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600,fontSize:10,
-                background:tab===t.id?"rgba(255,255,255,.1)":"transparent",color:tab===t.id?"#fff":"rgba(255,255,255,.4)",borderRadius:6,whiteSpace:"nowrap"}}>
-                {t.label}
-              </button>
-            ))}
           </div>
         </div>
         <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",rowGap:6}}>
           {/* Reward Points Summary */}
           {(()=>{
             const totalPts=Object.values(rewardBalances).reduce((s,r)=>s+(r?.balance||0),0);
-            return <div style={{display:"flex",alignItems:"center",gap:5,padding:"4px 8px",background:"rgba(245,166,35,.12)",border:"1px solid rgba(245,166,35,.3)",borderRadius:7}}>
+            return <button onClick={()=>setShowPointsModal(true)} style={{display:"flex",alignItems:"center",gap:5,padding:"4px 8px",background:"rgba(245,166,35,.12)",border:"1px solid rgba(245,166,35,.3)",borderRadius:7,cursor:"pointer",fontFamily:"Inter,sans-serif"}}>
               <span style={{fontSize:13}}>🏆</span>
-              <div>
+              <div style={{textAlign:"left"}}>
                 <div style={{fontSize:8,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.08em",lineHeight:1,whiteSpace:"nowrap"}}>Network Points</div>
                 <div style={{fontSize:12,fontWeight:800,color:"#F5A623",lineHeight:1.3}}>{totalPts.toLocaleString()}</div>
               </div>
-            </div>;
+            </button>;
           })()}
           {/* Month/Year Picker */}
           <div style={{display:"flex",gap:4,alignItems:"center"}}>
@@ -1771,7 +1817,29 @@ export default function App(){
       </div>
     </div>
 
-    <div style={{maxWidth:1400,margin:"0 auto",padding:"20px"}}>
+    <div style={{display:"flex",maxWidth:1400,margin:"0 auto"}}>
+      {/* SIDEBAR */}
+      <div style={{
+        width:sidebarOpen?180:0,flexShrink:0,overflow:"hidden",
+        transition:"width .2s ease",background:"#0F1B30",borderRight:sidebarOpen?"1px solid #1C2D4A":"none",
+        minHeight:"calc(100vh - 49px)",position:"sticky",top:49,alignSelf:"flex-start",
+      }}>
+        <div style={{width:180,padding:"16px 10px"}}>
+          {TABS.map(t=>(
+            <button key={t.id} onClick={()=>setTab(t.id)} style={{
+              display:"flex",alignItems:"center",width:"100%",textAlign:"left",padding:"9px 12px",marginBottom:3,
+              border:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600,fontSize:12,borderRadius:8,
+              background:tab===t.id?"rgba(255,255,255,.1)":"transparent",color:tab===t.id?"#fff":"rgba(255,255,255,.45)",
+              transition:"background .15s",
+            }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* MAIN CONTENT */}
+      <div style={{flex:1,minWidth:0,padding:"20px",maxWidth:1220}}>
       {/* OVERVIEW */}
       {tab==="overview"&&<div className="fade-in">
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:12,marginBottom:20}}>
@@ -1845,11 +1913,12 @@ export default function App(){
       {/* REPAIR */}
       {tab==="repair"&&<RepairTab month={month} year={year} endDay={selEndDay} refreshKey={repairRefresh}/>}
 
-    
-    </div>
+      </div>{/* end main content */}
+    </div>{/* end flex layout */}
 
     {showTargetModal&&<TargetModal targets={targets} setTargets={handleSaveTargets} srList={srList} branchMeta={branchMeta} onClose={()=>setShowTargetModal(false)}/>}
     {showSRModal&&<SRBMModal srList={srList} setSrList={setSrList} branchMeta={branchMeta} setBranchMeta={setBranchMeta} onClose={()=>setShowSRModal(false)} rewardBalances={rewardBalances} setOpeningBalance={setOpeningBalance}/>}
     {printBranch&&<PrintBranchReport branchId={printBranch} records={records} targets={targets} srList={srList} branchMeta={branchMeta} onClose={()=>setPrintBranch(null)} month={month} year={year} days={days}/>}
+    {showPointsModal&&<PointsHistoryModal srList={srList} branchMeta={branchMeta} rewardBalances={rewardBalances} rewardHistory={rewardHistory} onClose={()=>setShowPointsModal(false)}/>}
   </div>;
 }

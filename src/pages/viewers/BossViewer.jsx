@@ -265,7 +265,7 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
     const s=status.toLowerCase(),isDir=s.includes("director"),isConf=s.includes("confirmed");
     const bg=isDir?"#F5F3FF":isConf?"#F0FDF4":"#EFF6FF",color=isDir?"#6D28D9":isConf?"#15803D":"#1D4ED8";
     const base=isDir?"Director":isConf?"Confirmed":"Probation";
-    const pm=status.match(/Passed\s*(\d+)/i),fm=status.match(/Failed\s*(\d+)/i);
+    const pm=status.match(/\bP(\d+)\b/)||status.match(/Passed\s*(\d+)/i),fm=status.match(/\bF(\d+)\b/)||status.match(/Failed\s*(\d+)/i);
     const passed=pm?parseInt(pm[1]):null,failed=fm?parseInt(fm[1]):null;
     return <span style={{display:"inline-flex",alignItems:"center",gap:4,background:bg,color,padding:"1px 8px",borderRadius:20,fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>
       {base}
@@ -279,11 +279,11 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
 
   const medals=["🥇","🥈","🥉"];
   return <div style={{marginBottom:24,display:"flex",flexDirection:"column",height:"100%"}}>
-    <div style={{marginBottom:10,minHeight:36}}>
+    <div style={{marginBottom:10,minHeight:36,flexShrink:0}}>
       <h3 style={{fontSize:13,fontWeight:800,color:"#0A1628",textTransform:"uppercase",letterSpacing:"0.05em",margin:0}}>{title}</h3>
       <div style={{fontSize:10,color:"#8A96A8",fontWeight:500,marginTop:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{period?`Period: ${period}`:"\u00A0"}</div>
     </div>
-    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+    <div style={{display:"flex",flexDirection:"column",gap:6,flex:1}}>
       {rows.map((r,i)=>{
         const p=pctN(r.profit,r.target),branchPct=r.branchPct||p,color=achColor(r.profit,r.target);
         const achBonus=branchPct>=121&&p>=100?calcAchievementBonus(branchPct,r.role||"sr"):0;
@@ -295,6 +295,7 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
           borderRadius:10,padding:"10px 14px",
           boxShadow:isTop?"0 2px 8px rgba(10,22,40,.2)":"0 1px 3px rgba(10,22,40,.04)",
           display:"flex",alignItems:"center",gap:12,
+          minHeight:60,
         }}>
           {/* Rank */}
           <div style={{flexShrink:0,width:32,textAlign:"center"}}>
@@ -311,10 +312,10 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
             </div>
           </div>
           {/* Achievement */}
-          <div style={{flexShrink:0,textAlign:"right"}}>
-            {r.target>0&&<div style={{fontWeight:800,fontSize:14,color:isTop?color:color}}>{pctN(r.profit,r.target).toFixed(1)}%</div>}
-            {showBonus&&achBonus>0&&<div style={{fontSize:10,color:"#F5A623",fontWeight:700}}>{fRM(achBonus)}</div>}
-            {showPoints&&pts>0&&<div style={{fontSize:10,color:isTop?"#93C5FD":"#1E6FDB",fontWeight:700}}>{pts.toLocaleString()} pts</div>}
+          <div style={{flexShrink:0,textAlign:"right",display:"flex",flexDirection:"column",gap:2,minWidth:64}}>
+            <div style={{fontWeight:800,fontSize:14,color:isTop?color:color,lineHeight:1.2}}>{r.target>0?pctN(r.profit,r.target).toFixed(1)+"%":"—"}</div>
+            {showBonus&&<div style={{fontSize:10,fontWeight:700,lineHeight:1.2,color:achBonus>0?"#F5A623":(isTop?"rgba(255,255,255,.25)":"#CDD5E0")}}>{achBonus>0?fRM(achBonus):"—"}</div>}
+            {showPoints&&<div style={{fontSize:10,fontWeight:700,lineHeight:1.2,color:pts>0?(isTop?"#93C5FD":"#1E6FDB"):(isTop?"rgba(255,255,255,.25)":"#CDD5E0")}}>{pts>0?pts.toLocaleString()+" pts":"—"}</div>}
           </div>
         </div>;
       })}
@@ -358,6 +359,55 @@ function PdfDownloads({month,year}){
   </div>;
 }
 
+function PointsHistoryModal({srList,bMeta,rewardBalances,rewardHistory,onClose}){
+  const people=[
+    ...BRANCH_ORDER.map(b=>({id:`BM_${b}`,name:bMeta[b]?.manager||b,role:`${b} — Branch Manager`})),
+    ...srList.map(sr=>({id:sr.id,name:sr.canon,role:`${sr.branch} — ${sr.type} SR`}))
+  ];
+  const [selPerson,setSelPerson]=useState(people[0]?.id);
+  const person=people.find(p=>p.id===selPerson);
+  const balance=rewardBalances[selPerson]?.balance||0;
+  const history=(rewardHistory[selPerson]||[]).slice().reverse();
+
+  return <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+    <div style={{background:"#fff",borderRadius:16,width:"100%",maxWidth:600,maxHeight:"85vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"18px 24px",borderBottom:"1px solid #E4EAF2"}}>
+        <h2 style={{fontSize:15,fontWeight:800,color:"#0A1628",margin:0}}>🏆 Reward Points Balance</h2>
+        <button className="btn btn-ghost" onClick={onClose} style={{padding:"6px 14px"}}>Close</button>
+      </div>
+      <div style={{padding:"16px 24px",borderBottom:"1px solid #E4EAF2"}}>
+        <select className="input select" value={selPerson} onChange={e=>setSelPerson(e.target.value)} style={{fontSize:13,padding:"8px 28px 8px 12px"}}>
+          {people.map(p=><option key={p.id} value={p.id}>{p.name} — {p.role}</option>)}
+        </select>
+      </div>
+      <div style={{padding:"16px 24px",background:"linear-gradient(135deg,#0A1628,#162B52)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <div style={{fontSize:10,color:"rgba(255,255,255,.5)",textTransform:"uppercase",letterSpacing:"0.08em"}}>{person?.name}</div>
+          <div style={{fontSize:11,color:"rgba(255,255,255,.35)",marginTop:2}}>Current Balance</div>
+        </div>
+        <div style={{fontSize:24,fontWeight:800,color:"#F5A623"}}>{balance.toLocaleString()} pts</div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"12px 24px"}}>
+        {history.length===0
+          ? <div style={{padding:"32px 0",textAlign:"center",color:"#8A96A8",fontSize:12}}>No transaction history yet.</div>
+          : history.map((h,i)=>(
+            <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:i<history.length-1?"1px solid #F0F2F5":"none"}}>
+              <div>
+                <div style={{fontSize:12,fontWeight:600,color:"#0A1628"}}>{h.note}</div>
+                <div style={{fontSize:10,color:"#8A96A8",marginTop:2}}>{new Date(h.date).toLocaleString("en-MY",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})}</div>
+              </div>
+              <div style={{fontSize:13,fontWeight:800,color:h.amount>=0?"#00C896":"#F0354B",whiteSpace:"nowrap"}}>
+                {h.amount>=0?"+":""}{h.amount.toLocaleString()} pts
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+    {showPointsModal&&<PointsHistoryModal srList={srList} bMeta={bMeta} rewardBalances={rewardBalances} rewardHistory={rewardHistory} onClose={()=>setShowPointsModal(false)}/>}
+  </div>;
+}
+
 export default function App(){
   const now=new Date();
   const [selMonth,setSelMonth]=useState(now.getMonth()+1);
@@ -381,6 +431,8 @@ export default function App(){
   const [loading,setLoading]=useState(true);
   const [repairData,setRepairData]=useState({});
   const [rewardBalances,setRewardBalances]=useState({});
+  const [rewardHistory,setRewardHistory]=useState({});
+  const [showPointsModal,setShowPointsModal]=useState(false);
 
   useEffect(()=>{
     setLoading(true);setRecords({});
@@ -396,7 +448,8 @@ export default function App(){
       loadData(snapKey),
       loadData(repKey),
       loadData("emax_v5_reward_balance"),
-    ]).then(([r,t,srData,bmData,snap,rep,rb])=>{
+      loadData("emax_v5_reward_history"),
+    ]).then(([r,t,srData,bmData,snap,rep,rb,rh])=>{
       setRecords(r||{});
       const baseSR=(srData&&Array.isArray(srData)&&srData.length>0)?srData:DEFAULT_SR;
       if(snap&&Object.keys(snap).length>0){
@@ -405,6 +458,7 @@ export default function App(){
       } else setSrList(baseSR);
       if(bmData&&Object.keys(bmData).length>0)setBMeta({...DEFAULT_BRANCH_META,...bmData});
       setRewardBalances(rb||{});
+      setRewardHistory(rh||{});
       if(t?.bm)setTargets({bm:{...DEFAULT_TARGETS.bm,...t.bm},bmBonus:{...DEFAULT_TARGETS.bmBonus,...(t.bmBonus||{})},sr:{...DEFAULT_TARGETS.sr,...t.sr}});
       else setTargets(DEFAULT_TARGETS);
       setRepairData(rep||{});
@@ -510,13 +564,13 @@ export default function App(){
           <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",rowGap:6}}>
             {(()=>{
               const totalPts=Object.values(rewardBalances).reduce((s,r)=>s+(r?.balance||0),0);
-              return <div style={{display:"flex",alignItems:"center",gap:5,padding:"4px 10px",background:"rgba(245,166,35,.12)",border:"1px solid rgba(245,166,35,.3)",borderRadius:7,marginRight:2}}>
+              return <button onClick={()=>setShowPointsModal(true)} style={{display:"flex",alignItems:"center",gap:5,padding:"4px 10px",background:"rgba(245,166,35,.12)",border:"1px solid rgba(245,166,35,.3)",borderRadius:7,marginRight:2,cursor:"pointer",fontFamily:"Inter,sans-serif"}}>
                 <span style={{fontSize:13}}>🏆</span>
-                <div>
-                  <div style={{fontSize:8,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.08em",lineHeight:1}}>Network Points</div>
+                <div style={{textAlign:"left"}}>
+                  <div style={{fontSize:8,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.08em",lineHeight:1,whiteSpace:"nowrap"}}>Network Points</div>
                   <div style={{fontSize:12,fontWeight:800,color:"#F5A623",lineHeight:1.3}}>{totalPts.toLocaleString()}</div>
                 </div>
-              </div>;
+              </button>;
             })()}
             <select value={selMonth} onChange={e=>setSelMonth(Number(e.target.value))}
               style={{padding:"4px 8px",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,fontSize:11,background:"rgba(255,255,255,.1)",color:"#fff",outline:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600}}>
