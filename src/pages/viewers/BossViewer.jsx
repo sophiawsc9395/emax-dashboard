@@ -199,25 +199,6 @@ function SRCard({sr,records,targets,branchPct,month,year,days,bMeta,rewardBalanc
           : <span style={{color:"#5A6472"}}>—</span>
         }
       </div>
-      {(branchPct>=121&&p>=100)&&(()=>{
-        const tier=Math.floor((branchPct-121)/10);
-        const nextTierPct=121+(tier+1)*10;
-        const isMaxTier=nextTierPct>200;
-        return <div style={{background:"linear-gradient(135deg,#FFF9EB,#FFFBF0)",borderRadius:8,padding:"8px 10px",marginBottom:4,border:"1px solid #FDE68A",boxShadow:"0 1px 3px rgba(245,166,35,.1)"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-            <span style={{fontSize:10,fontWeight:700,color:"#92400E",display:"flex",alignItems:"center",gap:4}}>
-              <span style={{background:"#F5A623",color:"#fff",borderRadius:20,padding:"1px 7px",fontSize:9,fontWeight:800}}>Tier {tier+1}</span>
-              Branch {branchPct.toFixed(1)}%
-            </span>
-            <span style={{fontWeight:800,fontSize:12,color:"#D97706"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
-          </div>
-          {!isMaxTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:4,borderTop:"1px dashed #FDE68A"}}>
-            <span style={{fontSize:9,color:"#B45309"}}>Next: Tier {tier+2} at {nextTierPct}%</span>
-            <span style={{fontSize:9,fontWeight:700,color:"#B45309"}}>{fRM(calcAchievementBonus(nextTierPct,"sr"))}</span>
-          </div>}
-          {isMaxTier&&<div style={{fontSize:9,color:"#D97706",fontWeight:600,paddingTop:4,borderTop:"1px dashed #FDE68A"}}>🏆 Maximum tier reached</div>}
-        </div>;
-      })()}
 
       {/* Reward Points */}
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2,marginTop:2}}>
@@ -227,31 +208,29 @@ function SRCard({sr,records,targets,branchPct,month,year,days,bMeta,rewardBalanc
           : <span style={{color:"#5A6472"}}>—</span>
         }
       </div>
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:6}}>
         <span style={{color:"#5A6472"}}>Earned Reward Points{pointsAsOf?` (as at ${pointsAsOf})`:""}</span>
         <span style={{fontWeight:800,color:"#0A1628"}}>{rewardBalance.toLocaleString()} pts</span>
       </div>
-      {(branchPct>=100&&p>=110)&&(()=>{
+
+      {/* Compact tier progress — only shown when at least one tier is active */}
+      {((branchPct>=121&&p>=100)||(branchPct>=100&&p>=110))&&(()=>{
+        const bTier=branchPct>=121&&p>=100?Math.floor((branchPct-121)/10)+1:null;
+        const bNextPct=bTier?121+bTier*10:null;
+        const bMax=bNextPct>200;
         const pts=calcRewardPoints(p,branchPct);
         const TIERS=[[110,500],[120,1000],[130,1500],[140,2000],[150,3000],[160,4500],[170,6000],[180,7500],[190,9000],[200,12000]];
-        const curTierIdx=TIERS.reduce((acc,[t],i)=>p>=t?i:acc,-1);
-        const nextTierEntry=TIERS[curTierIdx+1]||null;
-        const isMaxTier=!nextTierEntry;
-        return <div style={{background:"linear-gradient(135deg,#EFF6FF,#F0F7FF)",borderRadius:8,padding:"8px 10px",marginBottom:4,border:"1px solid #BFDBFE",boxShadow:"0 1px 3px rgba(30,111,219,.08)"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-            <span style={{fontSize:10,fontWeight:700,color:"#1E40AF",display:"flex",alignItems:"center",gap:4}}>
-              <span style={{background:"#1E6FDB",color:"#fff",borderRadius:20,padding:"1px 7px",fontSize:9,fontWeight:800}}>
-                {curTierIdx>=0?`Tier ${curTierIdx+1}`:"Tier 1"}
-              </span>
-              SR {p.toFixed(1)}%
-            </span>
-            <span style={{fontWeight:800,fontSize:12,color:"#1E6FDB"}}>{pts.toLocaleString()} pts</span>
-          </div>
-          {!isMaxTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:4,borderTop:"1px dashed #BFDBFE"}}>
-            <span style={{fontSize:9,color:"#1E40AF"}}>Next: Tier {curTierIdx+2} at {nextTierEntry[0]}%</span>
-            <span style={{fontSize:9,fontWeight:700,color:"#1E40AF"}}>{nextTierEntry[1].toLocaleString()} pts</span>
+        const pTierIdx=branchPct>=100&&p>=110?TIERS.reduce((acc,[t],i)=>p>=t?i:acc,-1):-1;
+        const pNext=pTierIdx>=0?TIERS[pTierIdx+1]:null;
+        return <div style={{background:"#F7F9FC",borderRadius:8,padding:"8px 10px",border:"1px solid #E4EAF2",display:"flex",flexDirection:"column",gap:5}}>
+          {bTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{fontSize:10,color:"#92400E",fontWeight:600}}>Bonus Tier {bTier}{!bMax?` → next at ${bNextPct}%`:" (max)"}</span>
+            <span style={{fontSize:10,fontWeight:700,color:"#B7791F"}}>{!bMax?fRM(calcAchievementBonus(bNextPct,"sr")):"🏆"}</span>
           </div>}
-          {isMaxTier&&<div style={{fontSize:9,color:"#1E6FDB",fontWeight:600,paddingTop:4,borderTop:"1px dashed #BFDBFE"}}>🏆 Maximum tier reached</div>}
+          {pTierIdx>=0&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{fontSize:10,color:"#1E40AF",fontWeight:600}}>Points Tier {pTierIdx+1}{pNext?` → next at ${pNext[0]}%`:" (max)"}</span>
+            <span style={{fontSize:10,fontWeight:700,color:"#1E6FDB"}}>{pNext?pNext[1].toLocaleString()+" pts":"🏆"}</span>
+          </div>}
         </div>;
       })()}
 

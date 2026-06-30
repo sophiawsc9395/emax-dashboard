@@ -331,25 +331,6 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days,
           : <span style={{color:"#5A6472"}}>—</span>
         }
       </div>
-      {(branchPct>=121&&p>=100)&&(()=>{
-        const tier=Math.floor((branchPct-121)/10);
-        const nextTierPct=121+(tier+1)*10;
-        const isMaxTier=nextTierPct>200;
-        return <div style={{background:"linear-gradient(135deg,#FFF9EB,#FFFBF0)",borderRadius:8,padding:"8px 10px",marginBottom:4,border:"1px solid #FDE68A",boxShadow:"0 1px 3px rgba(245,166,35,.1)"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-            <span style={{fontSize:10,fontWeight:700,color:"#92400E",display:"flex",alignItems:"center",gap:4}}>
-              <span style={{background:"#F5A623",color:"#fff",borderRadius:20,padding:"1px 7px",fontSize:9,fontWeight:800}}>Tier {tier+1}</span>
-              Branch {branchPct.toFixed(1)}%
-            </span>
-            <span style={{fontWeight:800,fontSize:12,color:"#D97706"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
-          </div>
-          {!isMaxTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:4,borderTop:"1px dashed #FDE68A"}}>
-            <span style={{fontSize:9,color:"#B45309"}}>Next: Tier {tier+2} at {nextTierPct}%</span>
-            <span style={{fontSize:9,fontWeight:700,color:"#B45309"}}>{fRM(calcAchievementBonus(nextTierPct,"sr"))}</span>
-          </div>}
-          {isMaxTier&&<div style={{fontSize:9,color:"#D97706",fontWeight:600,paddingTop:4,borderTop:"1px dashed #FDE68A"}}>🏆 Maximum tier reached</div>}
-        </div>;
-      })()}
 
       {/* Reward Points */}
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2,marginTop:2}}>
@@ -359,31 +340,29 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days,
           : <span style={{color:"#5A6472"}}>—</span>
         }
       </div>
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:6}}>
         <span style={{color:"#5A6472"}}>Earned Reward Points{pointsAsOf?` (as at ${pointsAsOf})`:""}</span>
         <span style={{fontWeight:800,color:"#0A1628"}}>{rewardBalance.toLocaleString()} pts</span>
       </div>
-      {(branchPct>=100&&p>=110)&&(()=>{
+
+      {/* Compact tier progress — only shown when at least one tier is active */}
+      {((branchPct>=121&&p>=100)||(branchPct>=100&&p>=110))&&(()=>{
+        const bTier=branchPct>=121&&p>=100?Math.floor((branchPct-121)/10)+1:null;
+        const bNextPct=bTier?121+bTier*10:null;
+        const bMax=bNextPct>200;
         const pts=calcRewardPoints(p,branchPct);
         const TIERS=[[110,500],[120,1000],[130,1500],[140,2000],[150,3000],[160,4500],[170,6000],[180,7500],[190,9000],[200,12000]];
-        const curTierIdx=TIERS.reduce((acc,[t],i)=>p>=t?i:acc,-1);
-        const nextTierEntry=TIERS[curTierIdx+1]||null;
-        const isMaxTier=!nextTierEntry;
-        return <div style={{background:"linear-gradient(135deg,#EFF6FF,#F0F7FF)",borderRadius:8,padding:"8px 10px",marginBottom:4,border:"1px solid #BFDBFE",boxShadow:"0 1px 3px rgba(30,111,219,.08)"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-            <span style={{fontSize:10,fontWeight:700,color:"#1E40AF",display:"flex",alignItems:"center",gap:4}}>
-              <span style={{background:"#1E6FDB",color:"#fff",borderRadius:20,padding:"1px 7px",fontSize:9,fontWeight:800}}>
-                {curTierIdx>=0?`Tier ${curTierIdx+1}`:"Tier 1"}
-              </span>
-              SR {p.toFixed(1)}%
-            </span>
-            <span style={{fontWeight:800,fontSize:12,color:"#1E6FDB"}}>{pts.toLocaleString()} pts</span>
-          </div>
-          {!isMaxTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:4,borderTop:"1px dashed #BFDBFE"}}>
-            <span style={{fontSize:9,color:"#1E40AF"}}>Next: Tier {curTierIdx+2} at {nextTierEntry[0]}%</span>
-            <span style={{fontSize:9,fontWeight:700,color:"#1E40AF"}}>{nextTierEntry[1].toLocaleString()} pts</span>
+        const pTierIdx=branchPct>=100&&p>=110?TIERS.reduce((acc,[t],i)=>p>=t?i:acc,-1):-1;
+        const pNext=pTierIdx>=0?TIERS[pTierIdx+1]:null;
+        return <div style={{background:"#F7F9FC",borderRadius:8,padding:"8px 10px",border:"1px solid #E4EAF2",display:"flex",flexDirection:"column",gap:5}}>
+          {bTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{fontSize:10,color:"#92400E",fontWeight:600}}>Bonus Tier {bTier}{!bMax?` → next at ${bNextPct}%`:" (max)"}</span>
+            <span style={{fontSize:10,fontWeight:700,color:"#B7791F"}}>{!bMax?fRM(calcAchievementBonus(bNextPct,"sr")):"🏆"}</span>
           </div>}
-          {isMaxTier&&<div style={{fontSize:9,color:"#1E6FDB",fontWeight:600,paddingTop:4,borderTop:"1px dashed #BFDBFE"}}>🏆 Maximum tier reached</div>}
+          {pTierIdx>=0&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{fontSize:10,color:"#1E40AF",fontWeight:600}}>Points Tier {pTierIdx+1}{pNext?` → next at ${pNext[0]}%`:" (max)"}</span>
+            <span style={{fontSize:10,fontWeight:700,color:"#1E6FDB"}}>{pNext?pNext[1].toLocaleString()+" pts":"🏆"}</span>
+          </div>}
         </div>;
       })()}
 
@@ -1018,7 +997,41 @@ function TargetModal({targets,setTargets,srList,branchMeta,onClose}){
 }
 
 // ─── SR/BM MANAGEMENT MODAL ────────────────────────────────
-function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBalances,setOpeningBalance}){
+function AdjustBalanceWidget({personId,balance,adjustBalance}){
+  const [open,setOpen]=useState(false);
+  const [amount,setAmount]=useState("");
+  const [note,setNote]=useState("");
+  const [mode,setMode]=useState("add"); // "add" | "subtract"
+
+  const submit=async()=>{
+    const n=Math.abs(Number(amount)||0);
+    if(n===0||!note.trim()){return;}
+    await adjustBalance(personId,mode==="add"?n:-n,note.trim());
+    setAmount("");setNote("");setOpen(false);
+  };
+
+  return <div style={{position:"relative"}}>
+    <div style={{display:"flex",alignItems:"center",gap:8}}>
+      <span style={{fontWeight:800,fontSize:14,color:"#0A1628"}}>{balance.toLocaleString()} pts</span>
+      <button onClick={()=>setOpen(o=>!o)} style={{padding:"3px 10px",fontSize:11,fontWeight:700,border:"1px solid #E4EAF2",borderRadius:6,background:open?"#0A1628":"#F7F9FC",color:open?"#fff":"#4A5568",cursor:"pointer",fontFamily:"Inter,sans-serif"}}>
+        {open?"Cancel":"Adjust ±"}
+      </button>
+    </div>
+    {open&&<div style={{marginTop:8,padding:10,background:"#F7F9FC",border:"1px solid #E4EAF2",borderRadius:8}}>
+      <div style={{display:"flex",gap:6,marginBottom:6}}>
+        <button onClick={()=>setMode("add")} style={{flex:1,padding:"5px 0",fontSize:11,fontWeight:700,border:"1px solid "+(mode==="add"?"#00C896":"#E4EAF2"),borderRadius:6,background:mode==="add"?"#00C89615":"#fff",color:mode==="add"?"#00C896":"#8A96A8",cursor:"pointer",fontFamily:"Inter,sans-serif"}}>+ Add</button>
+        <button onClick={()=>setMode("subtract")} style={{flex:1,padding:"5px 0",fontSize:11,fontWeight:700,border:"1px solid "+(mode==="subtract"?"#F0354B":"#E4EAF2"),borderRadius:6,background:mode==="subtract"?"#F0354B15":"#fff",color:mode==="subtract"?"#F0354B":"#8A96A8",cursor:"pointer",fontFamily:"Inter,sans-serif"}}>− Subtract</button>
+      </div>
+      <input type="number" min="0" className="input" placeholder="Points amount" value={amount} onChange={e=>setAmount(e.target.value)} style={{fontSize:12,marginBottom:6}}/>
+      <input type="text" className="input" placeholder="Reason / description (required)" value={note} onChange={e=>setNote(e.target.value)} style={{fontSize:12,marginBottom:8}}/>
+      <button onClick={submit} disabled={!amount||!note.trim()} style={{width:"100%",padding:"7px 0",fontSize:12,fontWeight:700,border:"none",borderRadius:6,background:(!amount||!note.trim())?"#E4EAF2":"#0A1628",color:(!amount||!note.trim())?"#8A96A8":"#fff",cursor:(!amount||!note.trim())?"not-allowed":"pointer",fontFamily:"Inter,sans-serif"}}>
+        Confirm {mode==="add"?"+":"−"}{amount||0} pts
+      </button>
+    </div>}
+  </div>;
+}
+
+function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBalances,adjustBalance}){
   const [tab,setTab]=useState("bm");
   const [localBM,setLocalBM]=useState(JSON.parse(JSON.stringify(branchMeta)));
   const [localSR,setLocalSR]=useState(JSON.parse(JSON.stringify(srList)));
@@ -1084,13 +1097,8 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBala
                     </>}
                   </div>;
                 })()}
-                <label style={{fontSize:10,fontWeight:700,color:"#F5A623",display:"block",marginBottom:3,textTransform:"uppercase",letterSpacing:"0.05em"}}>🏆 Reward Points Balance</label>
-                <input type="number" className="input" defaultValue={rewardBalances?.[`BM_${b}`]?.balance||0}
-                  onBlur={e=>setOpeningBalance(`BM_${b}`,e.target.value,rewardBalances?.[`BM_${b}`]?.asOf||"")}
-                  style={{fontSize:12,marginBottom:4}}/>
-                <input type="text" className="input" placeholder="As at DD/MM/YYYY" defaultValue={rewardBalances?.[`BM_${b}`]?.asOf||""}
-                  onBlur={e=>setOpeningBalance(`BM_${b}`,rewardBalances?.[`BM_${b}`]?.balance||0,e.target.value)}
-                  style={{fontSize:11}}/>
+                <label style={{fontSize:10,fontWeight:700,color:"#F5A623",display:"block",marginBottom:5,textTransform:"uppercase",letterSpacing:"0.05em"}}>🏆 Reward Points Balance</label>
+                <AdjustBalanceWidget personId={`BM_${b}`} balance={rewardBalances?.[`BM_${b}`]?.balance||0} adjustBalance={adjustBalance}/>
               </div>
             ))}
           </div>
@@ -1200,9 +1208,7 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBala
                     })()}
                   </td>
                   <td style={{padding:"8px 14px"}}>
-                    <input type="number" className="input" defaultValue={rewardBalances?.[sr.id]?.balance||0}
-                      onBlur={e=>setOpeningBalance(sr.id,e.target.value,rewardBalances?.[sr.id]?.asOf||"")}
-                      style={{width:90,padding:"4px 8px",fontSize:11}}/>
+                    <AdjustBalanceWidget personId={sr.id} balance={rewardBalances?.[sr.id]?.balance||0} adjustBalance={adjustBalance}/>
                   </td>
                   <td style={{padding:"8px 14px",textAlign:"right"}}>
                     <button className="btn btn-danger" onClick={()=>removeSR(sr.id)}>Remove</button>
@@ -1674,18 +1680,20 @@ export default function App(){
     await saveData("emax_v5_locked_months",newLocked);
     alert(`${branchId} — ${selMonth}/${selYear} locked. Reward points credited to balance.`);
   };
-  const setOpeningBalance=async(personId,balance,asOf)=>{
+  // Manually adjust a person's points balance by +/- delta, with a required description.
+  // This appends a history entry instead of overwriting the balance.
+  const adjustBalance=async(personId,delta,note)=>{
+    const d=Number(delta)||0;
+    if(d===0)return;
     const prevBalance=rewardBalances[personId]?.balance||0;
-    const newBalance=Number(balance)||0;
-    const updates={...rewardBalances,[personId]:{balance:newBalance,asOf}};
+    const newBalance=prevBalance+d;
+    const updates={...rewardBalances,[personId]:{...(rewardBalances[personId]||{}),balance:newBalance}};
     setRewardBalances(updates);
     await saveData("emax_v5_reward_balance",updates);
-    if(newBalance!==prevBalance){
-      const hist=rewardHistory[personId]||[];
-      const newHist={...rewardHistory,[personId]:[...hist,{date:new Date().toISOString(),type:"adjustment",amount:newBalance-prevBalance,note:asOf?`Opening balance as at ${asOf}`:"Manual balance adjustment"}]};
-      setRewardHistory(newHist);
-      await saveData("emax_v5_reward_history",newHist);
-    }
+    const hist=rewardHistory[personId]||[];
+    const newHist={...rewardHistory,[personId]:[...hist,{date:new Date().toISOString(),type:"adjustment",amount:d,note:note||"Manual adjustment"}]};
+    setRewardHistory(newHist);
+    await saveData("emax_v5_reward_history",newHist);
   };
   const handleSaveTargets=async(t)=>{setTargets(t);await saveData(TARGET_KEY,t);};
 
@@ -1958,7 +1966,7 @@ export default function App(){
     </div>{/* end flex layout */}
 
     {showTargetModal&&<TargetModal targets={targets} setTargets={handleSaveTargets} srList={srList} branchMeta={branchMeta} onClose={()=>setShowTargetModal(false)}/>}
-    {showSRModal&&<SRBMModal srList={srList} setSrList={setSrList} branchMeta={branchMeta} setBranchMeta={setBranchMeta} onClose={()=>setShowSRModal(false)} rewardBalances={rewardBalances} setOpeningBalance={setOpeningBalance}/>}
+    {showSRModal&&<SRBMModal srList={srList} setSrList={setSrList} branchMeta={branchMeta} setBranchMeta={setBranchMeta} onClose={()=>setShowSRModal(false)} rewardBalances={rewardBalances} adjustBalance={adjustBalance}/>}
     {printBranch&&<PrintBranchReport branchId={printBranch} records={records} targets={targets} srList={srList} branchMeta={branchMeta} onClose={()=>setPrintBranch(null)} month={month} year={year} days={days}/>}
     {showPointsModal&&<PointsHistoryModal srList={srList} branchMeta={branchMeta} rewardBalances={rewardBalances} rewardHistory={rewardHistory} initialPerson={pointsModalPerson} onClose={()=>{setShowPointsModal(false);setPointsModalPerson(null);}}/>}
   </div>;
