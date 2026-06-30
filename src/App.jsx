@@ -267,9 +267,9 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days}
     <table style={{width:"100%",borderCollapse:"collapse"}}>
       <thead><tr>
         <th style={{...thS,textAlign:"center",width:48}}>Date</th>
-        <th style={{...thS,color:"#1E6FDB"}}>Walk In</th>
-        <th style={{...thS,color:"#7C5CFC"}}>Invoice</th>
-        <th style={{...thS,color:"#0A1628"}}>Total</th>
+        <th style={{...thS,color:"#4A5568"}}>Walk In</th>
+        <th style={{...thS,color:"#4A5568"}}>Invoice</th>
+        <th style={{...thS,color:"#4A5568"}}>Total</th>
       </tr></thead>
       <tbody>{rows.map(({day,wi,ae})=>{
         const dk=`${day}/${month}/${year}`,rt=wi+ae;
@@ -286,7 +286,7 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days}
       })}</tbody>
     </table>
     <div style={{padding:"10px 14px",background:"#F7F9FC",borderTop:"2px solid #E4EAF2"}}>
-      {[["Walk In",fRM(tWI),"#1E6FDB"],["Invoice",fRM(tAE),"#7C5CFC"],["Total Profit",fRM(total),"#0A1628"]].map(([l,v,c])=>(
+      {[["Walk In",fRM(tWI),"#4A5568"],["Invoice",fRM(tAE),"#4A5568"],["Total Profit",fRM(total),"#0A1628"]].map(([l,v,c])=>(
         <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"2px 0",fontSize:11}}>
           <span style={{color:"#8A96A8"}}>{l}</span>
           <span style={{fontWeight:700,color:c,fontSize:11}}>{v}</span>
@@ -416,9 +416,9 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
       <thead><tr>
         <th style={{...thS,textAlign:"center",width:48}}>Date</th>
         <th style={{...thS,fontSize:9}}>Unalloc.</th>
-        <th style={{...thS,color:"#1E6FDB"}}>Walk In</th>
-        <th style={{...thS,color:"#7C5CFC"}}>Invoice</th>
-        <th style={{...thS,color:"#0A1628"}}>Total</th>
+        <th style={{...thS,color:"#4A5568"}}>Walk In</th>
+        <th style={{...thS,color:"#4A5568"}}>Invoice</th>
+        <th style={{...thS,color:"#4A5568"}}>Total</th>
       </tr></thead>
       <tbody>{rows.map(({day,wi,ae,ua})=>{
         const dk=`${day}/${month}/${year}`,rt=wi+ae+ua;
@@ -435,7 +435,7 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
       })}</tbody>
     </table>
     <div style={{padding:"10px 14px",background:"#F7F9FC",borderTop:"2px solid #E4EAF2"}}>
-      {[["Unallocated",fRM(tUA),"#8A96A8"],["Walk In",fRM(tWI),"#1E6FDB"],["Invoice",fRM(tAE),"#7C5CFC"],["Total Profit",fRM(total),"#0A1628"]].map(([l,v,c])=>(
+      {[["Unallocated",fRM(tUA),"#4A5568"],["Walk In",fRM(tWI),"#4A5568"],["Invoice",fRM(tAE),"#4A5568"],["Total Profit",fRM(total),"#0A1628"]].map(([l,v,c])=>(
         <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"2px 0",fontSize:11}}>
           <span style={{color:"#8A96A8"}}>{l}</span><span style={{fontWeight:700,color:c,fontSize:11}}>{v}</span>
         </div>
@@ -600,7 +600,7 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
         </div>
       </div>
       <div style={{textAlign:"right"}}>
-        <div style={{fontSize:10,color:"#8A96A8"}}>Network Total</div>
+        <div style={{fontSize:10,color:"#8A96A8"}}>Total</div>
         <div style={{fontWeight:700,fontSize:14,color:"#0A1628"}}>{fRM(grandT)}</div>
       </div>
     </div>
@@ -610,8 +610,8 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
           <th style={TH({textAlign:"left"})}>Branch</th>
           <th style={TH()}>Monthly Target</th>
           <th style={{...TH(),background:"#0A1628",color:"rgba(255,255,255,.85)"}}>Total Profit</th>
-          <th style={{...TH(),background:"#0A1628",color:"rgba(255,255,255,.65)"}}>Walk In</th>
-          <th style={{...TH(),background:"#0A1628",color:"rgba(255,255,255,.65)"}}>Invoice</th>
+          <th style={{...TH(),background:"#0A1628",color:"rgba(255,255,255,.55)"}}>Walk In</th>
+          <th style={{...TH(),background:"#0A1628",color:"rgba(255,255,255,.55)"}}>Invoice</th>
           <th style={TH()}>Balance</th>
           <th style={TH()}>Achievement</th>
         </tr></thead>
@@ -1390,6 +1390,36 @@ function DailyEntry({records,setRecords,srList,branchMeta,month,year,days,record
 
 
 // ─── MAIN APP ──────────────────────────────────────────────
+// ─── PDF DOWNLOADS ───────────────────────────────────────────
+function PdfDownloads({month,year}){
+  const [pdfList,setPdfList]=useState([]);
+  useEffect(()=>{
+    loadData("emax_v5_pdf_index").then(idx=>{
+      const list=Array.isArray(idx)?idx:[];
+      Promise.all(list.map(k=>loadData(k))).then(pdfs=>{
+        const valid=pdfs.filter(p=>p&&p.date&&p.b64);
+        const filtered=valid.filter(p=>{const parts=p.date.split("/");return parseInt(parts[1])===month&&parseInt(parts[2])===year;});
+        const seen=new Set();
+        const deduped=filtered.filter(p=>{if(seen.has(p.name||p.date))return false;seen.add(p.name||p.date);return true;});
+        setPdfList(deduped);
+      });
+    });
+  },[month,year]);
+  if(!pdfList.length)return null;
+  return <div style={{marginTop:16,padding:"14px 16px",background:"#fff",border:"1px solid #E4EAF2",borderRadius:10}}>
+    <div style={{fontSize:11,fontWeight:700,color:"#0A1628",marginBottom:10,textTransform:"uppercase",letterSpacing:"0.06em"}}>AEON Profit Reports — Click to Download</div>
+    <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+      {pdfList.map((pdf,idx)=>(
+        <a key={idx} href={`data:application/pdf;base64,${pdf.b64}`} download={pdf.name||`AEON_${pdf.date}.pdf`}
+          style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 14px",background:"#0A1628",color:"#fff",borderRadius:7,fontSize:12,fontWeight:600,textDecoration:"none"}}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          {pdf.name||`AEON ${pdf.date}`}
+        </a>
+      ))}
+    </div>
+  </div>;
+}
+
 export default function App(){
   // Month/year selection — default to current month
   const now = new Date();
@@ -1666,6 +1696,7 @@ export default function App(){
             <div style={{marginTop:22}}>
               <div style={{fontWeight:800,fontSize:12,color:"#0A1628",marginBottom:10,paddingBottom:7,borderBottom:"1px solid #E4EAF2",textTransform:"uppercase",letterSpacing:"0.06em"}}>Daily AEON Profit Report</div>
               <UploadPanel records={records} setRecords={setRecords} srList={srList} defaultBranch={selBranch} recordsKey={recordsKey}/>
+            <PdfDownloads month={month} year={year}/>
             </div>
           </div>;
         })()}

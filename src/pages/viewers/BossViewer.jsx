@@ -141,8 +141,8 @@ function SRCard({sr,records,targets,branchPct,month,year,days,bMeta}){
     <table style={{width:"100%",borderCollapse:"collapse"}}>
       <thead><tr>
         <th style={{...thS,textAlign:"center",width:48}}>Date</th>
-        <th style={{...thS,color:"#1E6FDB"}}>Walk In</th>
-        <th style={{...thS,color:"#7C5CFC"}}>Invoice</th>
+        <th style={{...thS,color:"#4A5568"}}>Walk In</th>
+        <th style={{...thS,color:"#4A5568"}}>Invoice</th>
         <th style={{...thS,color:"#0A1628"}}>Total</th>
       </tr></thead>
       <tbody>{rows.filter(r=>r.wi>0||r.ae>0).map(({day,wi,ae})=>(
@@ -155,7 +155,7 @@ function SRCard({sr,records,targets,branchPct,month,year,days,bMeta}){
       ))}</tbody>
     </table>
     <div style={{padding:"10px 14px",background:"#F7F9FC",borderTop:"2px solid #E4EAF2"}}>
-      {[["Walk In",fRM(tWI),"#1E6FDB"],["Invoice",fRM(tAE),"#7C5CFC"],["Total",fRM(total),"#0A1628"]].map(([l,v,c])=>(
+      {[["Walk In",fRM(tWI),"#4A5568"],["Invoice",fRM(tAE),"#4A5568"],["Total",fRM(total),"#0A1628"]].map(([l,v,c])=>(
         <div key={l} style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
           <span style={{color:"#8A96A8"}}>{l}</span><span style={{fontWeight:l==="Total"?700:500,color:c}}>{v}</span>
         </div>
@@ -244,225 +244,68 @@ body{font-family:'Inter',-apple-system,sans-serif;background:#F7F9FC;color:#0A16
 `;
 
 function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
+  const StatusTagR=({status})=>{
+    if(!status)return null;
+    const s=status.toLowerCase(),isDir=s.includes("director"),isConf=s.includes("confirmed");
+    const bg=isDir?"#F5F3FF":isConf?"#F0FDF4":"#EFF6FF",color=isDir?"#6D28D9":isConf?"#15803D":"#1D4ED8";
+    const base=isDir?"Director":isConf?"Confirmed":"Probation";
+    const pm=status.match(/Passed\s*(\d+)/i),fm=status.match(/Failed\s*(\d+)/i);
+    const passed=pm?parseInt(pm[1]):null,failed=fm?parseInt(fm[1]):null;
+    return <span style={{display:"inline-flex",alignItems:"center",gap:4,background:bg,color,padding:"1px 8px",borderRadius:20,fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>
+      {base}
+      {(passed!==null||failed!==null)&&<span style={{display:"flex",gap:2}}>
+        <span style={{width:1,height:9,background:color+"50"}}/>
+        {passed!==null&&<span style={{color:"#00C896",fontWeight:800}}>P{passed}</span>}
+        {failed!==null&&<span style={{color:"#F0354B",fontWeight:800}}>F{failed}</span>}
+      </span>}
+    </span>;
+  };
 
-
-
-  // Use standalone RankingTable function (same as dashboard)
-
-  return <div style={{minHeight:"100vh",background:"#F7F9FC",fontFamily:"Inter,-apple-system,sans-serif"}}>
-    <style>{CSS}</style>
-    <div style={{background:"#0A1628",borderBottom:"1px solid #162B52",position:"sticky",top:0,zIndex:100}}>
-      <div style={{maxWidth:1400,margin:"0 auto",padding:"0 20px",display:"flex",alignItems:"center",justifyContent:"space-between",height:54,gap:12}}>
-        <div style={{display:"flex",alignItems:"center",gap:14,flexShrink:0}}>
-          <div>
-            <div style={{fontWeight:900,fontSize:13,color:"#fff",letterSpacing:"0.06em"}}>EMAX NETWORK</div>
-            <div style={{fontSize:9,color:"rgba(255,255,255,.3)",letterSpacing:"0.12em",textTransform:"uppercase"}}>All Branches · Read Only</div>
-          </div>
-          <div style={{width:1,height:22,background:"rgba(255,255,255,.1)"}}/>
-          <div style={{display:"flex",gap:2}}>
-            {TABS.map(t=>(
-              <button key={t.id} onClick={()=>setTab(t.id)} style={{padding:"5px 12px",border:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600,fontSize:11,
-                background:tab===t.id?"rgba(255,255,255,.1)":"transparent",color:tab===t.id?"#fff":"rgba(255,255,255,.4)",borderRadius:6}}>
-                {t.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div style={{display:"flex",gap:4,alignItems:"center",flexShrink:0}}>
-          <select value={selMonth} onChange={e=>setSelMonth(Number(e.target.value))}
-            style={{padding:"4px 8px",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,fontSize:11,background:"rgba(255,255,255,.1)",color:"#fff",outline:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600}}>
-            {MONTHS.map((m,i)=><option key={i+1} value={i+1} style={{background:"#0A1628",color:"#fff"}}>{m}</option>)}
-          </select>
-          <select value={selYear} onChange={e=>setSelYear(Number(e.target.value))}
-            style={{padding:"4px 8px",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,fontSize:11,background:"rgba(255,255,255,.1)",color:"#fff",outline:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600}}>
-            {[2024,2025,2026,2027,2028].map(y=><option key={y} value={y} style={{background:"#0A1628",color:"#fff"}}>{y}</option>)}
-          </select>
-          <div style={{textAlign:"right",marginLeft:6}}>
-            <div style={{fontSize:9,color:"rgba(255,255,255,.35)",textTransform:"uppercase",letterSpacing:"0.1em"}}>{MONTHS[month-1]} {year}</div>
-            <div style={{fontWeight:800,fontSize:13,color:"#fff"}}>{fRM(grandTotal)}</div>
-          </div>
-        </div>
-      </div>
+  const medals=["🥇","🥈","🥉"];
+  return <div style={{marginBottom:24}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:10}}>
+      <h3 style={{fontSize:13,fontWeight:800,color:"#0A1628",textTransform:"uppercase",letterSpacing:"0.05em"}}>{title}</h3>
+      {period&&<span style={{fontSize:10,color:"#8A96A8",fontWeight:500}}>Period: {period}</span>}
     </div>
-
-    <div style={{maxWidth:1400,margin:"0 auto",padding:20}}>
-
-      {/* OVERVIEW */}
-      {tab==="overview"&&<div className="fade-in">
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:12,marginBottom:20}}>
-          {[["Total Profit",fRM(grandTotal),"#1E6FDB"],["Monthly Target",grandTarget>0?fRM(grandTarget):"Not Set","#162B52"],
-            ["Achievement",grandTarget>0?pctN(grandTotal,grandTarget).toFixed(1)+"%":"—",achColor(grandTotal,grandTarget)]
-          ].map(([l,v,c])=>(
-            <div key={l} className="card" style={{padding:"16px 18px",borderTop:`3px solid ${c}`}}>
-              <div style={{fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4}}>{l}</div>
-              <div style={{fontSize:16,fontWeight:700,color:"#0A1628",letterSpacing:"-0.01em",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{v}</div>
-            </div>
-          ))}
-        </div>
-        <div className="card" style={{overflow:"hidden"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",borderBottom:"1px solid #E4EAF2"}}>
-            <div>
-              <h3 style={{fontWeight:800,fontSize:13,color:"#0A1628",margin:0}}>Branch Performance Report</h3>
-              <div style={{display:"flex",alignItems:"center",gap:6,marginTop:3,flexWrap:"wrap"}}>
-                <span style={{fontSize:11,color:"#8A96A8"}}>Period:</span>
-                <select value={draftStart} onChange={e=>setDraftStart(Number(e.target.value))}
-                  style={{fontSize:11,color:"#1E6FDB",fontWeight:700,border:"1px solid #E4EAF2",borderRadius:5,background:"#fff",outline:"none",cursor:"pointer",padding:"2px 4px",fontFamily:"Inter,sans-serif"}}>
-                  {days.filter(d=>d<=draftEnd).map(d=><option key={d} value={d}>{d}/{month}/{year}</option>)}
-                </select>
-                <span style={{fontSize:11,color:"#8A96A8"}}>–</span>
-                <select value={draftEnd} onChange={e=>setDraftEnd(Number(e.target.value))}
-                  style={{fontSize:11,color:"#1E6FDB",fontWeight:700,border:"1px solid #E4EAF2",borderRadius:5,background:"#fff",outline:"none",cursor:"pointer",padding:"2px 4px",fontFamily:"Inter,sans-serif"}}>
-                  {days.filter(d=>d>=draftStart).map(d=><option key={d} value={d}>{d}/{month}/{year}</option>)}
-                </select>
-                <button onClick={()=>{setSelStartDay(draftStart);setSelEndDay(draftEnd);}} 
-                  style={{padding:"3px 10px",background:"#1E6FDB",color:"#fff",border:"none",borderRadius:5,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"Inter,sans-serif"}}>Filter</button>
-                {(selStartDay!==1||selEndDay!==days[days.length-1])&&<button onClick={()=>{setDraftStart(1);setDraftEnd(days[days.length-1]);setSelStartDay(1);setSelEndDay(days[days.length-1]);}} style={{padding:"3px 10px",background:"#F7F9FC",color:"#8A96A8",border:"1px solid #E4EAF2",borderRadius:5,fontSize:11,cursor:"pointer",fontFamily:"Inter,sans-serif"}}>Reset</button>}
-              </div>
-            </div>
-            <div style={{textAlign:"right"}}>
-              <div style={{fontSize:10,color:"#8A96A8"}}>Network Total</div>
-              <div style={{fontWeight:700,fontSize:14,color:"#0A1628"}}>{fRM(grandTotal)}</div>
+    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+      {rows.map((r,i)=>{
+        const p=pctN(r.profit,r.target),branchPct=r.branchPct||p,color=achColor(r.profit,r.target);
+        const achBonus=branchPct>=121&&p>=100?calcAchievementBonus(branchPct,r.role||"sr"):0;
+        const pts=calcRewardPoints(p,branchPct);
+        const isTop=i<3;
+        return <div key={i} style={{
+          background:isTop?"linear-gradient(135deg,#0A1628,#162B52)":"#fff",
+          border:isTop?"none":"1px solid #E4EAF2",
+          borderRadius:10,padding:"10px 14px",
+          boxShadow:isTop?"0 2px 8px rgba(10,22,40,.2)":"0 1px 3px rgba(10,22,40,.04)",
+          display:"flex",alignItems:"center",gap:12,
+        }}>
+          {/* Rank */}
+          <div style={{flexShrink:0,width:32,textAlign:"center"}}>
+            {i<3
+              ? <span style={{fontSize:20,lineHeight:1}}>{medals[i]}</span>
+              : <span style={{fontWeight:800,fontSize:13,color:"#8A96A8"}}>#{i+1}</span>}
+          </div>
+          {/* Name + status */}
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontWeight:700,fontSize:12,color:isTop?"#fff":"#0A1628",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.name}</div>
+            <div style={{marginTop:2,display:"flex",gap:4,alignItems:"center",flexWrap:"wrap"}}>
+              <StatusTagR status={r.status}/>
+              {r.branch&&branchMeta&&<span style={{fontSize:9,color:isTop?"rgba(255,255,255,.4)":"#8A96A8",textTransform:"uppercase"}}>{(branchMeta[r.branch]?.name||r.branch).replace("EMAX ","")}</span>}
             </div>
           </div>
-          <div style={{overflowX:"auto"}}>
-            <table style={{width:"100%",borderCollapse:"collapse",minWidth:580}}>
-              <thead><tr>
-                <th style={TH({textAlign:"left"})}>Branch</th>
-                <th style={TH()}>Monthly Target</th>
-                <th style={{...TH(),background:"#0D3D1C",color:"rgba(255,255,255,.9)"}}>Total Profit</th>
-                <th style={{...TH(),background:"#0D3D1C",color:"rgba(255,255,255,.65)"}}>Walk In</th>
-                <th style={{...TH(),background:"#0D3D1C",color:"rgba(255,255,255,.65)"}}>Invoice</th>
-                <th style={TH()}>Balance</th>
-                <th style={TH()}>Achievement</th>
-              </tr></thead>
-              <tbody>{BRANCH_ORDER.map((b,i)=>{
-                const wi=branchTotals[b]?.wi||0,ae=branchTotals[b]?.ae||0,total=wi+ae;
-                const target=targets?.bm?.[b]||0,bal=target>0?total-target:null,over=target>0&&total>=target;
-                const p=pctN(total,target),color=achColor(total,target);
-                return <tr key={b} className="shine" style={{background:i%2===0?"#fff":"#F7F9FC"}}>
-                  <td style={TD({textAlign:"left"})}>
-                    <div style={{fontWeight:700,color:"#0A1628",textTransform:"uppercase",fontSize:12}}>{bMeta[b]?.name||b}</div>
-                    <div style={{fontSize:10,color:"#8A96A8",marginTop:1}}>{bMeta[b]?.manager}</div>
-                  </td>
-                  <td style={{...TD(),textAlign:"right",color:"#4A5568"}}>{target>0?nc(target):"—"}</td>
-                  <td style={{...TD({background:over?"#F0FDF4":"#fff"}),textAlign:"right"}}>
-                    <span style={{color:over?"#00C896":"#4A5568",fontWeight:over?600:400}}>{total>0?`RM ${nc(total)}`:"—"}</span>
-                  </td>
-                  <td style={{...TD({background:over?"#F0FDF4":"#fff"}),textAlign:"right",color:"#4A5568"}}>{wi>0?`RM ${nc(wi)}`:"—"}</td>
-                  <td style={{...TD({background:over?"#F0FDF4":"#fff"}),textAlign:"right",color:"#4A5568"}}>{ae>0?`RM ${nc(ae)}`:"—"}</td>
-                  <td style={{...TD(),textAlign:"right"}}>
-                    {bal===null?<span style={{color:"#8A96A8"}}>—</span>
-                      :bal>=0?<span style={{color:"#00C896",fontWeight:600}}>+{nc(bal)}</span>
-                      :<span style={{color:"#F0354B",fontWeight:600}}>{nc(Math.abs(bal))}</span>}
-                  </td>
-                  <td style={{...TD(),textAlign:"right"}}><AchBadge profit={total} target={target} size="md"/></td>
-                </tr>;
-              })}</tbody>
-              <tfoot><tr style={{background:"#0A1628",fontSize:12}}>
-                <td style={{padding:"9px 14px",fontWeight:600,color:"rgba(255,255,255,.6)"}}>Network Total</td>
-                <td style={{padding:"9px 14px",textAlign:"right",color:"rgba(255,255,255,.6)"}}>{grandTarget>0?nc(grandTarget):"—"}</td>
-                <td style={{padding:"9px 14px",textAlign:"right"}}>
-                  <span style={{fontWeight:600,color:grandTotal>=grandTarget?"#00C896":"rgba(255,255,255,.6)"}}>{grandTotal>0?`RM ${nc(grandTotal)}`:"—"}</span>
-                </td>
-                <td style={{padding:"9px 14px",textAlign:"right",color:"rgba(255,255,255,.6)"}}>{fRM(BRANCH_ORDER.reduce((s,b)=>s+(branchTotals[b]?.wi||0),0))}</td>
-                <td style={{padding:"9px 14px",textAlign:"right",color:"rgba(255,255,255,.6)"}}>{fRM(BRANCH_ORDER.reduce((s,b)=>s+(branchTotals[b]?.ae||0),0))}</td>
-                <td style={{padding:"9px 14px",textAlign:"right",color:grandTotal>=grandTarget?"#00C896":"rgba(255,255,255,.6)",fontWeight:grandTotal>=grandTarget?600:400}}>
-                  {grandTarget>0?(grandTotal-grandTarget>=0?"+"+nc(grandTotal-grandTarget):nc(Math.abs(grandTotal-grandTarget))):"—"}
-                </td>
-                <td style={{padding:"9px 14px",textAlign:"right"}}><AchBadge profit={grandTotal} target={grandTarget} size="md"/></td>
-              </tr></tfoot>
-            </table>
+          {/* Achievement */}
+          <div style={{flexShrink:0,textAlign:"right"}}>
+            {r.target>0&&<div style={{fontWeight:800,fontSize:14,color:isTop?color:color}}>{pctN(r.profit,r.target).toFixed(1)}%</div>}
+            {showBonus&&achBonus>0&&<div style={{fontSize:10,color:"#F5A623",fontWeight:700}}>{fRM(achBonus)}</div>}
+            {showPoints&&pts>0&&<div style={{fontSize:10,color:isTop?"#93C5FD":"#1E6FDB",fontWeight:700}}>{pts.toLocaleString()} pts</div>}
           </div>
-        </div>
-      </div>}
-
-      {/* RANKINGS */}
-      {tab==="rankings"&&<div className="fade-in" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:20}}>
-        <RankingTable title="Branch Manager Ranking" rows={bmRank} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
-        <RankingTable title="Online SR Ranking" rows={mkSRRank("Online")} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
-        <RankingTable title="Offline SR Ranking" rows={mkSRRank("Offline")} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
-      </div>}
-
-      {/* MONTHLY REPORT */}
-      {tab==="report"&&<div className="fade-in">
-        <div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:14,alignItems:"center",justifyContent:"space-between"}}>
-          <div style={{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}}>
-            <span style={{fontSize:11,fontWeight:700,color:"#8A96A8",marginRight:4,textTransform:"uppercase",letterSpacing:"0.06em"}}>Branch</span>
-            {BRANCH_ORDER.map(b=>(
-              <button key={b} onClick={()=>setSelBranch(b)} style={{padding:"4px 12px",border:"none",cursor:"pointer",borderRadius:6,fontWeight:700,fontSize:11,fontFamily:"Inter,sans-serif",
-                background:selBranch===b?"#0A1628":"#fff",color:selBranch===b?"#fff":"#4A5568",
-                outline:selBranch===b?"none":"1px solid #E4EAF2",transition:"all .15s"}}>
-                {b}
-              </button>
-            ))}
-          </div>
-        </div>
-        {(selStartDay!==1||selEndDay!==days[days.length-1])&&(
-          <div style={{background:"#EFF6FF",border:"1px solid #BFDBFE",borderRadius:8,padding:"7px 14px",marginBottom:10,fontSize:11,color:"#1E40AF",fontWeight:600}}>
-            Period: {selStartDay}/{month}/{year} – {selEndDay}/{month}/{year}
-          </div>
-        )}
-        {(()=>{
-          const bSRs=srList.filter(s=>s.branch===selBranch);
-          const bTarget=targets?.bm?.[selBranch]||0;
-          const bTot=BRANCH_ORDER.includes(selBranch)?branchTotals[selBranch]?.total||0:0;
-          const branchPct=pctN(bTot,bTarget);
-          return <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14,alignItems:"start"}}>
-            {bSRs.map(sr=><SRCard key={sr.id} sr={sr} records={records} targets={targets} branchPct={branchPct} month={month} year={year} days={periodDays} bMeta={bMeta}/>)}
-          </div>;
-        })()}
-        <PdfDownloads month={month} year={year}/>
-      </div>}
-
-      {/* REPAIR */}
-      {tab==="repair"&&<div className="fade-in">
-        <div style={{background:"#0A1628",borderRadius:12,padding:"14px 18px",marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
-          <div>
-            <h2 style={{fontWeight:800,fontSize:14,color:"#fff",margin:0}}>Repair & Service</h2>
-            <p style={{fontSize:11,color:"rgba(255,255,255,.45)",margin:0,marginTop:2}}>Excluded from sales targets</p>
-          </div>
-          <div style={{fontWeight:700,fontSize:14,color:"#7C5CFC"}}>{fRM(Object.values(repairData).reduce((s,v)=>s+(v||0),0))}</div>
-        </div>
-        <div className="card" style={{overflow:"hidden",maxWidth:480}}>
-          <div style={{padding:"12px 16px",borderBottom:"1px solid #E4EAF2",fontWeight:700,fontSize:12,color:"#0A1628",display:"flex",justifyContent:"space-between"}}>
-            <span>{MONTHS[month-1]} {year}</span>
-            <span style={{fontSize:11,color:"#8A96A8",fontWeight:400}}>{Object.keys(repairData).filter(k=>repairData[k]>0).length} days active</span>
-          </div>
-          <table style={{width:"100%",borderCollapse:"collapse"}}>
-            <thead><tr style={{background:"#F7F9FC"}}>
-              <th style={{padding:"8px 16px",fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left",borderBottom:"1px solid #E4EAF2",width:100}}>Date</th>
-              <th style={{padding:"8px 16px",fontSize:10,fontWeight:700,color:"#7C5CFC",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",borderBottom:"1px solid #E4EAF2"}}>Amount (RM)</th>
-            </tr></thead>
-            <tbody>
-              {days.filter(d=>repairData[d]>0).map(d=>(
-                <tr key={d} className="shine" style={{borderBottom:"1px solid rgba(228,234,242,.7)"}}>
-                  <td style={{padding:"7px 16px",fontSize:12,color:"#4A5568",fontWeight:600}}>{d}/{month}/{year}</td>
-                  <td style={{padding:"7px 16px",fontSize:12,textAlign:"right",fontWeight:700,color:"#7C5CFC"}}>{f2(repairData[d])}</td>
-                </tr>
-              ))}
-              {days.filter(d=>repairData[d]>0).length===0&&(
-                <tr><td colSpan={2} style={{padding:24,textAlign:"center",color:"#8A96A8",fontSize:12}}>No repair records this month</td></tr>
-              )}
-            </tbody>
-          </table>
-          <div style={{padding:"9px 16px",background:"#F7F9FC",borderTop:"2px solid #E4EAF2",display:"flex",justifyContent:"space-between",fontSize:12}}>
-            <span style={{color:"#8A96A8",fontWeight:600}}>Total</span>
-            <span style={{fontWeight:700,color:"#7C5CFC"}}>{fRM(Object.values(repairData).reduce((s,v)=>s+(v||0),0))}</span>
-          </div>
-        </div>
-      </div>}
-
+        </div>;
+      })}
     </div>
   </div>;
 }
 
-function KpiCard({label,value,sub,accent="#1E6FDB"}){
-  return <div className="card fade-in" style={{padding:"18px 20px",borderTop:`3px solid ${accent}`}}>
-    <div style={{fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>{label}</div>
-    <div style={{fontSize:16,fontWeight:700,color:"#0A1628",letterSpacing:"-0.01em",lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{value}</div>
-    {sub&&<div style={{fontSize:11,color:"#8A96A8",marginTop:4}}>{sub}</div>}
-  </div>;
-}
 
 function PdfDownloads({month,year}){
   const [pdfList,setPdfList]=useState([]);
