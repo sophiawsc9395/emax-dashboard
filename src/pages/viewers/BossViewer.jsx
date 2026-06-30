@@ -307,6 +307,14 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
 }
 
 
+function KpiCard({label,value,sub,accent="#1E6FDB"}){
+  return <div className="card fade-in" style={{padding:"18px 20px",borderTop:`3px solid ${accent}`}}>
+    <div style={{fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>{label}</div>
+    <div style={{fontSize:16,fontWeight:700,color:"#0A1628",letterSpacing:"-0.01em",lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{value}</div>
+    {sub&&<div style={{fontSize:11,color:"#8A96A8",marginTop:4}}>{sub}</div>}
+  </div>;
+}
+
 function PdfDownloads({month,year}){
   const [pdfList,setPdfList]=useState([]);
   useEffect(()=>{
