@@ -379,6 +379,7 @@ export default function App(){
             </div>
           </div>;
         })}
+      </div>
 
       <PdfDownloads month={month} year={year}/>
     </div>
