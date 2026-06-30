@@ -250,7 +250,7 @@ function PdfDownloads({month,year}){
         const valid=pdfs.filter(p=>p&&p.date&&p.b64);
         const filtered=valid.filter(p=>{
           const parts=p.date.split("/");
-          return parseInt(parts[1])===month&&parseInt(parts[2])===year;
+          return parseInt(parts[1])===month&&parseInt(parts[2])===year&&p.branch===BRANCH_ID;
         });
         // Deduplicate by filename
         const seen=new Set();

@@ -23,7 +23,6 @@ const CSS = `
   body{font-family:'Inter',-apple-system,sans-serif;background:#F7F9FC;color:#0A1628;}
   ::-webkit-scrollbar{width:5px;height:5px;}
   ::-webkit-scrollbar-thumb{background:#CDD5E0;border-radius:3px;}
-  .sidebar-rank-item:hover{background:rgba(255,255,255,.06)!important;}
   
   .card{background:#fff;border:1px solid #E4EAF2;border-radius:12px;box-shadow:0 1px 3px rgba(10,22,40,.06),0 4px 12px rgba(10,22,40,.04);transition:box-shadow .2s,transform .2s;}
   .card:hover{box-shadow:0 4px 16px rgba(10,22,40,.10);}
@@ -903,8 +902,8 @@ function UploadPanel({records,setRecords,srList,defaultBranch,recordsKey:rKey}){
     setErr("");setSaving(true);
     try{
       const b64=await fileToB64(file);
-      const pdfKey=`emax_v5_pdf_${date.replace(/\//g,"_")}`;
-      await saveData(pdfKey,{name:file.name,date,b64});
+      const pdfKey=`emax_v5_pdf_${defaultBranch}_${date.replace(/\//g,"_")}_${Date.now()}`;
+      await saveData(pdfKey,{name:file.name,date,b64,branch:defaultBranch});
       const idxKey="emax_v5_pdf_index";
       const existing=await loadData(idxKey)||[];
       const arr=Array.isArray(existing)?existing:[];
@@ -1459,23 +1458,24 @@ function DailyEntry({records,setRecords,srList,branchMeta,month,year,days,record
 
 // ─── MAIN APP ──────────────────────────────────────────────
 // ─── PDF DOWNLOADS ───────────────────────────────────────────
-function PdfDownloads({month,year}){
+function PdfDownloads({month,year,branch}){
   const [pdfList,setPdfList]=useState([]);
   useEffect(()=>{
     loadData("emax_v5_pdf_index").then(idx=>{
       const list=Array.isArray(idx)?idx:[];
       Promise.all(list.map(k=>loadData(k))).then(pdfs=>{
         const valid=pdfs.filter(p=>p&&p.date&&p.b64);
-        const filtered=valid.filter(p=>{const parts=p.date.split("/");return parseInt(parts[1])===month&&parseInt(parts[2])===year;});
+        let filtered=valid.filter(p=>{const parts=p.date.split("/");return parseInt(parts[1])===month&&parseInt(parts[2])===year;});
+        if(branch)filtered=filtered.filter(p=>p.branch===branch);
         const seen=new Set();
         const deduped=filtered.filter(p=>{if(seen.has(p.name||p.date))return false;seen.add(p.name||p.date);return true;});
         setPdfList(deduped);
       });
     });
-  },[month,year]);
+  },[month,year,branch]);
   if(!pdfList.length)return null;
   return <div style={{marginTop:16,padding:"14px 16px",background:"#fff",border:"1px solid #E4EAF2",borderRadius:10}}>
-    <div style={{fontSize:11,fontWeight:700,color:"#0A1628",marginBottom:10,textTransform:"uppercase",letterSpacing:"0.06em"}}>AEON Profit Reports — Click to Download</div>
+    <div style={{fontSize:11,fontWeight:700,color:"#0A1628",marginBottom:10,textTransform:"uppercase",letterSpacing:"0.06em"}}>AEON Profit Reports{branch?` — ${branch}`:""} — Click to Download</div>
     <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
       {pdfList.map((pdf,idx)=>(
         <a key={idx} href={`data:application/pdf;base64,${pdf.b64}`} download={pdf.name||`AEON_${pdf.date}.pdf`}
@@ -1555,7 +1555,6 @@ export default function App(){
   const [tab,setTab]               = useState("overview");
   const [sidebarOpen,setSidebarOpen] = useState(true);
   const [showPointsModal,setShowPointsModal] = useState(false);
-  const [showRankSidebar,setShowRankSidebar] = useState(false);
   const [pointsModalPerson,setPointsModalPerson] = useState(null);
   const [selBranch,setSelBranch]   = useState("KM");
   const [selStartDay,setSelStartDay] = useState(1);
@@ -1780,6 +1779,7 @@ export default function App(){
   const TABS=[
     {id:"overview",label:"Overview"},
     {id:"rankings",label:"Rankings"},
+    {id:"points",label:"Reward Point Ranking"},
     {id:"report",label:"Monthly Report"},
     {id:"daily",label:"Daily Entry"},
     {id:"repair",label:"Repair & Service"},
@@ -1840,64 +1840,8 @@ export default function App(){
     </div>
 
     <div style={{display:"flex",maxWidth:1400,margin:"0 auto"}}>
-      {/* SIDEBAR */}
-      <div style={{
-        width:sidebarOpen?220:0,flexShrink:0,overflow:"hidden",
-        transition:"width .2s ease",background:"#0F1B30",borderRight:sidebarOpen?"1px solid #1C2D4A":"none",
-        minHeight:"calc(100vh - 49px)",position:"sticky",top:49,alignSelf:"flex-start",
-      }}>
-        <div style={{width:220,padding:"16px 10px",display:"flex",flexDirection:"column",height:"calc(100vh - 49px)"}}>
-          <div style={{flexShrink:0}}>
-            {TABS.map(t=>(
-              <button key={t.id} onClick={()=>setTab(t.id)} style={{
-                display:"flex",alignItems:"center",width:"100%",textAlign:"left",padding:"9px 12px",marginBottom:3,
-                border:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600,fontSize:12,borderRadius:8,
-                background:tab===t.id?"rgba(255,255,255,.1)":"transparent",color:tab===t.id?"#fff":"rgba(255,255,255,.45)",
-                transition:"background .15s",
-              }}>
-                {t.label}
-              </button>
-            ))}
-          </div>
-          <div style={{width:"100%",height:1,background:"rgba(255,255,255,.08)",margin:"12px 0"}}/>
-          <button onClick={()=>setShowRankSidebar(o=>!o)} style={{
-            display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",padding:"8px 4px",
-            border:"none",cursor:"pointer",background:"transparent",fontFamily:"Inter,sans-serif",flexShrink:0,
-          }}>
-            <span style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,.5)",textTransform:"uppercase",letterSpacing:"0.08em",display:"flex",alignItems:"center",gap:5}}>
-              🏆 Reward Point Ranking
-            </span>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" strokeWidth="2.5" style={{transform:showRankSidebar?"rotate(180deg)":"rotate(0deg)",transition:"transform .15s"}}>
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
-          {showRankSidebar&&<div style={{flex:1,overflowY:"auto",paddingRight:2,marginTop:4}}>
-            {(()=>{
-              const allPeople=[
-                ...BRANCH_ORDER.map(b=>({id:`BM_${b}`,name:branchMeta[b]?.manager||b,sub:`${b} · BM`})),
-                ...srList.map(sr=>({id:sr.id,name:sr.canon,sub:`${sr.branch} · SR`})),
-              ];
-              const ranked=allPeople.map(p=>({...p,balance:rewardBalances[p.id]?.balance||0})).sort((a,b)=>b.balance-a.balance);
-              return ranked.map((p,i)=>(
-                <button key={p.id} onClick={()=>{setPointsModalPerson(p.id);setShowPointsModal(true);}} style={{
-                  display:"flex",alignItems:"center",gap:8,width:"100%",textAlign:"left",padding:"6px 8px",marginBottom:2,
-                  border:"none",cursor:"pointer",background:"transparent",borderRadius:6,fontFamily:"Inter,sans-serif",
-                }} className="sidebar-rank-item">
-                  <span style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,.3)",width:16,flexShrink:0}}>{i+1}</span>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:11,fontWeight:600,color:"rgba(255,255,255,.85)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.name}</div>
-                    <div style={{fontSize:9,color:"rgba(255,255,255,.3)"}}>{p.sub}</div>
-                  </div>
-                  <div style={{fontSize:11,fontWeight:800,color:"#F5A623",flexShrink:0,whiteSpace:"nowrap"}}>{p.balance.toLocaleString()}</div>
-                </button>
-              ));
-            })()}
-          </div>}
-        </div>
-      </div>
-
       {/* MAIN CONTENT */}
-      <div style={{flex:1,minWidth:0,padding:"20px",maxWidth:1220}}>
+      <div style={{flex:1,minWidth:0,padding:"20px",maxWidth:1180}}>
       {/* OVERVIEW */}
       {tab==="overview"&&<div className="fade-in">
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:12,marginBottom:20}}>
@@ -1919,6 +1863,41 @@ export default function App(){
         <RankingTable title="Branch Manager Ranking" rows={bmRanking} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
         <RankingTable title="Online SR Ranking" rows={mkSRRank("Online")} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
         <RankingTable title="Offline SR Ranking" rows={mkSRRank("Offline")} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
+      </div>}
+
+      {/* REWARD POINT RANKING */}
+      {tab==="points"&&<div className="fade-in">
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+          <h2 style={{fontSize:15,fontWeight:800,color:"#0A1628",margin:0}}>🏆 Reward Point Ranking</h2>
+          <span style={{fontSize:11,color:"#5A6472"}}>All Branch Managers and Sales Representatives, ranked by current points balance</span>
+        </div>
+        <div className="card" style={{overflow:"hidden"}}>
+          <table style={{width:"100%",borderCollapse:"collapse"}}>
+            <thead><tr style={{background:"#0A1628"}}>
+              <th style={{padding:"10px 16px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.6)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left",width:48}}>#</th>
+              <th style={{padding:"10px 16px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.6)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left"}}>Name</th>
+              <th style={{padding:"10px 16px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.6)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left"}}>Role</th>
+              <th style={{padding:"10px 16px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.85)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right"}}>Points Balance</th>
+            </tr></thead>
+            <tbody>
+              {(()=>{
+                const allPeople=[
+                  ...BRANCH_ORDER.map(b=>({id:`BM_${b}`,name:branchMeta[b]?.manager||b,role:"Branch Manager",branch:b})),
+                  ...srList.map(sr=>({id:sr.id,name:sr.canon,role:`${sr.type} SR`,branch:sr.branch})),
+                ];
+                const ranked=allPeople.map(p=>({...p,balance:rewardBalances[p.id]?.balance||0})).sort((a,b)=>b.balance-a.balance);
+                return ranked.map((p,i)=>(
+                  <tr key={p.id} className="shine-row" onClick={()=>{setPointsModalPerson(p.id);setShowPointsModal(true);}} style={{borderBottom:"1px solid #E4EAF2",background:"#fff",cursor:"pointer"}}>
+                    <td style={{padding:"10px 16px",fontWeight:800,fontSize:12,color:i<3?"#F5A623":"#8A96A8"}}>{i+1}</td>
+                    <td style={{padding:"10px 16px",fontWeight:700,fontSize:12,color:"#0A1628"}}>{p.name}</td>
+                    <td style={{padding:"10px 16px",fontSize:11,color:"#5A6472"}}>{p.role} · {p.branch}</td>
+                    <td style={{padding:"10px 16px",textAlign:"right",fontWeight:800,fontSize:13,color:"#0A1628"}}>{p.balance.toLocaleString()} pts</td>
+                  </tr>
+                ));
+              })()}
+            </tbody>
+          </table>
+        </div>
       </div>}
 
       {/* MONTHLY REPORT */}
@@ -1957,7 +1936,7 @@ export default function App(){
             <div style={{marginTop:22}}>
               <div style={{fontWeight:800,fontSize:12,color:"#0A1628",marginBottom:10,paddingBottom:7,borderBottom:"1px solid #E4EAF2",textTransform:"uppercase",letterSpacing:"0.06em"}}>Daily AEON Profit Report</div>
               <UploadPanel records={records} setRecords={setRecords} srList={srList} defaultBranch={selBranch} recordsKey={recordsKey}/>
-            <PdfDownloads month={month} year={year}/>
+            <PdfDownloads month={month} year={year} branch={selBranch}/>
             </div>
           </div>;
         })()}
@@ -1972,6 +1951,26 @@ export default function App(){
       {tab==="repair"&&<RepairTab month={month} year={year} endDay={selEndDay} refreshKey={repairRefresh}/>}
 
       </div>{/* end main content */}
+
+      {/* SIDEBAR — right side, collapsible */}
+      <div style={{
+        width:sidebarOpen?220:0,flexShrink:0,overflow:"hidden",
+        transition:"width .2s ease",background:"#0F1B30",borderLeft:sidebarOpen?"1px solid #1C2D4A":"none",
+        minHeight:"calc(100vh - 49px)",position:"sticky",top:49,alignSelf:"flex-start",
+      }}>
+        <div style={{width:220,padding:"16px 10px"}}>
+          {TABS.map(t=>(
+            <button key={t.id} onClick={()=>setTab(t.id)} style={{
+              display:"flex",alignItems:"center",width:"100%",textAlign:"left",padding:"9px 12px",marginBottom:3,
+              border:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600,fontSize:12,borderRadius:8,
+              background:tab===t.id?"rgba(255,255,255,.1)":"transparent",color:tab===t.id?"#fff":"rgba(255,255,255,.45)",
+              transition:"background .15s",
+            }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>{/* end flex layout */}
 
     {showTargetModal&&<TargetModal targets={targets} setTargets={handleSaveTargets} srList={srList} branchMeta={branchMeta} onClose={()=>setShowTargetModal(false)}/>}
