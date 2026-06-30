@@ -262,10 +262,10 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
   };
 
   const medals=["🥇","🥈","🥉"];
-  return <div style={{marginBottom:24}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:10}}>
-      <h3 style={{fontSize:13,fontWeight:800,color:"#0A1628",textTransform:"uppercase",letterSpacing:"0.05em"}}>{title}</h3>
-      {period&&<span style={{fontSize:10,color:"#8A96A8",fontWeight:500}}>Period: {period}</span>}
+  return <div style={{marginBottom:24,display:"flex",flexDirection:"column",height:"100%"}}>
+    <div style={{marginBottom:10,minHeight:36}}>
+      <h3 style={{fontSize:13,fontWeight:800,color:"#0A1628",textTransform:"uppercase",letterSpacing:"0.05em",margin:0}}>{title}</h3>
+      <div style={{fontSize:10,color:"#8A96A8",fontWeight:500,marginTop:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{period?`Period: ${period}`:"\u00A0"}</div>
     </div>
     <div style={{display:"flex",flexDirection:"column",gap:6}}>
       {rows.map((r,i)=>{

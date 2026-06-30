@@ -122,10 +122,10 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
   };
 
   const medals=["🥇","🥈","🥉"];
-  return <div style={{marginBottom:24}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:10}}>
-      <h3 style={{fontSize:13,fontWeight:800,color:"#0A1628",textTransform:"uppercase",letterSpacing:"0.05em"}}>{title}</h3>
-      {period&&<span style={{fontSize:10,color:"#8A96A8",fontWeight:500}}>Period: {period}</span>}
+  return <div style={{marginBottom:24,display:"flex",flexDirection:"column",height:"100%"}}>
+    <div style={{marginBottom:10,minHeight:36}}>
+      <h3 style={{fontSize:13,fontWeight:800,color:"#0A1628",textTransform:"uppercase",letterSpacing:"0.05em",margin:0}}>{title}</h3>
+      <div style={{fontSize:10,color:"#8A96A8",fontWeight:500,marginTop:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{period?`Period: ${period}`:"\u00A0"}</div>
     </div>
     <div style={{display:"flex",flexDirection:"column",gap:6}}>
       {rows.map((r,i)=>{
@@ -282,6 +282,11 @@ export default function App(){
     const p=pctN(profit,target);
     return{name:s.canon,status:s.status,branch:s.branch,profit,target,p,branchPct:bTotalPct,role:"sr"};
   }).sort((a,b)=>b.p-a.p);
+
+  const bmRankRows=BRANCH_ORDER.map(b=>{
+    const profit=allBranchTotals[b]?.total||0,target=targets?.bm?.[b]||0,p=pctN(profit,target);
+    return{name:bMeta[b]?.manager,status:bMeta[b]?.mStatus,branch:b,profit,target,p,branchPct:p,role:"bm"};
+  }).sort((a,b)=>b.p-a.p);
   const branchPct=pctN(bTotal.total,bTarget);
   const meta=bMeta[BRANCH_ID]||{};
 
@@ -331,6 +336,7 @@ export default function App(){
     <div style={{maxWidth:900,margin:"0 auto",padding:20}}>
 
       {tab==="rankings"&&<div className="fade-in" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:20}}>
+        <RankingTable title="Branch Manager Ranking" rows={bmRankRows} showBonus showPoints branchMeta={bMeta} period={rankingPeriod}/>
         <RankingTable title="Online SR Ranking — Company" rows={srRankRows.filter(r=>DEFAULT_SR.find(s=>s.canon===r.name)?.type==="Online")} showBonus showPoints branchMeta={bMeta} period={rankingPeriod}/>
         <RankingTable title="Offline SR Ranking — Company" rows={srRankRows.filter(r=>DEFAULT_SR.find(s=>s.canon===r.name)?.type==="Offline")} showBonus showPoints branchMeta={bMeta} period={rankingPeriod}/>
       </div>}
