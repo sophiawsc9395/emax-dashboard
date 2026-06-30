@@ -298,8 +298,7 @@ export default function App(){
               <tbody>{days.map(d=>{
                 const k=`${d}/${month}/${year}`,v=records[k]?.[sr.id]||{};
                 const wi=v.walkin||0,ae=v.aeon||0,rt=wi+ae;
-                if(wi===0&&ae===0)return null;
-                return <tr key={d} style={{borderBottom:"1px solid rgba(228,234,242,.8)",background:d%2===0?"#fff":"#F7F9FC"}}>
+                return <tr key={d} style={{borderBottom:"1px solid rgba(228,234,242,.7)",background:d%2===0?"#fff":"#F7F9FC"}}>
                   <td style={{padding:"4px 8px",color:"#4A5568",fontWeight:600,textAlign:"center",fontSize:11,borderRight:"1px solid rgba(228,234,242,.6)"}}>{d}/{month}</td>
                   <td style={{padding:"4px 12px",textAlign:"right",fontSize:11,color:wi!==0?"#4A5568":"#E4EAF2",fontWeight:wi!==0?500:300}}>{wi!==0?f2(wi):"—"}</td>
                   <td style={{padding:"4px 12px",textAlign:"right",fontSize:11,color:ae!==0?"#7C5CFC":"#E4EAF2",fontWeight:ae!==0?500:300}}>{ae!==0?f2(ae):"—"}</td>
@@ -339,7 +338,7 @@ export default function App(){
               {bonus>0&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,marginBottom:4}}>
                 <span style={{color:"#8A96A8"}}>Personal Achievement Bonus</span>
                 <span style={{fontWeight:700,color:bonusEarned?"#00C896":"#8A96A8",whiteSpace:"nowrap"}}>
-                  {bonusEarned?fRM(bonus):`${fRM(bonus)} (Pending)`}
+                  {bonusEarned?"Earned ✓":"Pending"}
                 </span>
               </div>}
               <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>

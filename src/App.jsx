@@ -361,9 +361,24 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days}
       {(branchPct>=100&&p>=110)&&(()=>{
         const pts=calcRewardPoints(p,branchPct);
         const TIERS=[[110,500],[120,1000],[130,1500],[140,2000],[150,3000],[160,4500],[170,6000],[180,7500],[190,9000],[200,12000]];
-        const nextTier=TIERS.find(([t])=>p<t);
-        return <div style={{background:"#EFF6FF",borderRadius:6,padding:"4px 8px",marginBottom:3,fontSize:10,color:"#1E40AF",border:"1px solid #BFDBFE"}}>
-          {pts.toLocaleString()} pts at SR {p.toFixed(1)}%{nextTier?` · Next: ${nextTier[1].toLocaleString()} pts at ${nextTier[0]}%`:" · Max tier"}
+        const curTierIdx=TIERS.reduce((acc,[t],i)=>p>=t?i:acc,-1);
+        const nextTierEntry=TIERS[curTierIdx+1]||null;
+        const isMaxTier=!nextTierEntry;
+        return <div style={{background:"linear-gradient(135deg,#EFF6FF,#F0F7FF)",borderRadius:8,padding:"8px 10px",marginBottom:4,border:"1px solid #BFDBFE",boxShadow:"0 1px 3px rgba(30,111,219,.08)"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+            <span style={{fontSize:10,fontWeight:700,color:"#1E40AF",display:"flex",alignItems:"center",gap:4}}>
+              <span style={{background:"#1E6FDB",color:"#fff",borderRadius:20,padding:"1px 7px",fontSize:9,fontWeight:800}}>
+                {curTierIdx>=0?`Tier ${curTierIdx+1}`:"Tier 1"}
+              </span>
+              SR {p.toFixed(1)}%
+            </span>
+            <span style={{fontWeight:800,fontSize:12,color:"#1E6FDB"}}>{pts.toLocaleString()} pts</span>
+          </div>
+          {!isMaxTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:4,borderTop:"1px dashed #BFDBFE"}}>
+            <span style={{fontSize:9,color:"#1E40AF"}}>Next: Tier {curTierIdx+2} at {nextTierEntry[0]}%</span>
+            <span style={{fontSize:9,fontWeight:700,color:"#1E40AF"}}>{nextTierEntry[1].toLocaleString()} pts</span>
+          </div>}
+          {isMaxTier&&<div style={{fontSize:9,color:"#1E6FDB",fontWeight:600,paddingTop:4,borderTop:"1px dashed #BFDBFE"}}>🏆 Maximum tier reached</div>}
         </div>;
       })()}
 
@@ -494,9 +509,24 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
       {(p>=100&&p>=110)&&(()=>{
         const pts=calcRewardPoints(p,p);
         const TIERS=[[110,500],[120,1000],[130,1500],[140,2000],[150,3000],[160,4500],[170,6000],[180,7500],[190,9000],[200,12000]];
-        const nextTier=TIERS.find(([t])=>p<t);
-        return <div style={{background:"#EFF6FF",borderRadius:6,padding:"4px 8px",marginBottom:3,fontSize:10,color:"#1E40AF",border:"1px solid #BFDBFE"}}>
-          {pts.toLocaleString()} pts at {p.toFixed(1)}%{nextTier?` · Next: ${nextTier[1].toLocaleString()} pts at ${nextTier[0]}%`:" · Max tier"}
+        const curTierIdx=TIERS.reduce((acc,[t],i)=>p>=t?i:acc,-1);
+        const nextTierEntry=TIERS[curTierIdx+1]||null;
+        const isMaxTier=!nextTierEntry;
+        return <div style={{background:"linear-gradient(135deg,#EFF6FF,#F0F7FF)",borderRadius:8,padding:"8px 10px",marginBottom:4,border:"1px solid #BFDBFE",boxShadow:"0 1px 3px rgba(30,111,219,.08)"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+            <span style={{fontSize:10,fontWeight:700,color:"#1E40AF",display:"flex",alignItems:"center",gap:4}}>
+              <span style={{background:"#1E6FDB",color:"#fff",borderRadius:20,padding:"1px 7px",fontSize:9,fontWeight:800}}>
+                {curTierIdx>=0?`Tier ${curTierIdx+1}`:"Tier 1"}
+              </span>
+              BM {p.toFixed(1)}%
+            </span>
+            <span style={{fontWeight:800,fontSize:12,color:"#1E6FDB"}}>{pts.toLocaleString()} pts</span>
+          </div>
+          {!isMaxTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:4,borderTop:"1px dashed #BFDBFE"}}>
+            <span style={{fontSize:9,color:"#1E40AF"}}>Next: Tier {curTierIdx+2} at {nextTierEntry[0]}%</span>
+            <span style={{fontSize:9,fontWeight:700,color:"#1E40AF"}}>{nextTierEntry[1].toLocaleString()} pts</span>
+          </div>}
+          {isMaxTier&&<div style={{fontSize:9,color:"#1E6FDB",fontWeight:600,paddingTop:4,borderTop:"1px dashed #BFDBFE"}}>🏆 Maximum tier reached</div>}
         </div>;
       })()}
 
@@ -579,9 +609,9 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
         <thead><tr>
           <th style={TH({textAlign:"left"})}>Branch</th>
           <th style={TH()}>Monthly Target</th>
-          <th style={{...TH(),background:"#1A3A5C",color:"rgba(255,255,255,.9)"}}>Total Profit</th>
-          <th style={{...TH(),background:"#1A3A5C",color:"rgba(255,255,255,.65)"}}>Walk In</th>
-          <th style={{...TH(),background:"#1A3A5C",color:"rgba(255,255,255,.65)"}}>Invoice</th>
+          <th style={{...TH(),background:"#0A1628",color:"rgba(255,255,255,.85)"}}>Total Profit</th>
+          <th style={{...TH(),background:"#0A1628",color:"rgba(255,255,255,.65)"}}>Walk In</th>
+          <th style={{...TH(),background:"#0A1628",color:"rgba(255,255,255,.65)"}}>Invoice</th>
           <th style={TH()}>Balance</th>
           <th style={TH()}>Achievement</th>
         </tr></thead>
@@ -598,13 +628,13 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
               <div style={{fontSize:10,color:"#8A96A8",marginTop:1}}>{branchMeta[b]?.manager}</div>
             </td>
             <td style={{...TD(),textAlign:"right"}}><span style={{color:"#4A5568"}}>{target>0?nc(target):"—"}</span></td>
-            <td style={{...TD({background:over?"#EFF6FF":"#fff"}),textAlign:"right"}}>
+            <td style={{...TD({background:"#fff"}),textAlign:"right"}}>
               <span style={{fontWeight:600,color:over?"#00C896":"#4A5568"}}>{total>0?`RM ${nc(total)}`:"—"}</span>
             </td>
-            <td style={{...TD({background:over?"#EFF6FF":"#fff"}),textAlign:"right"}}>
+            <td style={{...TD({background:"#fff"}),textAlign:"right"}}>
               <span style={{color:"#4A5568"}}>{wi!==0?`RM ${nc(wi)}`:"—"}</span>
             </td>
-            <td style={{...TD({background:over?"#EFF6FF":"#fff"}),textAlign:"right"}}>
+            <td style={{...TD({background:"#fff"}),textAlign:"right"}}>
               <span style={{color:"#4A5568"}}>{ae>0?`RM ${nc(ae)}`:"—"}</span>
             </td>
             <td style={{...TD(),textAlign:"right"}}>
@@ -746,123 +776,79 @@ function BonusReference(){
 
 // ─── REPAIR TAB ─────────────────────────────────────────────
 function RepairTab({month,year,endDay,refreshKey=0}){
+  const [repairData,setRepairData]=useState({});
+  const [loading,setLoading]=useState(true);
+  const [editing,setEditing]=useState(null);
+  const [editVal,setEditVal]=useState("");
   const days=Array.from({length:daysInMonth(month,year)},(_,i)=>i+1);
-  const [repairData, setRepairData] = useState({});
-  const [loading, setLoading]       = useState(true);
-  const [editing, setEditing]       = useState(null); // day number being edited
-  const [editVal, setEditVal]       = useState("");
+  const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
   useEffect(()=>{
     setRepairData({});
     loadData(`emax_v5_repair_${year}_${month}`).then(d=>{setRepairData(d||{});setLoading(false);});
   },[month,year,refreshKey]);
 
-  const handleSave = async(day, val) => {
-    const v = parseFloat(val)||0;
-    const updated = {...repairData};
-    if(v>0) updated[day]=v;
-    else delete updated[day];
-    setRepairData(updated);
-    setEditing(null);
-    await saveData(`emax_v5_repair_${year}_${month}`, updated);
+  const handleSave=async(day,val)=>{
+    const v=parseFloat(val)||0;
+    const updated={...repairData};
+    if(v!==0)updated[day]=v; else delete updated[day];
+    setRepairData(updated);setEditing(null);
+    await saveData(`emax_v5_repair_${year}_${month}`,updated);
   };
 
-  const total = Object.values(repairData).reduce((s,v)=>s+(v||0),0);
-  const activeDays = Object.keys(repairData).filter(d=>repairData[d]>0).length;
+  const total=Object.values(repairData).reduce((s,v)=>s+(v||0),0);
+  const activeDays=Object.keys(repairData).filter(d=>repairData[d]!==0).length;
 
-  const printRepair = () => {
-    const w = window.open("","_blank");
-    const rows = days.map(d=>{
-      const v=repairData[d]||0;
-      return v>0?`<tr><td style="text-align:center;color:#4A5568;font-weight:600">${d}/${month}/${year}</td><td style="text-align:right;font-weight:700;color:#7C5CFC">RM ${f2(v)}</td></tr>`:"";
-    }).join("");
-    w.document.write(`<!DOCTYPE html><html><head><title>Repair & Service Report</title>
-    <style>*{box-sizing:border-box;margin:0;padding:0;font-family:Inter,system-ui,sans-serif;}body{padding:24px;}
-    h2{font-size:15px;font-weight:800;color:#0A1628;margin-bottom:2px;}
-    .sub{font-size:11px;color:#8A96A8;margin-bottom:16px;}
-    table{border-collapse:collapse;width:100%;max-width:400px;font-size:12px;}
-    th{background:#3D1A78;color:rgba(255,255,255,.85);padding:8px 14px;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.07em;}
-    td{padding:8px 14px;border-bottom:1px solid #E4EAF2;}
-    tfoot td{background:#3D1A78;color:#fff;font-weight:800;}
-    @page{size:A4;margin:15mm;}</style></head><body>
-    <h2>Repair & Service Report</h2>
-    <div class="sub">Period: 1/${month}/${year} – ${endDay||month}/${month}/${year} &nbsp;|&nbsp; ${activeDays} days active</div>
-    <table>
-      <thead><tr><th>Date</th><th style="text-align:right">Amount (RM)</th></tr></thead>
-      <tbody>${rows}</tbody>
-      <tfoot><tr><td>Total</td><td style="text-align:right">RM ${f2(total)}</td></tr></tfoot>
-    </table></body></html>`);
-    w.document.close(); setTimeout(()=>w.print(),400);
-  };
+  if(loading)return <div style={{padding:32,textAlign:"center",color:"#8A96A8",fontSize:12}}>Loading...</div>;
 
-  if(loading) return <div className="card" style={{padding:32,textAlign:"center",color:"#8A96A8"}}>Loading...</div>;
-
-  return <div className="fade-in">
-    {/* Header */}
-    <div style={{background:"#0A1628",borderRadius:12,padding:"14px 18px",marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
-      <div>
-        <h2 style={{fontWeight:800,fontSize:14,color:"#fff",margin:0}}>Repair & Service</h2>
-        
-      </div>
-      <div style={{display:"flex",gap:16,alignItems:"center"}}>
-        <div style={{textAlign:"right"}}>
-          <div style={{fontSize:9,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.1em"}}>Monthly Total</div>
-          <div style={{fontWeight:700,fontSize:14,color:total>0?"#7C5CFC":"rgba(255,255,255,.3)"}}>{total>0?fRM(total):"—"}</div>
+  return <div className="fade-in" style={{maxWidth:520}}>
+    <div className="card" style={{overflow:"hidden"}}>
+      <div style={{padding:"14px 18px",borderBottom:"1px solid #E4EAF2",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <div style={{fontWeight:700,fontSize:13,color:"#0A1628"}}>Repair & Service</div>
+          <div style={{fontSize:11,color:"#8A96A8",marginTop:2}}>{MONTHS[month-1]} {year} · {activeDays} {activeDays===1?"entry":"entries"}</div>
         </div>
-
-        <button className="btn btn-ghost" onClick={printRepair} style={{color:"rgba(255,255,255,.7)",borderColor:"rgba(255,255,255,.2)",fontSize:12}}>
-          Download Report
-        </button>
-      </div>
-    </div>
-
-    {/* Simple date table */}
-    <div className="card" style={{overflow:"hidden",maxWidth:480}}>
-      <div style={{padding:"12px 16px",borderBottom:"1px solid #E4EAF2",fontWeight:700,fontSize:12,color:"#0A1628",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <span>June {year}</span>
-        <span style={{fontSize:10,color:"#8A96A8",fontWeight:400}}>Click amount to edit</span>
+        <div style={{textAlign:"right"}}>
+          <div style={{fontSize:10,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em"}}>Monthly Total</div>
+          <div style={{fontWeight:700,fontSize:15,color:"#0A1628"}}>{total!==0?fRM(total):"—"}</div>
+        </div>
       </div>
       <table style={{width:"100%",borderCollapse:"collapse"}}>
-        <thead>
-          <tr style={{background:"#F7F9FC"}}>
-            <th style={{padding:"8px 16px",fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left",borderBottom:"1px solid #E4EAF2",width:100}}>Date</th>
-            <th style={{padding:"8px 16px",fontSize:10,fontWeight:700,color:"#7C5CFC",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",borderBottom:"1px solid #E4EAF2"}}>Amount (RM)</th>
-          </tr>
-        </thead>
+        <thead><tr style={{background:"#F7F9FC",borderBottom:"1px solid #E4EAF2"}}>
+          <th style={{padding:"8px 16px",fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left"}}>Date</th>
+          <th style={{padding:"8px 16px",fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right"}}>Amount (RM)</th>
+        </tr></thead>
         <tbody>
           {days.map(d=>{
-            const val = repairData[d]||0;
-            const isEditing = editing===d;
-            return <tr key={d} className="shine-row" style={{borderBottom:"1px solid rgba(228,234,242,.7)",background:val>0?"#FAF5FF":"#fff"}}>
-              <td style={{padding:"7px 16px",fontSize:12,color:"#4A5568",fontWeight:val>0?600:400}}>{d}/{month}/{year}</td>
+            const val=repairData[d]||0;
+            const isEditing=editing===d;
+            return <tr key={d} style={{borderBottom:"1px solid rgba(228,234,242,.6)"}}>
+              <td style={{padding:"7px 16px",fontSize:12,color:"#4A5568",fontWeight:val!==0?500:400}}>{d}/{month}/{year}</td>
               {isEditing
-                ? <td style={{padding:"4px 12px",textAlign:"right",background:"#FFFBEB"}}>
-                    <input autoFocus type="number" step="0.01" value={editVal}
-                      onChange={e=>setEditVal(e.target.value)}
-                      onBlur={()=>handleSave(d,editVal)}
-                      onKeyDown={e=>{if(e.key==="Enter")handleSave(d,editVal);if(e.key==="Escape")setEditing(null);}}
-                      style={{width:120,padding:"4px 8px",border:"1.5px solid #F5A623",borderRadius:6,fontSize:12,outline:"none",textAlign:"right",fontFamily:"Inter,sans-serif"}}/>
-                  </td>
-                : <td onClick={()=>{setEditVal(val>0?val:"");setEditing(d);}}
+                ?<td style={{padding:"4px 12px",textAlign:"right"}}>
+                  <input autoFocus type="number" step="0.01" value={editVal}
+                    onChange={e=>setEditVal(e.target.value)}
+                    onBlur={()=>handleSave(d,editVal)}
+                    onKeyDown={e=>{if(e.key==="Enter")handleSave(d,editVal);if(e.key==="Escape")setEditing(null);}}
+                    style={{width:120,padding:"4px 8px",border:"1.5px solid #0A1628",borderRadius:6,fontSize:12,outline:"none",textAlign:"right",fontFamily:"Inter,sans-serif"}}/>
+                </td>
+                :<td onClick={()=>{setEditVal(val!==0?val:"");setEditing(d);}}
                     style={{padding:"7px 16px",textAlign:"right",cursor:"pointer",fontSize:12,
-                      color:val>0?"#7C5CFC":"#CDD5E0",fontWeight:val>0?600:400}}
-                    title="Click to edit"
-                    onMouseEnter={e=>e.currentTarget.style.background="#F5F3FF"}
-                    onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                    {val>0?f2(val):"—"}
+                      color:val>0?"#0A1628":val<0?"#F0354B":"#CDD5E0",fontWeight:val!==0?600:400}}
+                    title="Click to edit">
+                    {val!==0?f2(val):"—"}
                   </td>
               }
             </tr>;
           })}
         </tbody>
-        <tfoot>
-          <tr style={{background:"#3D1A78"}}>
-            <td style={{padding:"9px 16px",fontWeight:700,color:"rgba(255,255,255,.8)",fontSize:12}}>Total</td>
-            <td style={{padding:"9px 16px",textAlign:"right",fontWeight:700,color:total>0?"#E9D5FF":"rgba(255,255,255,.4)",fontSize:12}}>{total>0?fRM(total):"—"}</td>
-          </tr>
-        </tfoot>
+        <tfoot><tr style={{background:"#0A1628"}}>
+          <td style={{padding:"9px 16px",fontWeight:700,color:"rgba(255,255,255,.7)",fontSize:12}}>Total</td>
+          <td style={{padding:"9px 16px",textAlign:"right",fontWeight:700,color:total!==0?"#fff":"rgba(255,255,255,.3)",fontSize:12}}>{total!==0?fRM(total):"—"}</td>
+        </tr></tfoot>
       </table>
     </div>
+    <p style={{fontSize:11,color:"#8A96A8",marginTop:8}}>Click any amount to edit. Press Enter or click away to save.</p>
   </div>;
 }
 
@@ -917,111 +903,50 @@ function PrintBranchReport({branchId,records,targets,srList,branchMeta,onClose,m
 
 // ─── UPLOAD PANEL ──────────────────────────────────────────
 function UploadPanel({records,setRecords,srList,defaultBranch,recordsKey:rKey}){
-  const [aeFile,setAeFile]=useState(null);
+  const [file,setFile]=useState(null);
   const [date,setDate]=useState(()=>{const d=new Date();return`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;});
-  const [parsing,setParsing]=useState(false);
-  const [preview,setPreview]=useState(null);
+  const [saving,setSaving]=useState(false);
   const [saved,setSaved]=useState(false);
   const [err,setErr]=useState("");
 
-  const parse=async()=>{
-    if(!aeFile){setErr("Select an Invoice PDF file.");return;}
-    setErr("");setParsing(true);setPreview(null);
-    try{
-      const pdfB64=await fileToB64(aeFile);
-      const ae=await parsePDF(pdfB64,"aeon");
-      setPreview({ae,date,pdfB64});
-    }catch(e){setErr(e.message);}finally{setParsing(false);}
-  };
-
   const save=async()=>{
-    if(!preview)return;
-    const day={...(records[preview.date]||{})};
-    preview.ae.forEach(item=>{
-      const sr=matchSR(item,srList);if(!sr)return;
-      if(!day[sr.id])day[sr.id]={walkin:0,aeon:0,repair:0};
-      day[sr.id].aeon=(day[sr.id].aeon||0)+(item.profit||0);
-      day[sr.id].repair=(day[sr.id].repair||0)+(item.repair_profit||0);
-    });
-    const nr={...records,[preview.date]:day};
-    await saveData(rKey||STORE_KEY,nr);
-    // Store PDF for viewer download
-    if(aeFile&&preview.pdfB64){
-      try{
-        const pdfKey=`emax_v5_pdf_${preview.date.replace(/\//g,"_")}`;
-        await saveData(pdfKey,{name:aeFile.name,date:preview.date,b64:preview.pdfB64});
-        // Store index of available PDFs
-        const idxKey="emax_v5_pdf_index";
-        const existing=await loadData(idxKey)||[];
-        if(!existing.includes(pdfKey))existing.push(pdfKey);
-        await saveData(idxKey,existing);
-      }catch(e){console.warn("PDF storage failed:",e);}
-    }
-    setRecords(nr);setSaved(true);
-    setTimeout(()=>{setSaved(false);setAeFile(null);setPreview(null);},1500);
+    if(!file){setErr("Please select a PDF file.");return;}
+    setErr("");setSaving(true);
+    try{
+      const b64=await fileToB64(file);
+      const pdfKey=`emax_v5_pdf_${date.replace(/\//g,"_")}`;
+      await saveData(pdfKey,{name:file.name,date,b64});
+      const idxKey="emax_v5_pdf_index";
+      const existing=await loadData(idxKey)||[];
+      const arr=Array.isArray(existing)?existing:[];
+      if(!arr.includes(pdfKey))arr.push(pdfKey);
+      await saveData(idxKey,arr);
+      setSaved(true);setTimeout(()=>{setSaved(false);setFile(null);},2000);
+    }catch(e){setErr(e.message);}
+    setSaving(false);
   };
 
-  return <div className="fade-in" style={{maxWidth:680}}>
-    <div className="card" style={{padding:"16px 20px",marginBottom:12,display:"flex",gap:16,alignItems:"flex-end",flexWrap:"wrap"}}>
-      <div style={{flex:"0 0 auto"}}>
-        <label style={{display:"block",fontSize:10,fontWeight:700,color:"#8A96A8",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.06em"}}>Report Date</label>
-        <input className="input" type="text" value={date} onChange={e=>setDate(e.target.value)} placeholder="D/M/YYYY" style={{width:140,fontSize:12}}/>
+  return <div style={{maxWidth:560,background:"#fff",border:"1px solid #E4EAF2",borderRadius:10,padding:16,marginTop:16}}>
+    <div style={{fontWeight:700,fontSize:12,color:"#0A1628",marginBottom:12,textTransform:"uppercase",letterSpacing:"0.06em"}}>Daily AEON Profit Report — Upload PDF</div>
+    <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"flex-end"}}>
+      <div>
+        <label style={{display:"block",fontSize:10,fontWeight:600,color:"#8A96A8",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.06em"}}>Report Date</label>
+        <input className="input" type="text" value={date} onChange={e=>setDate(e.target.value)} placeholder="D/M/YYYY" style={{width:130,fontSize:12}}/>
       </div>
       <div style={{flex:1,minWidth:200}}>
-        <label style={{display:"block",fontSize:10,fontWeight:700,color:"#8A96A8",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.06em"}}>AEON Profit PDF (Profit & Loss of Document)</label>
-        <label style={{display:"flex",alignItems:"center",gap:10,padding:"8px 14px",border:`1.5px dashed ${aeFile?"#7C5CFC":"#E4EAF2"}`,borderRadius:8,cursor:"pointer",background:aeFile?"rgba(124,92,252,.05)":"#F7F9FC",transition:"all .2s"}}>
-          <input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>setAeFile(e.target.files[0])}/>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={aeFile?"#7C5CFC":"#8A96A8"} strokeWidth="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-          </svg>
-          {aeFile
-            ?<span style={{fontSize:12,color:"#7C5CFC",fontWeight:600}}>{aeFile.name}</span>
-            :<span style={{fontSize:12,color:"#8A96A8"}}>Choose PDF file</span>}
+        <label style={{display:"block",fontSize:10,fontWeight:600,color:"#8A96A8",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.06em"}}>PDF File</label>
+        <label style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",border:`1.5px solid ${file?"#0A1628":"#E4EAF2"}`,borderRadius:7,cursor:"pointer",background:"#F7F9FC",fontSize:12,color:file?"#0A1628":"#8A96A8"}}>
+          <input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>setFile(e.target.files[0])}/>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          {file?file.name:"Choose PDF file"}
         </label>
       </div>
-      <button className="btn btn-primary" onClick={parse} disabled={parsing||!aeFile}
-        style={{padding:"9px 18px",fontSize:12,opacity:parsing||!aeFile?0.5:1,cursor:parsing?"wait":"pointer",whiteSpace:"nowrap",flex:"0 0 auto"}}>
-        {parsing?"Analysing...":"Upload & Parse"}
+      <button onClick={save} disabled={saving||!file} style={{padding:"9px 18px",background:saved?"#00C896":"#0A1628",color:"#fff",border:"none",borderRadius:7,fontSize:12,fontWeight:700,fontFamily:"Inter,sans-serif",cursor:saving||!file?"not-allowed":"pointer",opacity:!file?0.5:1}}>
+        {saved?"Saved!":saving?"Saving...":"Upload"}
       </button>
     </div>
-
-    {err&&<div style={{background:"rgba(240,53,75,.08)",border:"1px solid rgba(240,53,75,.3)",color:"#F0354B",padding:"10px 14px",borderRadius:8,fontSize:12,marginBottom:12}}>
-      <strong>Error:</strong> {err}
-    </div>}
-
-    {preview&&<div className="card fade-in" style={{overflow:"hidden"}}>
-      <div style={{padding:"12px 16px",borderBottom:"1px solid #E4EAF2",background:"#F7F9FC",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <div>
-          <div style={{fontWeight:700,fontSize:13,color:"#0A1628"}}>Invoice Results — {preview.date}</div>
-          <div style={{fontSize:11,color:"#8A96A8",marginTop:1}}>{preview.ae.length} entries parsed</div>
-        </div>
-      </div>
-      <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-        <thead><tr style={{background:"#F7F9FC"}}>
-          {["SR Name","Promoter ID","Invoice Profit","Matched SR"].map(h=>(
-            <th key={h} style={{padding:"7px 14px",textAlign:"left",fontWeight:700,fontSize:10,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em",borderBottom:"1px solid #E4EAF2"}}>{h}</th>
-          ))}
-        </tr></thead>
-        <tbody>{preview.ae.map((item,i)=>{const sr=matchSR(item,srList);return(
-          <tr key={i} className="shine-row" style={{borderBottom:"1px solid rgba(228,234,242,.6)",background:sr?"#fff":"#FFFBEB"}}>
-            <td style={{padding:"7px 14px",fontWeight:600,color:"#0A1628"}}>{item.name}</td>
-            <td style={{padding:"7px 14px",color:"#8A96A8",fontSize:11}}>{item.promoter_id}</td>
-            <td style={{padding:"7px 14px",fontWeight:700,color:"#7C5CFC"}}>RM {f2(item.profit)}</td>
-            <td style={{padding:"7px 14px"}}>
-              {sr?<span className="tag" style={{background:"rgba(0,200,150,.1)",color:"#00C896"}}>Matched: {sr.canon}</span>
-                :<span className="tag" style={{background:"rgba(245,166,35,.1)",color:"#F5A623"}}>Not found</span>}
-            </td>
-          </tr>
-        );})}
-        </tbody>
-      </table>
-      <div style={{padding:"12px 16px",display:"flex",justifyContent:"flex-end",gap:10,borderTop:"1px solid #E4EAF2",background:"#F7F9FC"}}>
-        <button className="btn btn-ghost" style={{fontSize:12}} onClick={()=>setPreview(null)}>Discard</button>
-        <button className="btn" onClick={save} style={{background:saved?"#00C896":"linear-gradient(135deg,#059669,#00C896)",color:"#fff",padding:"8px 20px",borderRadius:8,fontSize:13,cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:700,border:"none"}}>
-          {saved?"Saved!":"Save Invoice Records"}
-        </button>
-      </div>
-    </div>}
+    {err&&<div style={{color:"#F0354B",fontSize:11,marginTop:8}}>{err}</div>}
+    {saved&&<div style={{color:"#00C896",fontSize:11,marginTop:8}}>✓ PDF saved — viewers can now download it</div>}
   </div>;
 }
 

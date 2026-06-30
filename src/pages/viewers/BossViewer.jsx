@@ -243,6 +243,70 @@ body{font-family:'Inter',-apple-system,sans-serif;background:#F7F9FC;color:#0A16
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 `;
 
+function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
+  const StatusTagR=({status})=>{
+    if(!status)return null;
+    const s=status.toLowerCase(),isDir=s.includes("director"),isConf=s.includes("confirmed");
+    const bg=isDir?"#F5F3FF":isConf?"#F0FDF4":"#EFF6FF",color=isDir?"#6D28D9":isConf?"#15803D":"#1D4ED8";
+    const base=isDir?"Director":isConf?"Confirmed":"Probation";
+    const pm=status.match(/Passed\s*(\d+)/i),fm=status.match(/Failed\s*(\d+)/i);
+    const passed=pm?parseInt(pm[1]):null,failed=fm?parseInt(fm[1]):null;
+    return <span style={{display:"inline-flex",alignItems:"center",gap:4,background:bg,color,padding:"1px 8px",borderRadius:20,fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>
+      {base}
+      {(passed!==null||failed!==null)&&<span style={{display:"flex",gap:2}}>
+        <span style={{width:1,height:9,background:color+"50"}}/>
+        {passed!==null&&<span style={{color:"#00C896",fontWeight:800}}>P{passed}</span>}
+        {failed!==null&&<span style={{color:"#F0354B",fontWeight:800}}>F{failed}</span>}
+      </span>}
+    </span>;
+  };
+
+  const medals=["🥇","🥈","🥉"];
+  return <div style={{marginBottom:24}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:10}}>
+      <h3 style={{fontSize:13,fontWeight:800,color:"#0A1628",textTransform:"uppercase",letterSpacing:"0.05em"}}>{title}</h3>
+      {period&&<span style={{fontSize:10,color:"#8A96A8",fontWeight:500}}>Period: {period}</span>}
+    </div>
+    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+      {rows.map((r,i)=>{
+        const p=pctN(r.profit,r.target),branchPct=r.branchPct||p,color=achColor(r.profit,r.target);
+        const achBonus=branchPct>=121&&p>=100?calcAchievementBonus(branchPct,r.role||"sr"):0;
+        const pts=calcRewardPoints(p,branchPct);
+        const isTop=i<3;
+        return <div key={i} style={{
+          background:isTop?"linear-gradient(135deg,#0A1628,#162B52)":"#fff",
+          border:isTop?"none":"1px solid #E4EAF2",
+          borderRadius:10,padding:"10px 14px",
+          boxShadow:isTop?"0 2px 8px rgba(10,22,40,.2)":"0 1px 3px rgba(10,22,40,.04)",
+          display:"flex",alignItems:"center",gap:12,
+        }}>
+          {/* Rank */}
+          <div style={{flexShrink:0,width:32,textAlign:"center"}}>
+            {i<3
+              ? <span style={{fontSize:20,lineHeight:1}}>{medals[i]}</span>
+              : <span style={{fontWeight:800,fontSize:13,color:"#8A96A8"}}>#{i+1}</span>}
+          </div>
+          {/* Name + status */}
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontWeight:700,fontSize:12,color:isTop?"#fff":"#0A1628",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.name}</div>
+            <div style={{marginTop:2,display:"flex",gap:4,alignItems:"center",flexWrap:"wrap"}}>
+              <StatusTagR status={r.status}/>
+              {r.branch&&branchMeta&&<span style={{fontSize:9,color:isTop?"rgba(255,255,255,.4)":"#8A96A8",textTransform:"uppercase"}}>{(branchMeta[r.branch]?.name||r.branch).replace("EMAX ","")}</span>}
+            </div>
+          </div>
+          {/* Achievement */}
+          <div style={{flexShrink:0,textAlign:"right"}}>
+            {r.target>0&&<div style={{fontWeight:800,fontSize:14,color:isTop?color:color}}>{pctN(r.profit,r.target).toFixed(1)}%</div>}
+            {showBonus&&achBonus>0&&<div style={{fontSize:10,color:"#F5A623",fontWeight:700}}>{fRM(achBonus)}</div>}
+            {showPoints&&pts>0&&<div style={{fontSize:10,color:isTop?"#93C5FD":"#1E6FDB",fontWeight:700}}>{pts.toLocaleString()} pts</div>}
+          </div>
+        </div>;
+      })}
+    </div>
+  </div>;
+}
+
+
 function PdfDownloads({month,year}){
   const [pdfList,setPdfList]=useState([]);
   useEffect(()=>{
@@ -340,8 +404,18 @@ export default function App(){
   },[records,srList,periodDays,month,year]);
 
   const grandTotal=BRANCH_ORDER.reduce((s,b)=>s+(branchTotals[b]?.total||0),0);
+  // Last day with data for ranking period label
+  const lastDataDay=useMemo(()=>{
+    const allDays=Array.from({length:daysInMonth(month,year)},(_,i)=>i+1);
+    for(let i=allDays.length-1;i>=0;i--){
+      const k=`${allDays[i]}/${month}/${year}`;
+      if(records[k]&&Object.keys(records[k]).length>0)return allDays[i];
+    }return null;
+  },[records,month,year]);
+  const rankingPeriod=lastDataDay?`1/${month}/${year} – ${lastDataDay}/${month}/${year}`:`${MONTHS[month-1]} ${year}`;
   const grandTarget=BRANCH_ORDER.reduce((s,b)=>s+(targets?.bm?.[b]||0),0);
 
+  const branchMeta=bMeta; // alias for RankingTable
   const bmRank=[...BRANCH_ORDER].map(b=>{
     const profit=branchTotals[b]?.total||0,target=targets?.bm?.[b]||0,p=pctN(profit,target);
     return{name:bMeta[b]?.manager,status:bMeta[b]?.mStatus,branch:b,sub:(bMeta[b]?.name||b).toUpperCase(),profit,target,p,branchPct:p,role:"bm",points:calcRewardPoints(p,p)};
@@ -371,52 +445,8 @@ export default function App(){
     </span>;
   };
 
-  const RankTable=({title,rows})=>(
-    <div style={{marginBottom:24}}>
-      <h3 style={{fontSize:13,fontWeight:800,color:"#0A1628",marginBottom:10,textTransform:"uppercase",letterSpacing:"0.05em"}}>{title}</h3>
-      <div className="card" style={{overflow:"auto"}}>
-        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,minWidth:420}}>
-          <thead><tr style={{background:"#0A1628"}}>
-            {["Rank","Name","Branch","Personal Achievement","Branch Achievement Bonus","Reward Points"].map(h=>(
-              <th key={h} style={{padding:"10px 14px",textAlign:["Rank","Name","Branch"].includes(h)?"left":"right",fontWeight:700,fontSize:10,color:"rgba(255,255,255,.7)",textTransform:"uppercase",letterSpacing:"0.06em",whiteSpace:"nowrap"}}>{h}</th>
-            ))}
-          </tr></thead>
-          <tbody>{rows.map((r,i)=>{
-            const p=r.p,branchPct=r.branchPct||p,color=achColor(r.profit,r.target);
-            const achBonus=branchPct>=121&&p>=100?calcAchievementBonus(branchPct,r.role||"sr"):0;
-            const pts=calcRewardPoints(p,branchPct);
-            return <tr key={i} className="shine" style={{borderBottom:"1px solid #E4EAF2",background:i%2===0?"#fff":"#F7F9FC"}}>
-              <td style={{padding:"10px 14px",width:48}}><RankMedal rank={i+1}/></td>
-              <td style={{padding:"10px 14px",minWidth:160}}>
-                <div style={{fontWeight:700,color:"#0A1628",fontSize:12,marginBottom:4}}>{r.name}</div>
-                <StatusTagR status={r.status}/>
-              </td>
-              <td style={{padding:"10px 14px",fontSize:11,color:"#4A5568",fontWeight:600,textTransform:"uppercase",minWidth:120}}>{r.sub}</td>
-              <td style={{padding:"10px 14px",textAlign:"right"}}>
-                {r.target>0?<AchBadge profit={r.profit} target={r.target} size="md"/>:<span style={{color:"#8A96A8"}}>—</span>}
-              </td>
-              <td style={{padding:"10px 14px",textAlign:"right",fontSize:12}}>
-                {achBonus>0?<span style={{fontWeight:700,color:"#F5A623"}}>{fRM(achBonus)}</span>:<span style={{color:"#8A96A8"}}>—</span>}
-              </td>
-              <td style={{padding:"10px 14px",textAlign:"right",fontSize:12}}>
-                {pts>0?<span style={{fontWeight:700,color:"#1E6FDB"}}>{pts.toLocaleString()} pts</span>:<span style={{color:"#8A96A8"}}>—</span>}
-              </td>
-            </tr>;
-          })}</tbody>
-        </table>
-      </div>
-    </div>
-  );
 
-  const TH=(e={})=>({padding:"9px 14px",fontWeight:700,fontSize:10,background:"#0A1628",color:"rgba(255,255,255,.75)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",whiteSpace:"nowrap",...e});
-  const TD=(e={})=>({padding:"9px 14px",fontSize:12,whiteSpace:"nowrap",borderBottom:"1px solid rgba(228,234,242,.7)",...e});
-
-  if(loading)return <div style={{height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#0A1628",fontFamily:"Inter,sans-serif"}}>
-    <div style={{textAlign:"center"}}><div style={{fontWeight:900,fontSize:18,color:"#fff"}}>EMAX NETWORK</div>
-    <div style={{fontSize:11,color:"rgba(255,255,255,.3)",letterSpacing:"0.15em",textTransform:"uppercase",marginTop:6}}>Loading</div></div>
-  </div>;
-
-  const TABS=[{id:"overview",label:"Overview"},{id:"rankings",label:"Rankings"},{id:"report",label:"Monthly Report"},{id:"repair",label:"Repair & Service"}];
+  // Use standalone RankingTable function (same as dashboard)
 
   return <div style={{minHeight:"100vh",background:"#F7F9FC",fontFamily:"Inter,-apple-system,sans-serif"}}>
     <style>{CSS}</style>
@@ -547,9 +577,9 @@ export default function App(){
 
       {/* RANKINGS */}
       {tab==="rankings"&&<div className="fade-in">
-        <RankTable title="Branch Manager Ranking" rows={bmRank}/>
-        <RankTable title="Online SR Ranking" rows={mkSRRank("Online")}/>
-        <RankTable title="Offline SR Ranking" rows={mkSRRank("Offline")}/>
+        <RankingTable title="Branch Manager Ranking" rows={bmRank} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
+        <RankingTable title="Online SR Ranking" rows={mkSRRank("Online")} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
+        <RankingTable title="Offline SR Ranking" rows={mkSRRank("Offline")} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
       </div>}
 
       {/* MONTHLY REPORT */}
