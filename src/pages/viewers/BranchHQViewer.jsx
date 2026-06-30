@@ -288,7 +288,7 @@ export default function App(){
   const [bMeta,setBMeta]=useState(DEFAULT_BRANCH_META);
   const [loading,setLoading]=useState(true);
   const [tab,setTab]=useState('overview');
-  const [sidebarOpen,setSidebarOpen]=useState(true);
+  const [sidebarOpen,setSidebarOpen]=useState(false);
   const [rewardBalances,setRewardBalances]=useState({});
   const [rewardHistory,setRewardHistory]=useState({});
   const [showPointsModal,setShowPointsModal]=useState(false);
@@ -332,34 +332,45 @@ export default function App(){
   const branchPct2=pctN(bTotal.total,bTarget);
 
   // Ranking data for this branch's SRs
+  // Last day in the month where ANY branch/SR has a non-zero walkin/aeon/unalloc value
   const lastDataDay=useMemo(()=>{
     for(let d=days[days.length-1];d>=1;d--){
       const k=`${d}/${month}/${year}`;
-      if(records[k]&&Object.keys(records[k]).length>0)return d;
+      const day=records[k];
+      if(day){
+        const hasValue=Object.values(day).some(entry=>(entry?.walkin||0)!==0||(entry?.aeon||0)!==0||(entry?.unalloc||0)!==0);
+        if(hasValue)return d;
+      }
     }return null;
   },[records,days,month,year]);
-  const rankingPeriod=lastDataDay?`1/${month}/${year} – ${lastDataDay}/${month}/${year}`:`${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][month-1]} ${year}`;
+  const pad2=(n)=>String(n).padStart(2,"0");
+  const rankingPeriod=lastDataDay?`${pad2(1)}/${pad2(month)}/${year}-${pad2(lastDataDay)}/${pad2(month)}/${year}`:`${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][month-1]} ${year}`;
+  const rankEndDay=lastDataDay||daysInMonth(month,year);
 
-  // For company-wide ranking, compute all SRs from all branches
+  // For company-wide ranking, compute all SRs from all branches — always 1 → lastDataDay
   const allSRTotals=useMemo(()=>{
     const t={};
     DEFAULT_SR.forEach(sr=>{
       let wi=0,ae=0;
-      Object.values(records).forEach(day=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});
+      for(let d=1;d<=rankEndDay;d++){const k=`${d}/${month}/${year}`;wi+=(records[k]?.[sr.id]?.walkin||0);ae+=(records[k]?.[sr.id]?.aeon||0);}
       t[sr.id]={wi,ae,total:wi+ae};
     });
     return t;
-  },[records]);
+  },[records,rankEndDay,month,year]);
 
   const allBranchTotals=useMemo(()=>{
     const t={};
     BRANCH_ORDER.forEach(b=>{
       const bSRs=DEFAULT_SR.filter(s=>s.branch===b);let wi=0,ae=0;
-      Object.values(records).forEach(day=>{bSRs.forEach(sr=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});wi+=(day[`BM_${b}`]?.walkin||0);ae+=(day[`BM_${b}`]?.aeon||0);wi+=(day[`BM_${b}`]?.unalloc||0);});
+      for(let d=1;d<=rankEndDay;d++){
+        const k=`${d}/${month}/${year}`,day=records[k]||{};
+        bSRs.forEach(sr=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});
+        wi+=(day[`BM_${b}`]?.walkin||0);ae+=(day[`BM_${b}`]?.aeon||0);wi+=(day[`BM_${b}`]?.unalloc||0);
+      }
       t[b]={wi,ae,total:wi+ae};
     });
     return t;
-  },[records]);
+  },[records,rankEndDay,month,year]);
 
   const srRankRows=DEFAULT_SR.map(s=>{
     const profit=allSRTotals[s.id]?.total||0,target=targets?.sr?.[s.id]?.target||0;
@@ -424,9 +435,8 @@ export default function App(){
 
       {/* REWARD POINT RANKING — company-wide */}
       {tab==="points"&&<div className="fade-in">
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:6}}>
+        <div style={{marginBottom:14}}>
           <h2 style={{fontSize:15,fontWeight:800,color:"#0A1628",margin:0}}>🏆 Reward Point Ranking</h2>
-          <span style={{fontSize:11,color:"#5A6472"}}>All Branch Managers and Sales Representatives, ranked by current points balance</span>
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:6}}>
           {(()=>{
@@ -451,7 +461,7 @@ export default function App(){
                 </div>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontWeight:700,fontSize:13,color:isTop?"#fff":"#0A1628",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.name}</div>
-                  <div style={{fontSize:10,color:isTop?"rgba(255,255,255,.4)":"#8A96A8",marginTop:2}}>{p.role} · {p.branch}</div>
+                  <div style={{fontSize:10,color:isTop?"rgba(255,255,255,.4)":"#8A96A8",marginTop:2}}>{p.role} · {p.branch} · As at {pointsAsOf}</div>
                 </div>
                 <div style={{fontWeight:800,fontSize:15,color:isTop?"#fff":"#0A1628",flexShrink:0,whiteSpace:"nowrap"}}>{p.balance.toLocaleString()} pts</div>
               </div>;
@@ -681,7 +691,7 @@ export default function App(){
       }}>
         <div style={{width:220,padding:"16px 10px"}}>
           {[{id:"overview",label:"Performance"},{id:"rankings",label:"Rankings"},{id:"points",label:"Reward Point Ranking"}].map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)} style={{
+            <button key={t.id} onClick={()=>{setTab(t.id);setSidebarOpen(false);}} style={{
               display:"flex",alignItems:"center",width:"100%",textAlign:"left",padding:"9px 12px",marginBottom:3,
               border:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600,fontSize:12,borderRadius:8,
               background:tab===t.id?"rgba(255,255,255,.1)":"transparent",color:tab===t.id?"#fff":"rgba(255,255,255,.45)",

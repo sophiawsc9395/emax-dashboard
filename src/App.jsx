@@ -121,6 +121,17 @@ function calcRewardPoints(pct, branchPct) {
   return 0;
 }
 
+// ─── EMPLOYMENT STATUS HELPERS (module-level, shared) ────────
+const statusBaseOptions=["Probation","Confirmed","Director","Resigned"];
+function parseStatus(s){
+  const m=(s||"").match(/^(Probation|Confirmed|Director|Resigned)\s*(?:\(P(\d+)\s*F(\d+)\))?/i);
+  if(!m)return{base:"Probation",p:0,f:0};
+  return{base:m[1],p:parseInt(m[2]||0),f:parseInt(m[3]||0)};
+}
+function buildStatus(base,p,f){
+  return(base==="Director"||base==="Resigned")?base:`${base} (P${p} F${f})`;
+}
+
 // ─── HELPERS ───────────────────────────────────────────────
 const fRM=(n=0)=>"RM "+Number(n||0).toLocaleString("en-MY",{minimumFractionDigits:2,maximumFractionDigits:2});
 const f2=(n=0)=>Number(n||0).toFixed(2);
@@ -528,7 +539,7 @@ function AeonTable({sr,records,printMode,month,year,days}){
 }
 
 // ─── BRANCH PERFORMANCE TABLE ──────────────────────────────
-function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,startDay=1,endDay=30,onChangeStartDay,onChangeEndDay}){
+function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,startDay=1,endDay=30,onChangeStartDay,onChangeEndDay,maxDay}){
   const bt = branchTotals;
 
   const grandWI=BRANCH_ORDER.reduce((s,b)=>s+(bt[b]?.wi||0),0);
@@ -546,7 +557,7 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
           {onChangeStartDay
             ? <select value={startDay} onChange={e=>onChangeStartDay(Number(e.target.value))}
                 style={{fontSize:11,color:"#1E6FDB",fontWeight:700,border:"none",background:"transparent",outline:"none",cursor:"pointer",padding:0,fontFamily:"Inter,sans-serif"}}>
-                {Array.from({length:daysInMonth(month,year)},(_,i)=>i+1).filter(d=>d<=endDay).map(d=>(
+                {Array.from({length:maxDay||daysInMonth(month,year)},(_,i)=>i+1).filter(d=>d<=endDay).map(d=>(
                   <option key={d} value={d}>{d}/{month}/{year}</option>
                 ))}
               </select>
@@ -556,7 +567,7 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
           {onChangeEndDay
             ? <select value={endDay} onChange={e=>onChangeEndDay(Number(e.target.value))}
                 style={{fontSize:11,color:"#1E6FDB",fontWeight:700,border:"none",background:"transparent",outline:"none",cursor:"pointer",padding:0,fontFamily:"Inter,sans-serif"}}>
-                {Array.from({length:daysInMonth(month,year)},(_,i)=>i+1).filter(d=>d>=startDay).map(d=>(
+                {Array.from({length:maxDay||daysInMonth(month,year)},(_,i)=>i+1).filter(d=>d>=startDay).map(d=>(
                   <option key={d} value={d}>{d}/{month}/{year}</option>
                 ))}
               </select>
@@ -1028,13 +1039,6 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBala
   const updateSR=async(id,field,val)=>{const updated=localSR.map(s=>s.id===id?{...s,[field]:val}:s);setLocalSR(updated);await saveSR(updated);};
   const removeSR=async(id)=>{if(!confirm("Remove this SR?"))return;const updated=localSR.filter(s=>s.id!==id);setLocalSR(updated);await saveSR(updated);};
   const filteredSR=filterBranch==="ALL"?localSR:localSR.filter(s=>s.branch===filterBranch);
-  const statusBaseOptions=["Probation","Confirmed","Director"];
-  const parseStatus=(s)=>{
-    const m=(s||"").match(/^(Probation|Confirmed|Director)\s*(?:\(P(\d+)\s*F(\d+)\))?/i);
-    if(!m)return{base:"Probation",p:0,f:0};
-    return{base:m[1],p:parseInt(m[2]||0),f:parseInt(m[3]||0)};
-  };
-  const buildStatus=(base,p,f)=>base==="Director"?"Director":`${base} (P${p} F${f})`;
   return <div className="modal-overlay">
     <div style={{background:"#fff",borderRadius:16,width:"100%",maxWidth:860,maxHeight:"92vh",overflow:"auto"}}>
       <div style={{padding:"18px 24px",borderBottom:"1px solid #E4EAF2",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,background:"#fff",zIndex:1}}>
@@ -1066,7 +1070,7 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBala
                     <select className="input select" value={ps.base} onChange={e=>setLocalBM(p=>({...p,[b]:{...p[b],mStatus:buildStatus(e.target.value,ps.p,ps.f)}}))} style={{width:"auto",minWidth:96,padding:"4px 22px 4px 8px",fontSize:11}}>
                       {statusBaseOptions.map(s=><option key={s} value={s}>{s}</option>)}
                     </select>
-                    {ps.base!=="Director"&&<>
+                    {ps.base!=="Director"&&ps.base!=="Resigned"&&<>
                       <label style={{fontSize:10,color:"#8A96A8"}}>P</label>
                       <input type="number" min="0" className="input" value={ps.p} onChange={e=>setLocalBM(p=>({...p,[b]:{...p[b],mStatus:buildStatus(ps.base,Math.max(0,parseInt(e.target.value)||0),ps.f)}}))} style={{width:42,padding:"4px 4px",fontSize:11,textAlign:"center"}}/>
                       <label style={{fontSize:10,color:"#8A96A8"}}>F</label>
@@ -1124,7 +1128,7 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBala
                     <select className="input select" value={ps.base} onChange={e=>setNewSR(p=>({...p,status:buildStatus(e.target.value,ps.p,ps.f)}))} style={{width:"auto",minWidth:110,padding:"4px 24px 4px 8px",fontSize:12}}>
                       {statusBaseOptions.map(s=><option key={s} value={s}>{s}</option>)}
                     </select>
-                    {ps.base!=="Director"&&<>
+                    {ps.base!=="Director"&&ps.base!=="Resigned"&&<>
                       <label style={{fontSize:11,color:"#8A96A8"}}>P</label>
                       <input type="number" min="0" className="input" value={ps.p} onChange={e=>setNewSR(p=>({...p,status:buildStatus(ps.base,Math.max(0,parseInt(e.target.value)||0),ps.f)}))} style={{width:54,padding:"4px 6px",fontSize:12,textAlign:"center"}}/>
                       <label style={{fontSize:11,color:"#8A96A8"}}>F</label>
@@ -1175,7 +1179,7 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBala
                         <select className="input select" value={ps.base} onChange={e=>updateSR(sr.id,"status",buildStatus(e.target.value,ps.p,ps.f))} style={{width:"auto",minWidth:96,padding:"4px 20px 4px 6px",fontSize:11}}>
                           {statusBaseOptions.map(s=><option key={s} value={s}>{s}</option>)}
                         </select>
-                        {ps.base!=="Director"&&<>
+                        {ps.base!=="Director"&&ps.base!=="Resigned"&&<>
                           <span style={{fontSize:10,color:"#8A96A8"}}>P</span>
                           <input type="number" min="0" className="input" value={ps.p} onChange={e=>updateSR(sr.id,"status",buildStatus(ps.base,Math.max(0,parseInt(e.target.value)||0),ps.f))} style={{width:40,padding:"4px 4px",fontSize:11,textAlign:"center"}}/>
                           <span style={{fontSize:10,color:"#8A96A8"}}>F</span>
@@ -1531,7 +1535,7 @@ export default function App(){
   const [branchMeta,setBranchMeta] = useState(DEFAULT_BRANCH_META);
   const [loading,setLoading]       = useState(true);
   const [tab,setTab]               = useState("overview");
-  const [sidebarOpen,setSidebarOpen] = useState(true);
+  const [sidebarOpen,setSidebarOpen] = useState(false);
   const [showPointsModal,setShowPointsModal] = useState(false);
   const [pointsModalPerson,setPointsModalPerson] = useState(null);
   const [selBranch,setSelBranch]   = useState("KM");
@@ -1539,10 +1543,16 @@ export default function App(){
   const [selEndDay,setSelEndDay]   = useState(()=>daysInMonth(new Date().getMonth()+1,new Date().getFullYear()));
   const periodDays = days.filter(d=>d>=selStartDay&&d<=selEndDay);
   // Last day with any records entered (for ranking period label)
+  // Find the last day in the month where ANY branch/SR has a non-zero walkin/aeon/unalloc value.
+  // Days after this (even if a record key exists with all-zero values) are treated as "not yet filled".
   const lastDataDay = useMemo(()=>{
     for(let d=days[days.length-1];d>=1;d--){
       const k=`${d}/${month}/${year}`;
-      if(records[k]&&Object.keys(records[k]).length>0) return d;
+      const day=records[k];
+      if(day){
+        const hasValue=Object.values(day).some(entry=>(entry?.walkin||0)!==0||(entry?.aeon||0)!==0||(entry?.unalloc||0)!==0);
+        if(hasValue) return d;
+      }
     }
     return null;
   },[records,days,month,year]);
@@ -1629,8 +1639,10 @@ export default function App(){
     const historyUpdates={...rewardHistory};
     const MONTHS_FULL=["January","February","March","April","May","June","July","August","September","October","November","December"];
     const noteMonth=`${MONTHS_FULL[selMonth-1]} ${selYear}`;
-    // SR points
-    bSRs.forEach(sr=>{
+
+    // SR points + employment status P/F update
+    const updatedSRList=srList.map(sr=>{
+      if(sr.branch!==branchId)return sr;
       const srTarget=targets?.sr?.[sr.id]?.target||0;
       let wi=0,ae=0;
       days.forEach(d=>{const k=`${d}/${selMonth}/${selYear}`;wi+=(records[k]?.[sr.id]?.walkin||0);ae+=(records[k]?.[sr.id]?.aeon||0);});
@@ -1640,14 +1652,35 @@ export default function App(){
       updates[sr.id]={...cur,balance:(cur.balance||0)+earned};
       const hist=historyUpdates[sr.id]||[];
       historyUpdates[sr.id]=[...hist,{date:new Date().toISOString(),type:"credit",amount:earned,note:`${noteMonth} performance (${srPct.toFixed(1)}%)`}];
+      // Employment status: target hit -> P+1, not hit -> F+1 (skip Director/Resigned)
+      const ps=parseStatus(sr.status);
+      if(ps.base==="Director"||ps.base==="Resigned"||srTarget<=0)return sr;
+      const hit=srTotal>=srTarget;
+      const newStatus=buildStatus(ps.base,hit?ps.p+1:ps.p,hit?ps.f:ps.f+1);
+      return{...sr,status:newStatus};
     });
-    // BM points
+    setSrList(updatedSRList);
+    await saveData(SR_KEY,updatedSRList);
+
+    // BM points + employment status P/F update
     const bmEarned=calcRewardPoints(branchPct,branchPct);
     const bmKey=`BM_${branchId}`;
     const curBM=updates[bmKey]||{balance:0,asOf:""};
     updates[bmKey]={...curBM,balance:(curBM.balance||0)+bmEarned};
     const bmHist=historyUpdates[bmKey]||[];
     historyUpdates[bmKey]=[...bmHist,{date:new Date().toISOString(),type:"credit",amount:bmEarned,note:`${noteMonth} branch performance (${branchPct.toFixed(1)}%)`}];
+
+    if(bTarget>0){
+      const bmMeta=branchMeta[branchId]||{};
+      const bps=parseStatus(bmMeta.mStatus);
+      if(bps.base!=="Director"&&bps.base!=="Resigned"){
+        const bmHit=bTotal>=bTarget;
+        const newBMStatus=buildStatus(bps.base,bmHit?bps.p+1:bps.p,bmHit?bps.f:bps.f+1);
+        const newBranchMeta={...branchMeta,[branchId]:{...bmMeta,mStatus:newBMStatus}};
+        setBranchMeta(newBranchMeta);
+        await saveData(BM_KEY,newBranchMeta);
+      }
+    }
 
     setRewardBalances(updates);
     await saveData("emax_v5_reward_balance",updates);
@@ -1656,7 +1689,7 @@ export default function App(){
     const newLocked={...lockedMonths,[monthKeyStr]:{...(lockedMonths[monthKeyStr]||{}),[branchId]:true}};
     setLockedMonths(newLocked);
     await saveData("emax_v5_locked_months",newLocked);
-    alert(`${branchId} — ${selMonth}/${selYear} locked. Reward points credited to balance.`);
+    alert(`${branchId} — ${selMonth}/${selYear} locked. Reward points credited and employment status updated.`);
   };
   // Manually adjust a person's points balance by +/- delta, with a required description.
   // This appends a history entry instead of overwriting the balance.
@@ -1710,20 +1743,45 @@ export default function App(){
     return t;
   },[records,srList]);
 
+  // Ranking-specific totals: always 1 → lastDataDay (last day with real data), independent of the Overview period filter
+  const rankEndDay=lastDataDay||daysInMonth(month,year);
+  const rankBranchTotals=useMemo(()=>{
+    const t={};
+    BRANCH_ORDER.forEach(b=>{
+      const bSRs=srList.filter(s=>s.branch===b);let wi=0,ae=0;
+      for(let d=1;d<=rankEndDay;d++){
+        const k=`${d}/${month}/${year}`,day=records[k]||{};
+        bSRs.forEach(sr=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});
+        wi+=(day[`BM_${b}`]?.walkin||0);ae+=(day[`BM_${b}`]?.aeon||0);wi+=(day[`BM_${b}`]?.unalloc||0);
+      }
+      t[b]={wi,ae,total:wi+ae};
+    });
+    return t;
+  },[records,srList,rankEndDay,month,year]);
+  const rankSRTotals=useMemo(()=>{
+    const t={};
+    srList.forEach(sr=>{
+      let wi=0,ae=0;
+      for(let d=1;d<=rankEndDay;d++){const k=`${d}/${month}/${year}`;wi+=(records[k]?.[sr.id]?.walkin||0);ae+=(records[k]?.[sr.id]?.aeon||0);}
+      t[sr.id]={wi,ae,total:wi+ae};
+    });
+    return t;
+  },[records,srList,rankEndDay,month,year]);
+
   const grandTotal=BRANCH_ORDER.reduce((s,b)=>s+(branchTotals[b]?.total||0),0);
   const grandTarget=BRANCH_ORDER.reduce((s,b)=>s+(targets?.bm?.[b]||0),0);
 
   const bmRanking=useMemo(()=>[...BRANCH_ORDER].map(b=>{
-    const profit=branchTotals[b]?.total||0,target=targets?.bm?.[b]||0,bonus=targets?.bmBonus?.[b]||0;
+    const profit=rankBranchTotals[b]?.total||0,target=targets?.bm?.[b]||0,bonus=targets?.bmBonus?.[b]||0;
     const bonusEarned=target>0&&profit>=target&&bonus>0,p=pctN(profit,target);
-    return{name:branchMeta[b]?.manager,status:branchMeta[b]?.mStatus,branch:b,sub:null,wi:branchTotals[b]?.wi||0,ae:branchTotals[b]?.ae||0,profit,target,bonus,bonusEarned,branchPct:p,role:"bm",points:calcRewardPoints(p,p)};
-  }).sort((a,b)=>pctN(b.profit,b.target)-pctN(a.profit,a.target)),[branchTotals,targets,branchMeta]);
+    return{name:branchMeta[b]?.manager,status:branchMeta[b]?.mStatus,branch:b,sub:null,wi:rankBranchTotals[b]?.wi||0,ae:rankBranchTotals[b]?.ae||0,profit,target,bonus,bonusEarned,branchPct:p,role:"bm",points:calcRewardPoints(p,p)};
+  }).sort((a,b)=>pctN(b.profit,b.target)-pctN(a.profit,a.target)),[rankBranchTotals,targets,branchMeta]);
 
   const mkSRRank=type=>srList.filter(s=>s.type===type).map(s=>{
-    const profit=srTotals[s.id]?.total||0,target=targets?.sr?.[s.id]?.target||0,bonus=targets?.sr?.[s.id]?.bonus||0;
-    const bTarget=targets?.bm?.[s.branch]||0,bTotal=branchTotals[s.branch]?.total||0;
+    const profit=rankSRTotals[s.id]?.total||0,target=targets?.sr?.[s.id]?.target||0,bonus=targets?.sr?.[s.id]?.bonus||0;
+    const bTarget=targets?.bm?.[s.branch]||0,bTotal=rankBranchTotals[s.branch]?.total||0;
     const branchHit=bTarget>0&&bTotal>=bTarget,p=pctN(profit,target),branchPct=pctN(bTotal,bTarget);
-    return{name:s.canon,status:s.status,branch:s.branch,sub:null,wi:srTotals[s.id]?.wi||0,ae:srTotals[s.id]?.ae||0,profit,target,bonus,bonusEarned:branchHit&&profit>=target&&bonus>0,branchPct,role:"sr",points:calcRewardPoints(p,branchPct)};
+    return{name:s.canon,status:s.status,branch:s.branch,sub:null,wi:rankSRTotals[s.id]?.wi||0,ae:rankSRTotals[s.id]?.ae||0,profit,target,bonus,bonusEarned:branchHit&&profit>=target&&bonus>0,branchPct,role:"sr",points:calcRewardPoints(p,branchPct)};
   }).sort((a,b)=>pctN(b.profit,b.target)-pctN(a.profit,a.target));
 
   const printSummary=()=>{
@@ -1833,7 +1891,7 @@ export default function App(){
           <h2 style={{fontSize:14,fontWeight:800,color:"#0A1628",margin:0}}>Branch Performance</h2>
           <button className="btn btn-primary" onClick={printSummary} style={{fontSize:12}}>Download Report</button>
         </div>
-        <BranchPerfTable branchTotals={branchTotals} targets={targets} branchMeta={branchMeta} printRef={summaryRef} month={month} year={year} startDay={selStartDay} endDay={selEndDay} onChangeStartDay={setSelStartDay} onChangeEndDay={setSelEndDay}/>
+        <BranchPerfTable branchTotals={branchTotals} targets={targets} branchMeta={branchMeta} printRef={summaryRef} month={month} year={year} startDay={selStartDay} endDay={Math.min(selEndDay,lastDataDay||daysInMonth(month,year))} onChangeStartDay={setSelStartDay} onChangeEndDay={setSelEndDay} maxDay={lastDataDay||daysInMonth(month,year)}/>
       </div>}
 
       {/* RANKINGS */}
@@ -1845,38 +1903,38 @@ export default function App(){
 
       {/* REWARD POINT RANKING */}
       {tab==="points"&&<div className="fade-in">
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+        <div style={{marginBottom:14}}>
           <h2 style={{fontSize:15,fontWeight:800,color:"#0A1628",margin:0}}>🏆 Reward Point Ranking</h2>
-          <span style={{fontSize:11,color:"#5A6472"}}>All Branch Managers and Sales Representatives, ranked by current points balance</span>
         </div>
-        <div className="card" style={{overflow:"hidden"}}>
-          <table style={{width:"100%",borderCollapse:"collapse"}}>
-            <thead><tr style={{background:"#0A1628"}}>
-              <th style={{padding:"10px 16px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.6)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left",width:48}}>#</th>
-              <th style={{padding:"10px 16px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.6)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left"}}>Name</th>
-              <th style={{padding:"10px 16px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.6)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left"}}>Role</th>
-              <th style={{padding:"10px 16px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.5)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left"}}>As At</th>
-              <th style={{padding:"10px 16px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.85)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right"}}>Points Balance</th>
-            </tr></thead>
-            <tbody>
-              {(()=>{
-                const allPeople=[
-                  ...BRANCH_ORDER.map(b=>({id:`BM_${b}`,name:branchMeta[b]?.manager||b,role:"Branch Manager",branch:b})),
-                  ...srList.map(sr=>({id:sr.id,name:sr.canon,role:`${sr.type} SR`,branch:sr.branch})),
-                ];
-                const ranked=allPeople.map(p=>({...p,balance:rewardBalances[p.id]?.balance||0,asOf:pointsAsOfFor(p.branch)})).sort((a,b)=>b.balance-a.balance);
-                return ranked.map((p,i)=>(
-                  <tr key={p.id} className="shine-row" onClick={()=>{setPointsModalPerson(p.id);setShowPointsModal(true);}} style={{borderBottom:"1px solid #E4EAF2",background:"#fff",cursor:"pointer"}}>
-                    <td style={{padding:"10px 16px",fontWeight:800,fontSize:12,color:i<3?"#F5A623":"#8A96A8"}}>{i+1}</td>
-                    <td style={{padding:"10px 16px",fontWeight:700,fontSize:12,color:"#0A1628"}}>{p.name}</td>
-                    <td style={{padding:"10px 16px",fontSize:11,color:"#5A6472"}}>{p.role} · {p.branch}</td>
-                    <td style={{padding:"10px 16px",fontSize:11,color:"#8A96A8"}}>{p.asOf}</td>
-                    <td style={{padding:"10px 16px",textAlign:"right",fontWeight:800,fontSize:13,color:"#0A1628"}}>{p.balance.toLocaleString()} pts</td>
-                  </tr>
-                ));
-              })()}
-            </tbody>
-          </table>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {(()=>{
+            const allPeople=[
+              ...BRANCH_ORDER.map(b=>({id:`BM_${b}`,name:branchMeta[b]?.manager||b,role:"Branch Manager",branch:b})),
+              ...srList.map(sr=>({id:sr.id,name:sr.canon,role:`${sr.type} SR`,branch:sr.branch})),
+            ];
+            const ranked=allPeople.map(p=>({...p,balance:rewardBalances[p.id]?.balance||0,asOf:pointsAsOfFor(p.branch)})).sort((a,b)=>b.balance-a.balance);
+            const medals=["🥇","🥈","🥉"];
+            return ranked.map((p,i)=>{
+              const isTop=i<3;
+              return <div key={p.id} onClick={()=>{setPointsModalPerson(p.id);setShowPointsModal(true);}} style={{
+                background:isTop?"linear-gradient(135deg,#0A1628,#162B52)":"#fff",
+                border:isTop?"none":"1px solid #E4EAF2",
+                borderRadius:10,padding:"10px 14px",
+                boxShadow:isTop?"0 2px 8px rgba(10,22,40,.2)":"0 1px 3px rgba(10,22,40,.04)",
+                display:"flex",alignItems:"center",gap:12,cursor:"pointer",
+              }}>
+                <div style={{flexShrink:0,width:32,textAlign:"center"}}>
+                  {isTop?<span style={{fontSize:20,lineHeight:1}}>{medals[i]}</span>
+                        :<span style={{fontWeight:800,fontSize:13,color:"#8A96A8"}}>#{i+1}</span>}
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:13,color:isTop?"#fff":"#0A1628",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.name}</div>
+                  <div style={{fontSize:10,color:isTop?"rgba(255,255,255,.4)":"#8A96A8",marginTop:2}}>{p.role} · {p.branch} · As at {p.asOf}</div>
+                </div>
+                <div style={{fontWeight:800,fontSize:15,color:isTop?"#fff":"#0A1628",flexShrink:0,whiteSpace:"nowrap"}}>{p.balance.toLocaleString()} pts</div>
+              </div>;
+            });
+          })()}
         </div>
       </div>}
 
@@ -1901,7 +1959,7 @@ export default function App(){
           </div>
         </div>
         <div style={{padding:"8px 14px",background:"#F7F9FC",borderRadius:8,fontSize:11,color:"#4A5568",border:"1px solid #E4EAF2",marginBottom:14}}>
-          Click any Walk In or Invoice figure to edit inline. Press Enter or click outside to save. Monthly Report always shows the full month, regardless of the Overview period filter.
+          Click any Walk In or Invoice figure to edit inline. Press Enter or click outside to save.
         </div>
         {(()=>{
           const bSRs=srList.filter(s=>s.branch===selBranch);
@@ -1940,7 +1998,7 @@ export default function App(){
       }}>
         <div style={{width:220,padding:"16px 10px"}}>
           {TABS.map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)} style={{
+            <button key={t.id} onClick={()=>{setTab(t.id);setSidebarOpen(false);}} style={{
               display:"flex",alignItems:"center",width:"100%",textAlign:"left",padding:"9px 12px",marginBottom:3,
               border:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600,fontSize:12,borderRadius:8,
               background:tab===t.id?"rgba(255,255,255,.1)":"transparent",color:tab===t.id?"#fff":"rgba(255,255,255,.45)",

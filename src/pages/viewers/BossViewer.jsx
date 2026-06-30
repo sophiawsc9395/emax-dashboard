@@ -445,7 +445,7 @@ export default function App(){
   const periodDays=days.filter(d=>d>=selStartDay&&d<=selEndDay);
   const [selBranch,setSelBranch]=useState(BRANCH_ORDER[0]);
   const [tab,setTab]=useState("overview");
-  const [sidebarOpen,setSidebarOpen]=useState(true);
+  const [sidebarOpen,setSidebarOpen]=useState(false);
 
   const [records,setRecords]=useState({});
   const [targets,setTargets]=useState(DEFAULT_TARGETS);
@@ -534,24 +534,55 @@ export default function App(){
   const grandTotal=BRANCH_ORDER.reduce((s,b)=>s+(branchTotals[b]?.total||0),0);
   const grandTarget=BRANCH_ORDER.reduce((s,b)=>s+(targets?.bm?.[b]||0),0);
 
+  // Last day in the month where ANY branch/SR has a non-zero walkin/aeon/unalloc value
   const lastDataDay=useMemo(()=>{
     const allDays=Array.from({length:daysInMonth(month,year)},(_,i)=>i+1);
     for(let i=allDays.length-1;i>=0;i--){
       const k=`${allDays[i]}/${month}/${year}`;
-      if(records[k]&&Object.keys(records[k]).length>0)return allDays[i];
+      const day=records[k];
+      if(day){
+        const hasValue=Object.values(day).some(entry=>(entry?.walkin||0)!==0||(entry?.aeon||0)!==0||(entry?.unalloc||0)!==0);
+        if(hasValue)return allDays[i];
+      }
     }return null;
   },[records,month,year]);
-  const rankingPeriod=lastDataDay?`1/${month}/${year} – ${lastDataDay}/${month}/${year}`:`${MONTHS[month-1]} ${year}`;
+  const pad2=(n)=>String(n).padStart(2,"0");
+  const rankingPeriod=lastDataDay?`${pad2(1)}/${pad2(month)}/${year}-${pad2(lastDataDay)}/${pad2(month)}/${year}`:`${MONTHS[month-1]} ${year}`;
+
+  // Ranking-specific totals: always 1 → lastDataDay, independent of the Overview period filter
+  const rankEndDay=lastDataDay||daysInMonth(month,year);
+  const rankBranchTotals=useMemo(()=>{
+    const t={};
+    BRANCH_ORDER.forEach(b=>{
+      const bSRs=srList.filter(s=>s.branch===b);let wi=0,ae=0;
+      for(let d=1;d<=rankEndDay;d++){
+        const k=`${d}/${month}/${year}`,day=records[k]||{};
+        bSRs.forEach(sr=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});
+        wi+=(day[`BM_${b}`]?.walkin||0);ae+=(day[`BM_${b}`]?.aeon||0);wi+=(day[`BM_${b}`]?.unalloc||0);
+      }
+      t[b]={wi,ae,total:wi+ae};
+    });
+    return t;
+  },[records,srList,rankEndDay,month,year]);
+  const rankSRTotals=useMemo(()=>{
+    const t={};
+    srList.forEach(sr=>{
+      let wi=0,ae=0;
+      for(let d=1;d<=rankEndDay;d++){const k=`${d}/${month}/${year}`;wi+=(records[k]?.[sr.id]?.walkin||0);ae+=(records[k]?.[sr.id]?.aeon||0);}
+      t[sr.id]={wi,ae,total:wi+ae};
+    });
+    return t;
+  },[records,srList,rankEndDay,month,year]);
 
   const branchMeta=bMeta;
   const bmRank=[...BRANCH_ORDER].map(b=>{
-    const profit=branchTotals[b]?.total||0,target=targets?.bm?.[b]||0,p=pctN(profit,target);
+    const profit=rankBranchTotals[b]?.total||0,target=targets?.bm?.[b]||0,p=pctN(profit,target);
     return{name:bMeta[b]?.manager,status:bMeta[b]?.mStatus,branch:b,sub:(bMeta[b]?.name||b).toUpperCase(),profit,target,p,branchPct:p,role:"bm"};
   }).sort((a,b)=>b.p-a.p);
 
   const mkSRRank=type=>srList.filter(s=>s.type===type).map(s=>{
-    const profit=srTotals[s.id]?.total||0,target=targets?.sr?.[s.id]?.target||0;
-    const bTotal=branchTotals[s.branch]?.total||0,bTarget=targets?.bm?.[s.branch]||0;
+    const profit=rankSRTotals[s.id]?.total||0,target=targets?.sr?.[s.id]?.target||0;
+    const bTotal=rankBranchTotals[s.branch]?.total||0,bTarget=targets?.bm?.[s.branch]||0;
     const branchPct=pctN(bTotal,bTarget),p=pctN(profit,target);
     return{name:s.canon,status:s.status,branch:s.branch,sub:(bMeta[s.branch]?.name||s.branch).toUpperCase(),profit,target,p,branchPct,role:"sr"};
   }).sort((a,b)=>b.p-a.p);
@@ -688,9 +719,8 @@ export default function App(){
 
       {/* REWARD POINT RANKING */}
       {tab==="points"&&<div className="fade-in">
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+        <div style={{marginBottom:14}}>
           <h2 style={{fontSize:15,fontWeight:800,color:"#0A1628",margin:0}}>🏆 Reward Point Ranking</h2>
-          <span style={{fontSize:11,color:"#5A6472"}}>All Branch Managers and Sales Representatives, ranked by current points balance</span>
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:6}}>
           {(()=>{
@@ -715,7 +745,7 @@ export default function App(){
                 </div>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontWeight:700,fontSize:13,color:isTop?"#fff":"#0A1628",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.name}</div>
-                  <div style={{fontSize:10,color:isTop?"rgba(255,255,255,.4)":"#8A96A8",marginTop:2}}>{p.role} · {p.branch}</div>
+                  <div style={{fontSize:10,color:isTop?"rgba(255,255,255,.4)":"#8A96A8",marginTop:2}}>{p.role} · {p.branch} · As at {pointsAsOf}</div>
                 </div>
                 <div style={{fontWeight:800,fontSize:15,color:isTop?"#fff":"#0A1628",flexShrink:0,whiteSpace:"nowrap"}}>{p.balance.toLocaleString()} pts</div>
               </div>;
@@ -735,9 +765,6 @@ export default function App(){
               {b}
             </button>
           ))}
-        </div>
-        <div style={{padding:"8px 14px",background:"#F7F9FC",borderRadius:8,fontSize:11,color:"#4A5568",border:"1px solid #E4EAF2",marginBottom:14}}>
-          Monthly Report always shows the full month, regardless of the Overview period filter.
         </div>
         {(()=>{
           const bSRs=srList.filter(s=>s.branch===selBranch);
@@ -796,7 +823,7 @@ export default function App(){
       }}>
         <div style={{width:220,padding:"16px 10px"}}>
           {TABS.map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)} style={{
+            <button key={t.id} onClick={()=>{setTab(t.id);setSidebarOpen(false);}} style={{
               display:"flex",alignItems:"center",width:"100%",textAlign:"left",padding:"9px 12px",marginBottom:3,
               border:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600,fontSize:12,borderRadius:8,
               background:tab===t.id?"rgba(255,255,255,.1)":"transparent",color:tab===t.id?"#fff":"rgba(255,255,255,.45)",
