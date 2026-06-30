@@ -112,7 +112,7 @@ const pctN=(p,t)=>t>0?(p/t)*100:0;
 function daysInMonth(m,y){return new Date(y,m,0).getDate();}
 function achColor(p,t){const r=pctN(p,t);return r>=100?"#00C896":r>=80?"#F5A623":r>=50?"#F0794B":"#F0354B";}
 function achBg(p,t){const r=pctN(p,t);return r>=100?"#00C89612":r>=80?"#F5A62312":r>=50?"#F0794B12":"#F0354B12";}
-function calcAchievementBonus(pct,role="sr"){if(pct<121)return 0;const t=Math.floor((pct-121)/10);return role==="bm"?500+t*500:300+t*50;}
+function calcAchievementBonus(pct,role="sr"){if(pct<120)return 0;const t=Math.floor((pct-120)/10);return role==="bm"?500+t*500:300+t*50;}
 function calcRewardPoints(pct,bPct){if(bPct<100||pct<110)return 0;const T=[[200,12000],[190,9000],[180,7500],[170,6000],[160,4500],[150,3000],[140,2000],[130,1500],[120,1000],[110,500]];for(const[t,p]of T)if(pct>=t)return p;return 0;}
 
 // loadData imported
@@ -231,7 +231,7 @@ function SRCard({sr,records,targets,branchPct,month,year,days,bMeta,rewardBalanc
       {/* Branch Achievement Bonus */}
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
         <span style={{color:"#5A6472"}}>Branch Achievement Bonus</span>
-        {(branchPct>=121&&p>=100)
+        {(branchPct>=120&&p>=100)
           ? <span style={{fontWeight:700,fontSize:11,color:"#0A1628"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
           : <span style={{color:"#5A6472"}}>—</span>
         }
@@ -251,9 +251,9 @@ function SRCard({sr,records,targets,branchPct,month,year,days,bMeta,rewardBalanc
       </div>
 
       {/* Compact tier progress — only shown when at least one tier is active */}
-      {((branchPct>=121&&p>=100)||(branchPct>=100&&p>=110))&&(()=>{
-        const bTier=branchPct>=121&&p>=100?Math.floor((branchPct-121)/10)+1:null;
-        const bNextPct=bTier?121+bTier*10:null;
+      {((branchPct>=120&&p>=100)||(branchPct>=100&&p>=110))&&(()=>{
+        const bTier=branchPct>=120&&p>=100?Math.floor((branchPct-120)/10)+1:null;
+        const bNextPct=bTier?120+bTier*10:null;
         const bMax=bNextPct>200;
         const pts=calcRewardPoints(p,branchPct);
         const TIERS=[[110,500],[120,1000],[130,1500],[140,2000],[150,3000],[160,4500],[170,6000],[180,7500],[190,9000],[200,12000]];
@@ -355,10 +355,10 @@ function BMCard({branchId,records,targets,srList,branchMeta,month,year,days,rewa
 
 
 
-      {/* Branch Achievement Bonus — BM qualifies when branch >121% */}
+      {/* Branch Achievement Bonus — BM qualifies when branch >=120% */}
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
         <span style={{color:"#5A6472"}}>Branch Achievement Bonus</span>
-        {p>=121
+        {p>=120
           ? <span style={{fontWeight:700,fontSize:11,color:"#0A1628"}}>{fRM(calcAchievementBonus(p,"bm"))}</span>
           : <span style={{color:"#5A6472"}}>—</span>
         }
@@ -377,9 +377,9 @@ function BMCard({branchId,records,targets,srList,branchMeta,month,year,days,rewa
       </div>
 
       {/* Compact tier progress — only shown when at least one tier is active */}
-      {((p>=121)||(p>=100&&p>=110))&&(()=>{
-        const bTier=p>=121?Math.floor((p-121)/10)+1:null;
-        const bNextPct=bTier?121+bTier*10:null;
+      {((p>=120)||(p>=100&&p>=110))&&(()=>{
+        const bTier=p>=120?Math.floor((p-120)/10)+1:null;
+        const bNextPct=bTier?120+bTier*10:null;
         const bMax=bNextPct>200;
         const pts=calcRewardPoints(p,p);
         const TIERS=[[110,500],[120,1000],[130,1500],[140,2000],[150,3000],[160,4500],[170,6000],[180,7500],[190,9000],[200,12000]];
@@ -429,7 +429,7 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
     <div style={{display:"flex",flexDirection:"column",gap:6,flex:1}}>
       {rows.map((r,i)=>{
         const p=pctN(r.profit,r.target),branchPct=r.branchPct||p,color=achColor(r.profit,r.target);
-        const achBonus=branchPct>=121&&p>=100?calcAchievementBonus(branchPct,r.role||"sr"):0;
+        const achBonus=branchPct>=120&&p>=100?calcAchievementBonus(branchPct,r.role||"sr"):0;
         const pts=calcRewardPoints(p,branchPct);
         const isTop=i<3;
         return <div key={i} style={{
@@ -980,7 +980,7 @@ export default function App(){
         transition:"width .2s ease",background:"#0F1B30",borderLeft:sidebarOpen?"1px solid #1C2D4A":"none",
         minHeight:"calc(100vh - 49px)",position:"sticky",top:49,alignSelf:"flex-start",
       }}>
-        <div style={{width:220,padding:"16px 10px"}}>
+        <div style={{width:220,padding:"16px 10px",visibility:sidebarOpen?"visible":"hidden"}}>
           {TABS.map(t=>(
             <button key={t.id} onClick={()=>{setTab(t.id);setSidebarOpen(false);}} style={{
               display:"flex",alignItems:"center",width:"100%",textAlign:"left",padding:"9px 12px",marginBottom:3,

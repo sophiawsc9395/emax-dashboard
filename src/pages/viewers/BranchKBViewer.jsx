@@ -79,7 +79,7 @@ const pctN=(p,t)=>t>0?(p/t)*100:0;
 function achColor(p,t){const r=pctN(p,t);return r>=100?"#00C896":r>=80?"#F5A623":r>=50?"#F0794B":"#F0354B";}
 function achBg(p,t){const r=pctN(p,t);return r>=100?"#00C89612":r>=80?"#F5A62312":r>=50?"#F0794B12":"#F0354B12";}
 function daysInMonth(m,y){return new Date(y,m,0).getDate();}
-function calcAchievementBonus(pct,role="sr"){if(pct<121)return 0;const t=Math.floor((pct-121)/10);return role==="bm"?500+t*500:300+t*50;}
+function calcAchievementBonus(pct,role="sr"){if(pct<120)return 0;const t=Math.floor((pct-120)/10);return role==="bm"?500+t*500:300+t*50;}
 function calcRewardPoints(pct,bPct){if(bPct<100||pct<110)return 0;const T=[[200,12000],[190,9000],[180,7500],[170,6000],[160,4500],[150,3000],[140,2000],[130,1500],[120,1000],[110,500]];for(const[t,p]of T)if(pct>=t)return p;return 0;}
 
 function AchBadge({profit,target}){
@@ -155,7 +155,7 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
     <div style={{display:"flex",flexDirection:"column",gap:6,flex:1}}>
       {rows.map((r,i)=>{
         const p=pctN(r.profit,r.target),branchPct=r.branchPct||p,color=achColor(r.profit,r.target);
-        const achBonus=branchPct>=121&&p>=100?calcAchievementBonus(branchPct,r.role||"sr"):0;
+        const achBonus=branchPct>=120&&p>=100?calcAchievementBonus(branchPct,r.role||"sr"):0;
         const pts=calcRewardPoints(p,branchPct);
         const isTop=i<3;
         return <div key={i} style={{
@@ -188,133 +188,6 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
           </div>
         </div>;
       })}
-    </div>
-  </div>;
-}
-
-
-function BMCard({branchId,records,targets,srList,branchMeta,month,year,days,rewardBalance=0,pointsAsOf=""}){
-  const meta=branchMeta[branchId]||{},bSRs=srList.filter(s=>s.branch===branchId);
-  const target=targets?.bm?.[branchId]||0,bmBonus=targets?.bmBonus?.[branchId]||0;
-  const rows=days.map(d=>{
-    const k=`${d}/${month}/${year}`,day=records[k]||{},bm=day[`BM_${branchId}`]||{};
-    let wi=bm.walkin||0,ae=bm.aeon||0,ua=bm.unalloc||0;
-    bSRs.forEach(sr=>{wi+=(day[sr.id]?.walkin||0);ae+=(day[sr.id]?.aeon||0);});
-    return{day:d,wi,ae,ua};
-  });
-  const tWI=rows.reduce((s,r)=>s+r.wi,0),tAE=rows.reduce((s,r)=>s+r.ae,0),tUA=rows.reduce((s,r)=>s+r.ua,0),total=tWI+tAE+tUA;
-  const p=pctN(total,target),color=achColor(total,target);
-  const bmBonusEarned=target>0&&total>=target&&bmBonus>0;
-  const achBonus=calcAchievementBonus(p,"bm"),points=calcRewardPoints(p,p);
-  const thS={padding:"6px 10px",fontSize:10,fontWeight:700,color:"#5A6472",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",background:"#F7F9FC",borderBottom:"1px solid #E4EAF2",whiteSpace:"nowrap"};
-  return <div style={{border:"1px solid #E4EAF2",borderRadius:10,overflow:"hidden",background:"#fff",boxShadow:"0 1px 4px rgba(10,22,40,.05)"}}>
-    <div style={{background:"#0A1628",padding:"10px 14px"}}>
-      <div style={{fontSize:9,fontWeight:700,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.08em"}}>EMAX NETWORK SDN BHD</div>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:3}}>
-        <span style={{fontWeight:800,fontSize:13,color:"#fff"}}>{meta.manager}</span>
-        <span style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,.6)"}}>Branch Manager</span>
-      </div>
-    </div>
-    <div style={{padding:"5px 14px",background:"#0F2040",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-      <StatusTag status={meta.mStatus}/><span style={{fontSize:10,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.04em"}}>{meta.name}</span>
-    </div>
-    <table style={{width:"100%",borderCollapse:"collapse"}}>
-      <thead><tr>
-        <th style={{...thS,textAlign:"center",width:48}}>Date</th>
-        <th style={{...thS,fontSize:9}}>Unalloc.</th>
-        <th style={{...thS,color:"#4A5568"}}>Walk In</th>
-        <th style={{...thS,color:"#4A5568"}}>Invoice</th>
-        <th style={{...thS,color:"#4A5568"}}>Total</th>
-      </tr></thead>
-      <tbody>{rows.map(({day,wi,ae,ua})=>{
-        const rt=wi+ae+ua;
-        return <tr key={day} className="shine-row" style={{borderBottom:"1px solid rgba(228,234,242,.8)",background:day%2===0?"#fff":"#F7F9FC"}}>
-          <td style={{padding:"4px 8px",color:"#4A5568",fontWeight:600,textAlign:"center",fontSize:11,borderRight:"1px solid rgba(228,234,242,.6)"}}>{day}/{month}</td>
-          <td style={{padding:"4px 10px",textAlign:"right",fontSize:11,color:ua<0?"#F0354B":"#8A96A8"}}>{ua!==0?f2(ua):"—"}</td>
-          <td style={{padding:"4px 10px",textAlign:"right",fontSize:11,color:wi!==0?"#4A5568":"#E4EAF2",fontWeight:wi!==0?500:300}}>{wi!==0?f2(wi):"—"}</td>
-          <td style={{padding:"4px 10px",textAlign:"right",fontSize:11,color:ae!==0?"#4A5568":"#E4EAF2",fontWeight:ae!==0?500:300}}>{ae!==0?f2(ae):"—"}</td>
-          <td style={{padding:"4px 10px",textAlign:"right",fontWeight:rt!==0?600:300,fontSize:11,color:rt>0?"#0A1628":rt<0?"#F0354B":"#E4EAF2"}}>{rt!==0?f2(rt):"—"}</td>
-        </tr>;
-      })}</tbody>
-    </table>
-    <div style={{padding:"10px 14px",background:"#F7F9FC",borderTop:"2px solid #E4EAF2"}}>
-      {[["Unallocated",fRM(tUA),"#4A5568"],["Walk In",fRM(tWI),"#4A5568"],["Invoice",fRM(tAE),"#4A5568"],["Total Profit",fRM(total),"#0A1628"]].map(([l,v,c])=>(
-        <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"2px 0",fontSize:11}}>
-          <span style={{color:"#5A6472"}}>{l}</span><span style={{fontWeight:700,color:c,fontSize:11}}>{v}</span>
-        </div>
-      ))}
-      <div style={{height:1,background:"#E4EAF2",margin:"7px 0"}}/>
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
-        <span style={{color:"#5A6472"}}>Target</span><span style={{fontWeight:700,fontSize:11}}>{target>0?fRM(target):"Not set"}</span>
-      </div>
-      {target>0&&<>
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:4}}>
-          <span style={{color:"#5A6472"}}>Personal Achievement</span><AchBadge profit={total} target={target}/>
-        </div>
-        <ProgressBar pct={p} color={color}/>
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginTop:5}}>
-          <span style={{color:"#5A6472"}}>Balance to Hit</span>
-          <span style={{fontWeight:700,color:Math.max(target-total,0)>0?"#F0354B":"#00C896",fontSize:11}}>
-            {Math.max(target-total,0)>0?fRM(Math.max(target-total,0)):"Target Met"}
-          </span>
-        </div>
-      </>}
-      {/* ── BM INCENTIVES ── */}
-      <div style={{height:1,background:"#E4EAF2",margin:"8px 0"}}/>
-      <div style={{fontSize:9,fontWeight:700,color:"#5A6472",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Incentives</div>
-
-      {/* Personal Achievement Bonus: RM500 always, RM2200 if branch hits 100%+ */}
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,marginBottom:4}}>
-        <span style={{color:"#5A6472"}}>Personal Achievement Bonus</span>
-        <span style={{fontWeight:700,fontSize:11,color:"#0A1628",whiteSpace:"nowrap"}}>
-          {p>=100?"RM 2,200":"RM 500 (Pending)"}
-        </span>
-      </div>
-
-
-
-      {/* Branch Achievement Bonus — BM qualifies when branch >121% */}
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
-        <span style={{color:"#5A6472"}}>Branch Achievement Bonus</span>
-        {p>=121
-          ? <span style={{fontWeight:700,fontSize:11,color:"#0A1628"}}>{fRM(calcAchievementBonus(p,"bm"))}</span>
-          : <span style={{color:"#5A6472"}}>—</span>
-        }
-      </div>
-      {/* Reward Points */}
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2,marginTop:2}}>
-        <span style={{color:"#5A6472"}}>Reward Points (This Month)</span>
-        {(p>=100&&p>=110)
-          ? <span style={{fontWeight:700,fontSize:11,color:"#0A1628"}}>{calcRewardPoints(p,p).toLocaleString()} pts</span>
-          : <span style={{color:"#5A6472"}}>—</span>
-        }
-      </div>
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:6}}>
-        <span style={{color:"#5A6472"}}>Earned Reward Points{pointsAsOf?` (as at ${pointsAsOf})`:""}</span>
-        <span style={{fontWeight:700,fontSize:11,color:"#0A1628"}}>{rewardBalance.toLocaleString()} pts</span>
-      </div>
-
-      {/* Compact tier progress — only shown when at least one tier is active */}
-      {((p>=121)||(p>=100&&p>=110))&&(()=>{
-        const bTier=p>=121?Math.floor((p-121)/10)+1:null;
-        const bNextPct=bTier?121+bTier*10:null;
-        const bMax=bNextPct>200;
-        const pts=calcRewardPoints(p,p);
-        const TIERS=[[110,500],[120,1000],[130,1500],[140,2000],[150,3000],[160,4500],[170,6000],[180,7500],[190,9000],[200,12000]];
-        const pTierIdx=p>=100&&p>=110?TIERS.reduce((acc,[t],i)=>p>=t?i:acc,-1):-1;
-        const pNext=pTierIdx>=0?TIERS[pTierIdx+1]:null;
-        return <div style={{background:"#F7F9FC",borderRadius:8,padding:"8px 10px",border:"1px solid #E4EAF2",display:"flex",flexDirection:"column",gap:5}}>
-          {bTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <span style={{fontSize:10,color:"#92400E",fontWeight:600}}>Bonus Tier {bTier}{!bMax?` → next at ${bNextPct}%`:" (max)"}</span>
-            <span style={{fontSize:10,fontWeight:700,color:"#0A1628"}}>{!bMax?fRM(calcAchievementBonus(bNextPct,"bm")):"🏆"}</span>
-          </div>}
-          {pTierIdx>=0&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <span style={{fontSize:10,color:"#1E40AF",fontWeight:600}}>Points Tier {pTierIdx+1}{pNext?` → next at ${pNext[0]}%`:" (max)"}</span>
-            <span style={{fontSize:10,fontWeight:700,color:"#0A1628"}}>{pNext?pNext[1].toLocaleString()+" pts":"🏆"}</span>
-          </div>}
-        </div>;
-      })()}
-
     </div>
   </div>;
 }
@@ -648,7 +521,7 @@ export default function App(){
         </div>
         {/* BM Incentive Tiers */}
         {(()=>{
-          const achBonus=branchPct>=121?calcAchievementBonus(branchPct,"bm"):0;
+          const achBonus=branchPct>=120?calcAchievementBonus(branchPct,"bm"):0;
           const pts=calcRewardPoints(branchPct,branchPct);
           return <div style={{marginTop:14,display:"flex",flexDirection:"column",gap:8}}>
             <div style={{display:"flex",justifyContent:"space-between",fontSize:11}}>
@@ -657,8 +530,8 @@ export default function App(){
             </div>
             {/* Branch Achievement Bonus tier */}
             {achBonus>0&&(()=>{
-              const tier=Math.floor((branchPct-121)/10);
-              const nextTierPct=121+(tier+1)*10;
+              const tier=Math.floor((branchPct-120)/10);
+              const nextTierPct=120+(tier+1)*10;
               const isMaxTier=nextTierPct>200;
               return <div style={{background:"linear-gradient(135deg,#FFF9EB,#FFFBF0)",borderRadius:8,padding:"8px 10px",border:"1px solid #FDE68A"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
@@ -782,7 +655,7 @@ export default function App(){
       {/* Branch Achievement Bonus */}
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
         <span style={{color:"#5A6472"}}>Branch Achievement Bonus</span>
-        {(branchPct>=121&&p>=100)
+        {(branchPct>=120&&p>=100)
           ? <span style={{fontWeight:700,fontSize:11,color:"#0A1628"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
           : <span style={{color:"#5A6472"}}>—</span>
         }
@@ -802,9 +675,9 @@ export default function App(){
       </div>
 
       {/* Compact tier progress — only shown when at least one tier is active */}
-      {((branchPct>=121&&p>=100)||(branchPct>=100&&p>=110))&&(()=>{
-        const bTier=branchPct>=121&&p>=100?Math.floor((branchPct-121)/10)+1:null;
-        const bNextPct=bTier?121+bTier*10:null;
+      {((branchPct>=120&&p>=100)||(branchPct>=100&&p>=110))&&(()=>{
+        const bTier=branchPct>=120&&p>=100?Math.floor((branchPct-120)/10)+1:null;
+        const bNextPct=bTier?120+bTier*10:null;
         const bMax=bNextPct>200;
         const pts=calcRewardPoints(p,branchPct);
         const TIERS=[[110,500],[120,1000],[130,1500],[140,2000],[150,3000],[160,4500],[170,6000],[180,7500],[190,9000],[200,12000]];
@@ -825,7 +698,6 @@ export default function App(){
     </div>
   </div>;
         })}
-        <BMCard branchId={BRANCH_ID} records={records} targets={targets} srList={srList} branchMeta={bMeta} month={month} year={year} days={days} rewardBalance={rewardBalances[`BM_${BRANCH_ID}`]?.balance||0} pointsAsOf={pointsAsOf}/>
       </div>
 
       <PdfDownloads month={month} year={year}/>
@@ -838,7 +710,7 @@ export default function App(){
         transition:"width .2s ease",background:"#0F1B30",borderLeft:sidebarOpen?"1px solid #1C2D4A":"none",
         minHeight:"calc(100vh - 49px)",position:"sticky",top:49,alignSelf:"flex-start",
       }}>
-        <div style={{width:220,padding:"16px 10px"}}>
+        <div style={{width:220,padding:"16px 10px",visibility:sidebarOpen?"visible":"hidden"}}>
           {[{id:"overview",label:"Performance"},{id:"rankings",label:"Rankings"},{id:"points",label:"Reward Point Ranking"}].map(t=>(
             <button key={t.id} onClick={()=>{setTab(t.id);setSidebarOpen(false);}} style={{
               display:"flex",alignItems:"center",width:"100%",textAlign:"left",padding:"9px 12px",marginBottom:3,

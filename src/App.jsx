@@ -110,8 +110,8 @@ const STORE_KEY="emax_v5_records",TARGET_KEY="emax_v5_targets",SR_KEY="emax_v5_s
 
 // ─── BONUS CALCULATORS ─────────────────────────────────────
 function calcAchievementBonus(pct, role="sr") {
-  if(pct<121) return 0;
-  const tier=Math.floor((pct-121)/10);
+  if(pct<120) return 0;
+  const tier=Math.floor((pct-120)/10);
   return role==="bm"?500+tier*500:300+tier*50;
 }
 function calcRewardPoints(pct, branchPct) {
@@ -336,7 +336,7 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days,
       {/* Branch Achievement Bonus */}
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
         <span style={{color:"#5A6472"}}>Branch Achievement Bonus</span>
-        {(branchPct>=121&&p>=100)
+        {(branchPct>=120&&p>=100)
           ? <span style={{fontWeight:700,fontSize:11,color:"#0A1628"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
           : <span style={{color:"#5A6472"}}>—</span>
         }
@@ -356,9 +356,9 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days,
       </div>
 
       {/* Compact tier progress — only shown when at least one tier is active */}
-      {((branchPct>=121&&p>=100)||(branchPct>=100&&p>=110))&&(()=>{
-        const bTier=branchPct>=121&&p>=100?Math.floor((branchPct-121)/10)+1:null;
-        const bNextPct=bTier?121+bTier*10:null;
+      {((branchPct>=120&&p>=100)||(branchPct>=100&&p>=110))&&(()=>{
+        const bTier=branchPct>=120&&p>=100?Math.floor((branchPct-120)/10)+1:null;
+        const bNextPct=bTier?120+bTier*10:null;
         const bMax=bNextPct>200;
         const pts=calcRewardPoints(p,branchPct);
         const TIERS=[[110,500],[120,1000],[130,1500],[140,2000],[150,3000],[160,4500],[170,6000],[180,7500],[190,9000],[200,12000]];
@@ -464,10 +464,10 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
 
 
 
-      {/* Branch Achievement Bonus — BM qualifies when branch >121% */}
+      {/* Branch Achievement Bonus — BM qualifies when branch >=120% */}
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
         <span style={{color:"#5A6472"}}>Branch Achievement Bonus</span>
-        {p>=121
+        {p>=120
           ? <span style={{fontWeight:700,fontSize:11,color:"#0A1628"}}>{fRM(calcAchievementBonus(p,"bm"))}</span>
           : <span style={{color:"#5A6472"}}>—</span>
         }
@@ -486,9 +486,9 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
       </div>
 
       {/* Compact tier progress — only shown when at least one tier is active */}
-      {((p>=121)||(p>=100&&p>=110))&&(()=>{
-        const bTier=p>=121?Math.floor((p-121)/10)+1:null;
-        const bNextPct=bTier?121+bTier*10:null;
+      {((p>=120)||(p>=100&&p>=110))&&(()=>{
+        const bTier=p>=120?Math.floor((p-120)/10)+1:null;
+        const bNextPct=bTier?120+bTier*10:null;
         const bMax=bNextPct>200;
         const pts=calcRewardPoints(p,p);
         const TIERS=[[110,500],[120,1000],[130,1500],[140,2000],[150,3000],[160,4500],[170,6000],[180,7500],[190,9000],[200,12000]];
@@ -669,7 +669,7 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
     <div style={{display:"flex",flexDirection:"column",gap:6,flex:1}}>
       {rows.map((r,i)=>{
         const p=pctN(r.profit,r.target),branchPct=r.branchPct||p,color=achColor(r.profit,r.target);
-        const achBonus=branchPct>=121&&p>=100?calcAchievementBonus(branchPct,r.role||"sr"):0;
+        const achBonus=branchPct>=120&&p>=100?calcAchievementBonus(branchPct,r.role||"sr"):0;
         const pts=calcRewardPoints(p,branchPct);
         const isTop=i<3;
         return <div key={i} style={{
@@ -708,8 +708,8 @@ function RankingTable({title,rows,showBonus,showPoints,branchMeta,period}){
 
 // ─── BONUS REFERENCE ───────────────────────────────────────
 function BonusReference(){
-  const srTiers=[["121% – 129%","RM 300"],["130% – 139%","RM 350"],["140% – 149%","RM 400"],["150% – 159%","RM 450"],["160% +","RM 500+ (RM50/tier)"]];
-  const bmTiers=[["121% – 129%","RM 500"],["130% – 139%","RM 1,000"],["140% – 149%","RM 1,500"],["150% – 159%","RM 2,000"],["160% +","RM 2,500+ (RM500/tier)"]];
+  const srTiers=[["120% – 129%","RM 300"],["130% – 139%","RM 350"],["140% – 149%","RM 400"],["150% – 159%","RM 450"],["160% +","RM 500+ (RM50/tier)"]];
+  const bmTiers=[["120% – 129%","RM 500"],["130% – 139%","RM 1,000"],["140% – 149%","RM 1,500"],["150% – 159%","RM 2,000"],["160% +","RM 2,500+ (RM500/tier)"]];
   const ptsTiers=[["110%–119%","500"],["120%–129%","1,000"],["130%–139%","1,500"],["140%–149%","2,000"],["150%–159%","3,000"],["160%–169%","4,500"],["170%–179%","6,000"],["180%–189%","7,500"],["190%–199%","9,000"],["200%+","12,000"]];
   const TableCard=({title,rows,accent,note})=>(
     <div className="card" style={{padding:0,overflow:"hidden",borderTop:`3px solid ${accent}`}}>
@@ -1487,31 +1487,46 @@ function DailyEntry({records,setRecords,srList,branchMeta,month,year,days,record
 
 // ─── MAIN APP ──────────────────────────────────────────────
 // ─── PDF DOWNLOADS ───────────────────────────────────────────
-function PdfDownloads({month,year,branch}){
+function PdfDownloads({month,year,branch,allowDelete=false}){
   const [pdfList,setPdfList]=useState([]);
-  useEffect(()=>{
+  const refresh=()=>{
     loadData("emax_v5_pdf_index").then(idx=>{
       const list=Array.isArray(idx)?idx:[];
-      Promise.all(list.map(k=>loadData(k))).then(pdfs=>{
-        const valid=pdfs.filter(p=>p&&p.date&&p.b64);
-        let filtered=valid.filter(p=>{const parts=p.date.split("/");return parseInt(parts[1])===month&&parseInt(parts[2])===year;});
-        if(branch)filtered=filtered.filter(p=>p.branch===branch);
+      Promise.all(list.map(k=>loadData(k).then(p=>({key:k,pdf:p})))).then(entries=>{
+        const valid=entries.filter(e=>e.pdf&&e.pdf.date&&e.pdf.b64);
+        let filtered=valid.filter(e=>{const parts=e.pdf.date.split("/");return parseInt(parts[1])===month&&parseInt(parts[2])===year;});
+        if(branch)filtered=filtered.filter(e=>e.pdf.branch===branch);
         const seen=new Set();
-        const deduped=filtered.filter(p=>{if(seen.has(p.name||p.date))return false;seen.add(p.name||p.date);return true;});
+        const deduped=filtered.filter(e=>{const k=e.pdf.name||e.pdf.date;if(seen.has(k))return false;seen.add(k);return true;});
         setPdfList(deduped);
       });
     });
-  },[month,year,branch]);
+  };
+  useEffect(refresh,[month,year,branch]);
+  const handleDelete=async(key)=>{
+    if(!confirm("Delete this uploaded PDF? This cannot be undone."))return;
+    await saveData(key,null);
+    const idx=await loadData("emax_v5_pdf_index");
+    const list=Array.isArray(idx)?idx:[];
+    await saveData("emax_v5_pdf_index",list.filter(k=>k!==key));
+    refresh();
+  };
   if(!pdfList.length)return null;
   return <div style={{marginTop:16,padding:"14px 16px",background:"#fff",border:"1px solid #E4EAF2",borderRadius:10}}>
     <div style={{fontSize:11,fontWeight:700,color:"#0A1628",marginBottom:10,textTransform:"uppercase",letterSpacing:"0.06em"}}>AEON Profit Reports{branch?` — ${branch}`:""} — Click to Download</div>
     <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-      {pdfList.map((pdf,idx)=>(
-        <a key={idx} href={`data:application/pdf;base64,${pdf.b64}`} download={pdf.name||`AEON_${pdf.date}.pdf`}
-          style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 14px",background:"#0A1628",color:"#fff",borderRadius:7,fontSize:12,fontWeight:600,textDecoration:"none"}}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          {pdf.name||`AEON ${pdf.date}`}
-        </a>
+      {pdfList.map((entry,idx)=>(
+        <div key={idx} style={{display:"inline-flex",alignItems:"center",gap:0,borderRadius:7,overflow:"hidden"}}>
+          <a href={`data:application/pdf;base64,${entry.pdf.b64}`} download={entry.pdf.name||`AEON_${entry.pdf.date}.pdf`}
+            style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 14px",background:"#0A1628",color:"#fff",fontSize:12,fontWeight:600,textDecoration:"none"}}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            {entry.pdf.name||`AEON ${entry.pdf.date}`}
+          </a>
+          {allowDelete&&<button onClick={()=>handleDelete(entry.key)} title="Delete this PDF"
+            style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:30,alignSelf:"stretch",background:"#F0354B",color:"#fff",border:"none",cursor:"pointer",fontSize:13,fontWeight:700}}>
+            ×
+          </button>}
+        </div>
       ))}
     </div>
   </div>;
@@ -2068,7 +2083,7 @@ export default function App(){
             <div style={{marginTop:22}}>
               <div style={{fontWeight:800,fontSize:12,color:"#0A1628",marginBottom:10,paddingBottom:7,borderBottom:"1px solid #E4EAF2",textTransform:"uppercase",letterSpacing:"0.06em"}}>Daily AEON Profit Report</div>
               <UploadPanel records={records} setRecords={setRecords} srList={srList} defaultBranch={selBranch} recordsKey={recordsKey}/>
-            <PdfDownloads month={month} year={year} branch={selBranch}/>
+            <PdfDownloads month={month} year={year} branch={selBranch} allowDelete/>
             </div>
           </div>;
         })()}
@@ -2090,7 +2105,7 @@ export default function App(){
         transition:"width .2s ease",background:"#0F1B30",borderLeft:sidebarOpen?"1px solid #1C2D4A":"none",
         minHeight:"calc(100vh - 49px)",position:"sticky",top:49,alignSelf:"flex-start",
       }}>
-        <div style={{width:220,padding:"16px 10px"}}>
+        <div style={{width:220,padding:"16px 10px",visibility:sidebarOpen?"visible":"hidden"}}>
           {TABS.map(t=>(
             <button key={t.id} onClick={()=>{setTab(t.id);setSidebarOpen(false);}} style={{
               display:"flex",alignItems:"center",width:"100%",textAlign:"left",padding:"9px 12px",marginBottom:3,
