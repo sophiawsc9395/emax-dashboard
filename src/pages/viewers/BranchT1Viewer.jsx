@@ -77,7 +77,6 @@ const f2=(n=0)=>Number(n||0).toFixed(2);
 const pctN=(p,t)=>t>0?(p/t)*100:0;
 function achColor(p,t){const r=pctN(p,t);return r>=100?"#00C896":r>=80?"#F5A623":r>=50?"#F0794B":"#F0354B";}
 function achBg(p,t){const r=pctN(p,t);return r>=100?"#00C89612":r>=80?"#F5A62312":r>=50?"#F0794B12":"#F0354B12";}
-async function loadData(key){try{const r=await window.storage.get(key);return r?JSON.parse(r.value):{};}catch{return{};}}
 function daysInMonth(m,y){return new Date(y,m,0).getDate();}
 function calcAchievementBonus(pct,role="sr"){if(pct<121)return 0;const t=Math.floor((pct-121)/10);return role==="bm"?500+t*500:300+t*50;}
 function calcRewardPoints(pct,bPct){if(bPct<100||pct<110)return 0;const T=[[200,12000],[190,9000],[180,7500],[170,6000],[160,4500],[150,3000],[140,2000],[130,1500],[120,1000],[110,500]];for(const[t,p]of T)if(pct>=t)return p;return 0;}
