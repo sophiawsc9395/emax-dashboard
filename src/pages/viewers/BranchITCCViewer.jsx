@@ -302,7 +302,7 @@ export default function App(){
 
     {/* Nav */}
     <div style={{background:"#0A1628",borderBottom:"1px solid #162B52",position:"sticky",top:0,zIndex:100}}>
-      <div style={{maxWidth:900,margin:"0 auto",padding:"0 20px",display:"flex",alignItems:"center",justifyContent:"space-between",height:50,gap:12}}>
+      <div style={{maxWidth:1400,margin:"0 auto",padding:"0 20px",display:"flex",alignItems:"center",justifyContent:"space-between",height:50,gap:12}}>
         <div>
           <div style={{fontWeight:900,fontSize:13,color:"#fff",letterSpacing:"0.06em",textTransform:"uppercase"}}>{meta.name||DEFAULT_BRANCH_META[BRANCH_ID]?.name}</div>
           <div style={{fontSize:9,color:"rgba(255,255,255,.3)",letterSpacing:"0.12em",textTransform:"uppercase"}}>Branch Performance · Read Only</div>
@@ -333,9 +333,9 @@ export default function App(){
       </div>
     </div>
 
-    <div style={{maxWidth:900,margin:"0 auto",padding:20}}>
+    <div style={{maxWidth:1400,margin:"0 auto",padding:20}}>
 
-      {tab==="rankings"&&<div className="fade-in" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:20}}>
+      {tab==="rankings"&&<div className="fade-in" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:20}}>
         <RankingTable title="Branch Manager Ranking" rows={bmRankRows} showBonus showPoints branchMeta={bMeta} period={rankingPeriod}/>
         <RankingTable title="Online SR Ranking — Company" rows={srRankRows.filter(r=>DEFAULT_SR.find(s=>s.canon===r.name)?.type==="Online")} showBonus showPoints branchMeta={bMeta} period={rankingPeriod}/>
         <RankingTable title="Offline SR Ranking — Company" rows={srRankRows.filter(r=>DEFAULT_SR.find(s=>s.canon===r.name)?.type==="Offline")} showBonus showPoints branchMeta={bMeta} period={rankingPeriod}/>
