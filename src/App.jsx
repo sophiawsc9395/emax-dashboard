@@ -317,7 +317,7 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days,
       {/* Personal Achievement Bonus */}
       {bonus>0&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,marginBottom:4}}>
         <span style={{color:"#5A6472"}}>Personal Achievement Bonus</span>
-        <span style={{fontWeight:700,color:bonusEarned?"#0A8754":"#5A6472",whiteSpace:"nowrap"}}>
+        <span style={{fontWeight:700,color:"#0A1628",whiteSpace:"nowrap"}}>
           {bonusEarned?fRM(bonus):`${fRM(bonus)} (Pending)`}
         </span>
       </div>}
@@ -326,7 +326,7 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days,
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
         <span style={{color:"#5A6472"}}>Branch Achievement Bonus</span>
         {(branchPct>=121&&p>=100)
-          ? <span style={{fontWeight:700,color:"#B7791F"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
+          ? <span style={{fontWeight:700,color:"#0A1628"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
           : <span style={{color:"#5A6472"}}>—</span>
         }
       </div>
@@ -335,7 +335,7 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days,
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2,marginTop:2}}>
         <span style={{color:"#5A6472"}}>Reward Points (This Month)</span>
         {(branchPct>=100&&p>=110)
-          ? <span style={{fontWeight:700,color:"#1E6FDB"}}>{calcRewardPoints(p,branchPct).toLocaleString()} pts</span>
+          ? <span style={{fontWeight:700,color:"#0A1628"}}>{calcRewardPoints(p,branchPct).toLocaleString()} pts</span>
           : <span style={{color:"#5A6472"}}>—</span>
         }
       </div>
@@ -356,11 +356,11 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days,
         return <div style={{background:"#F7F9FC",borderRadius:8,padding:"8px 10px",border:"1px solid #E4EAF2",display:"flex",flexDirection:"column",gap:5}}>
           {bTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <span style={{fontSize:10,color:"#92400E",fontWeight:600}}>Bonus Tier {bTier}{!bMax?` → next at ${bNextPct}%`:" (max)"}</span>
-            <span style={{fontSize:10,fontWeight:700,color:"#B7791F"}}>{!bMax?fRM(calcAchievementBonus(bNextPct,"sr")):"🏆"}</span>
+            <span style={{fontSize:10,fontWeight:700,color:"#0A1628"}}>{!bMax?fRM(calcAchievementBonus(bNextPct,"sr")):"🏆"}</span>
           </div>}
           {pTierIdx>=0&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <span style={{fontSize:10,color:"#1E40AF",fontWeight:600}}>Points Tier {pTierIdx+1}{pNext?` → next at ${pNext[0]}%`:" (max)"}</span>
-            <span style={{fontSize:10,fontWeight:700,color:"#1E6FDB"}}>{pNext?pNext[1].toLocaleString()+" pts":"🏆"}</span>
+            <span style={{fontSize:10,fontWeight:700,color:"#0A1628"}}>{pNext?pNext[1].toLocaleString()+" pts":"🏆"}</span>
           </div>}
         </div>;
       })()}
@@ -446,7 +446,7 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
       {/* Personal Achievement Bonus: RM500 always, RM2200 if branch hits 100%+ */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,marginBottom:4}}>
         <span style={{color:"#5A6472"}}>Personal Achievement Bonus</span>
-        <span style={{fontWeight:700,color:p>=100?"#0A8754":"#5A6472",whiteSpace:"nowrap"}}>
+        <span style={{fontWeight:700,color:"#0A1628",whiteSpace:"nowrap"}}>
           {p>=100?"RM 2,200":"RM 500 (Pending)"}
         </span>
       </div>
@@ -457,63 +457,41 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
         <span style={{color:"#5A6472"}}>Branch Achievement Bonus</span>
         {p>=121
-          ? <span style={{fontWeight:700,color:"#B7791F"}}>{fRM(calcAchievementBonus(p,"bm"))}</span>
+          ? <span style={{fontWeight:700,color:"#0A1628"}}>{fRM(calcAchievementBonus(p,"bm"))}</span>
           : <span style={{color:"#5A6472"}}>—</span>
         }
       </div>
-      {p>=121&&(()=>{
-        const tier=Math.floor((p-121)/10);
-        const nextTierPct=121+(tier+1)*10;
-        const isMaxTier=nextTierPct>200;
-        return <div style={{background:"linear-gradient(135deg,#FFF9EB,#FFFBF0)",borderRadius:8,padding:"8px 10px",marginBottom:4,border:"1px solid #FDE68A",boxShadow:"0 1px 3px rgba(245,166,35,.1)"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-            <span style={{fontSize:10,fontWeight:700,color:"#92400E",display:"flex",alignItems:"center",gap:4}}>
-              <span style={{background:"#F5A623",color:"#fff",borderRadius:20,padding:"1px 7px",fontSize:9,fontWeight:800}}>Tier {tier+1}</span>
-              Branch {p.toFixed(1)}%
-            </span>
-            <span style={{fontWeight:800,fontSize:12,color:"#D97706"}}>{fRM(calcAchievementBonus(p,"bm"))}</span>
-          </div>
-          {!isMaxTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:4,borderTop:"1px dashed #FDE68A"}}>
-            <span style={{fontSize:9,color:"#B45309"}}>Next: Tier {tier+2} at {nextTierPct}%</span>
-            <span style={{fontSize:9,fontWeight:700,color:"#B45309"}}>{fRM(calcAchievementBonus(nextTierPct,"bm"))}</span>
-          </div>}
-          {isMaxTier&&<div style={{fontSize:9,color:"#D97706",fontWeight:600,paddingTop:4,borderTop:"1px dashed #FDE68A"}}>🏆 Maximum tier reached</div>}
-        </div>;
-      })()}
-
-      {/* Reward Points — BM needs branch 100%+ and own achievement 110%+ */}
+      {/* Reward Points */}
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2,marginTop:2}}>
         <span style={{color:"#5A6472"}}>Reward Points (This Month)</span>
         {(p>=100&&p>=110)
-          ? <span style={{fontWeight:700,color:"#1E6FDB"}}>{calcRewardPoints(p,p).toLocaleString()} pts</span>
+          ? <span style={{fontWeight:700,color:"#0A1628"}}>{calcRewardPoints(p,p).toLocaleString()} pts</span>
           : <span style={{color:"#5A6472"}}>—</span>
         }
       </div>
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:6}}>
         <span style={{color:"#5A6472"}}>Earned Reward Points{pointsAsOf?` (as at ${pointsAsOf})`:""}</span>
         <span style={{fontWeight:800,color:"#0A1628"}}>{rewardBalance.toLocaleString()} pts</span>
       </div>
-      {(p>=100&&p>=110)&&(()=>{
+
+      {/* Compact tier progress — only shown when at least one tier is active */}
+      {((p>=121)||(p>=100&&p>=110))&&(()=>{
+        const bTier=p>=121?Math.floor((p-121)/10)+1:null;
+        const bNextPct=bTier?121+bTier*10:null;
+        const bMax=bNextPct>200;
         const pts=calcRewardPoints(p,p);
         const TIERS=[[110,500],[120,1000],[130,1500],[140,2000],[150,3000],[160,4500],[170,6000],[180,7500],[190,9000],[200,12000]];
-        const curTierIdx=TIERS.reduce((acc,[t],i)=>p>=t?i:acc,-1);
-        const nextTierEntry=TIERS[curTierIdx+1]||null;
-        const isMaxTier=!nextTierEntry;
-        return <div style={{background:"linear-gradient(135deg,#EFF6FF,#F0F7FF)",borderRadius:8,padding:"8px 10px",marginBottom:4,border:"1px solid #BFDBFE",boxShadow:"0 1px 3px rgba(30,111,219,.08)"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-            <span style={{fontSize:10,fontWeight:700,color:"#1E40AF",display:"flex",alignItems:"center",gap:4}}>
-              <span style={{background:"#1E6FDB",color:"#fff",borderRadius:20,padding:"1px 7px",fontSize:9,fontWeight:800}}>
-                {curTierIdx>=0?`Tier ${curTierIdx+1}`:"Tier 1"}
-              </span>
-              BM {p.toFixed(1)}%
-            </span>
-            <span style={{fontWeight:800,fontSize:12,color:"#1E6FDB"}}>{pts.toLocaleString()} pts</span>
-          </div>
-          {!isMaxTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:4,borderTop:"1px dashed #BFDBFE"}}>
-            <span style={{fontSize:9,color:"#1E40AF"}}>Next: Tier {curTierIdx+2} at {nextTierEntry[0]}%</span>
-            <span style={{fontSize:9,fontWeight:700,color:"#1E40AF"}}>{nextTierEntry[1].toLocaleString()} pts</span>
+        const pTierIdx=p>=100&&p>=110?TIERS.reduce((acc,[t],i)=>p>=t?i:acc,-1):-1;
+        const pNext=pTierIdx>=0?TIERS[pTierIdx+1]:null;
+        return <div style={{background:"#F7F9FC",borderRadius:8,padding:"8px 10px",border:"1px solid #E4EAF2",display:"flex",flexDirection:"column",gap:5}}>
+          {bTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{fontSize:10,color:"#92400E",fontWeight:600}}>Bonus Tier {bTier}{!bMax?` → next at ${bNextPct}%`:" (max)"}</span>
+            <span style={{fontSize:10,fontWeight:700,color:"#0A1628"}}>{!bMax?fRM(calcAchievementBonus(bNextPct,"bm")):"🏆"}</span>
           </div>}
-          {isMaxTier&&<div style={{fontSize:9,color:"#1E6FDB",fontWeight:600,paddingTop:4,borderTop:"1px dashed #BFDBFE"}}>🏆 Maximum tier reached</div>}
+          {pTierIdx>=0&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{fontSize:10,color:"#1E40AF",fontWeight:600}}>Points Tier {pTierIdx+1}{pNext?` → next at ${pNext[0]}%`:" (max)"}</span>
+            <span style={{fontSize:10,fontWeight:700,color:"#0A1628"}}>{pNext?pNext[1].toLocaleString()+" pts":"🏆"}</span>
+          </div>}
         </div>;
       })()}
 
@@ -1800,10 +1778,6 @@ export default function App(){
         {/* Row 1: Logo + Tabs + Controls */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",minHeight:48,gap:8,flexWrap:"wrap"}}>
         <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
-          <button onClick={()=>setSidebarOpen(o=>!o)} title={sidebarOpen?"Collapse menu":"Expand menu"}
-            style={{display:"flex",alignItems:"center",justifyContent:"center",width:30,height:30,border:"1px solid rgba(255,255,255,.15)",borderRadius:7,background:"rgba(255,255,255,.06)",cursor:"pointer",flexShrink:0}}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-          </button>
           <div>
             <div style={{fontWeight:900,fontSize:12,color:"#fff",letterSpacing:"0.06em",lineHeight:1}}>EMAX NETWORK</div>
           </div>
@@ -1834,6 +1808,10 @@ export default function App(){
           </div>
           <button className="btn btn-ghost" onClick={()=>setShowTargetModal(true)} style={{fontSize:11,color:"rgba(255,255,255,.6)",borderColor:"rgba(255,255,255,.15)",padding:"5px 11px",whiteSpace:"nowrap"}}>Set Targets</button>
           <button className="btn btn-ghost" onClick={()=>setShowSRModal(true)} style={{fontSize:11,color:"rgba(255,255,255,.6)",borderColor:"rgba(255,255,255,.15)",padding:"5px 11px",whiteSpace:"nowrap"}}>Manage SR</button>
+          <button onClick={()=>setSidebarOpen(o=>!o)} title={sidebarOpen?"Collapse menu":"Expand menu"}
+            style={{display:"flex",alignItems:"center",justifyContent:"center",width:30,height:30,border:"1px solid rgba(255,255,255,.15)",borderRadius:7,background:"rgba(255,255,255,.06)",cursor:"pointer",flexShrink:0}}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
         </div>
         </div>{/* Row 1 end */}
       </div>
@@ -1877,6 +1855,7 @@ export default function App(){
               <th style={{padding:"10px 16px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.6)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left",width:48}}>#</th>
               <th style={{padding:"10px 16px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.6)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left"}}>Name</th>
               <th style={{padding:"10px 16px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.6)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left"}}>Role</th>
+              <th style={{padding:"10px 16px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.5)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left"}}>As At</th>
               <th style={{padding:"10px 16px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.85)",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right"}}>Points Balance</th>
             </tr></thead>
             <tbody>
@@ -1885,12 +1864,13 @@ export default function App(){
                   ...BRANCH_ORDER.map(b=>({id:`BM_${b}`,name:branchMeta[b]?.manager||b,role:"Branch Manager",branch:b})),
                   ...srList.map(sr=>({id:sr.id,name:sr.canon,role:`${sr.type} SR`,branch:sr.branch})),
                 ];
-                const ranked=allPeople.map(p=>({...p,balance:rewardBalances[p.id]?.balance||0})).sort((a,b)=>b.balance-a.balance);
+                const ranked=allPeople.map(p=>({...p,balance:rewardBalances[p.id]?.balance||0,asOf:pointsAsOfFor(p.branch)})).sort((a,b)=>b.balance-a.balance);
                 return ranked.map((p,i)=>(
                   <tr key={p.id} className="shine-row" onClick={()=>{setPointsModalPerson(p.id);setShowPointsModal(true);}} style={{borderBottom:"1px solid #E4EAF2",background:"#fff",cursor:"pointer"}}>
                     <td style={{padding:"10px 16px",fontWeight:800,fontSize:12,color:i<3?"#F5A623":"#8A96A8"}}>{i+1}</td>
                     <td style={{padding:"10px 16px",fontWeight:700,fontSize:12,color:"#0A1628"}}>{p.name}</td>
                     <td style={{padding:"10px 16px",fontSize:11,color:"#5A6472"}}>{p.role} · {p.branch}</td>
+                    <td style={{padding:"10px 16px",fontSize:11,color:"#8A96A8"}}>{p.asOf}</td>
                     <td style={{padding:"10px 16px",textAlign:"right",fontWeight:800,fontSize:13,color:"#0A1628"}}>{p.balance.toLocaleString()} pts</td>
                   </tr>
                 ));

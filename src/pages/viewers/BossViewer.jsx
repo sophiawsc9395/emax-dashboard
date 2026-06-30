@@ -377,12 +377,12 @@ function PdfDownloads({month,year,branch}){
   </div>;
 }
 
-function PointsHistoryModal({srList,bMeta,rewardBalances,rewardHistory,onClose}){
+function PointsHistoryModal({srList,bMeta,rewardBalances,rewardHistory,onClose,initialPerson}){
   const people=[
     ...BRANCH_ORDER.map(b=>({id:`BM_${b}`,name:bMeta[b]?.manager||b,role:`${b} — Branch Manager`})),
     ...srList.map(sr=>({id:sr.id,name:sr.canon,role:`${sr.branch} — ${sr.type} SR`}))
   ];
-  const [selPerson,setSelPerson]=useState(people[0]?.id);
+  const [selPerson,setSelPerson]=useState(initialPerson||people[0]?.id);
   const person=people.find(p=>p.id===selPerson);
   const balance=rewardBalances[selPerson]?.balance||0;
   const history=(rewardHistory[selPerson]||[]).slice().reverse();
@@ -422,7 +422,7 @@ function PointsHistoryModal({srList,bMeta,rewardBalances,rewardHistory,onClose})
         }
       </div>
     </div>
-    {showPointsModal&&<PointsHistoryModal srList={srList} bMeta={bMeta} rewardBalances={rewardBalances} rewardHistory={rewardHistory} onClose={()=>setShowPointsModal(false)}/>}
+    {showPointsModal&&<PointsHistoryModal srList={srList} bMeta={bMeta} rewardBalances={rewardBalances} rewardHistory={rewardHistory} initialPerson={pointsModalPerson} onClose={()=>{setShowPointsModal(false);setPointsModalPerson(null);}}/>}
   </div>;
 }
 
@@ -445,6 +445,7 @@ export default function App(){
   const periodDays=days.filter(d=>d>=selStartDay&&d<=selEndDay);
   const [selBranch,setSelBranch]=useState(BRANCH_ORDER[0]);
   const [tab,setTab]=useState("overview");
+  const [sidebarOpen,setSidebarOpen]=useState(true);
 
   const [records,setRecords]=useState({});
   const [targets,setTargets]=useState(DEFAULT_TARGETS);
@@ -455,6 +456,7 @@ export default function App(){
   const [rewardBalances,setRewardBalances]=useState({});
   const [rewardHistory,setRewardHistory]=useState({});
   const [showPointsModal,setShowPointsModal]=useState(false);
+  const [pointsModalPerson,setPointsModalPerson]=useState(null);
 
   useEffect(()=>{
     setLoading(true);setRecords({});
@@ -554,7 +556,7 @@ export default function App(){
     return{name:s.canon,status:s.status,branch:s.branch,sub:(bMeta[s.branch]?.name||s.branch).toUpperCase(),profit,target,p,branchPct,role:"sr"};
   }).sort((a,b)=>b.p-a.p);
 
-  const TABS=[{id:"overview",label:"Overview"},{id:"rankings",label:"Rankings"},{id:"report",label:"Monthly Report"},{id:"repair",label:"Repair & Service"}];
+  const TABS=[{id:"overview",label:"Overview"},{id:"rankings",label:"Rankings"},{id:"points",label:"Reward Point Ranking"},{id:"report",label:"Monthly Report"},{id:"repair",label:"Repair & Service"}];
 
   if(loading)return <div style={{height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#0A1628",fontFamily:"Inter,sans-serif"}}>
     <div style={{textAlign:"center"}}>
@@ -573,27 +575,8 @@ export default function App(){
               <div style={{fontWeight:900,fontSize:12,color:"#fff",letterSpacing:"0.06em",lineHeight:1}}>EMAX NETWORK</div>
               <div style={{fontSize:9,color:"rgba(255,255,255,.3)",letterSpacing:"0.14em",textTransform:"uppercase",marginTop:1}}>Boss View · All Branches</div>
             </div>
-            <div style={{width:1,height:18,background:"rgba(255,255,255,.1)"}}/>
-            <div style={{display:"flex",gap:2,flexWrap:"wrap"}}>
-              {TABS.map(t=>(
-                <button key={t.id} onClick={()=>setTab(t.id)} style={{padding:"4px 10px",border:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600,fontSize:10,
-                  background:tab===t.id?"rgba(255,255,255,.1)":"transparent",color:tab===t.id?"#fff":"rgba(255,255,255,.4)",borderRadius:6,whiteSpace:"nowrap"}}>
-                  {t.label}
-                </button>
-              ))}
-            </div>
           </div>
           <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",rowGap:6}}>
-            {(()=>{
-              const totalPts=Object.values(rewardBalances).reduce((s,r)=>s+(r?.balance||0),0);
-              return <button onClick={()=>setShowPointsModal(true)} style={{display:"flex",alignItems:"center",gap:5,padding:"4px 10px",background:"rgba(245,166,35,.12)",border:"1px solid rgba(245,166,35,.3)",borderRadius:7,marginRight:2,cursor:"pointer",fontFamily:"Inter,sans-serif"}}>
-                <span style={{fontSize:13}}>🏆</span>
-                <div style={{textAlign:"left"}}>
-                  <div style={{fontSize:8,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.08em",lineHeight:1,whiteSpace:"nowrap"}}>Network Points</div>
-                  <div style={{fontSize:12,fontWeight:800,color:"#F5A623",lineHeight:1.3}}>{totalPts.toLocaleString()}</div>
-                </div>
-              </button>;
-            })()}
             <select value={selMonth} onChange={e=>setSelMonth(Number(e.target.value))}
               style={{padding:"4px 8px",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,fontSize:11,background:"rgba(255,255,255,.1)",color:"#fff",outline:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600}}>
               {MONTHS.map((m,i)=><option key={i+1} value={i+1} style={{background:"#0A1628",color:"#fff"}}>{m}</option>)}
@@ -606,12 +589,17 @@ export default function App(){
               <div style={{fontSize:9,color:"rgba(255,255,255,.35)",textTransform:"uppercase",letterSpacing:"0.1em",whiteSpace:"nowrap"}}>{MONTHS[month-1]} {year}</div>
               <div style={{fontWeight:800,fontSize:13,color:"#fff",whiteSpace:"nowrap"}}>{grandTotal>0?fRM(grandTotal):"—"}</div>
             </div>
+            <button onClick={()=>setSidebarOpen(o=>!o)} title={sidebarOpen?"Collapse menu":"Expand menu"}
+              style={{display:"flex",alignItems:"center",justifyContent:"center",width:30,height:30,border:"1px solid rgba(255,255,255,.15)",borderRadius:7,background:"rgba(255,255,255,.06)",cursor:"pointer",flexShrink:0}}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
           </div>
         </div>
       </div>
     </div>
 
-    <div style={{maxWidth:1400,margin:"0 auto",padding:"20px 12px"}}>
+    <div style={{display:"flex",maxWidth:1400,margin:"0 auto"}}>
+    <div style={{flex:1,minWidth:0,padding:"20px 12px",maxWidth:1180}}>
 
       {/* OVERVIEW */}
       {tab==="overview"&&<div className="fade-in">
@@ -698,6 +686,44 @@ export default function App(){
         <RankingTable title="Offline SR Ranking" rows={mkSRRank("Offline")} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
       </div>}
 
+      {/* REWARD POINT RANKING */}
+      {tab==="points"&&<div className="fade-in">
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+          <h2 style={{fontSize:15,fontWeight:800,color:"#0A1628",margin:0}}>🏆 Reward Point Ranking</h2>
+          <span style={{fontSize:11,color:"#5A6472"}}>All Branch Managers and Sales Representatives, ranked by current points balance</span>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {(()=>{
+            const allPeople=[
+              ...BRANCH_ORDER.map(b=>({id:`BM_${b}`,name:bMeta[b]?.manager||b,role:"Branch Manager",branch:b})),
+              ...srList.map(sr=>({id:sr.id,name:sr.canon,role:`${sr.type} SR`,branch:sr.branch})),
+            ];
+            const ranked=allPeople.map(p=>({...p,balance:rewardBalances[p.id]?.balance||0})).sort((a,b)=>b.balance-a.balance);
+            const medals=["🥇","🥈","🥉"];
+            return ranked.map((p,i)=>{
+              const isTop=i<3;
+              return <div key={p.id} onClick={()=>{setPointsModalPerson(p.id);setShowPointsModal(true);}} style={{
+                background:isTop?"linear-gradient(135deg,#0A1628,#162B52)":"#fff",
+                border:isTop?"none":"1px solid #E4EAF2",
+                borderRadius:10,padding:"10px 14px",
+                boxShadow:isTop?"0 2px 8px rgba(10,22,40,.2)":"0 1px 3px rgba(10,22,40,.04)",
+                display:"flex",alignItems:"center",gap:12,cursor:"pointer",
+              }}>
+                <div style={{flexShrink:0,width:32,textAlign:"center"}}>
+                  {isTop?<span style={{fontSize:20,lineHeight:1}}>{medals[i]}</span>
+                        :<span style={{fontWeight:800,fontSize:13,color:"#8A96A8"}}>#{i+1}</span>}
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:13,color:isTop?"#fff":"#0A1628",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.name}</div>
+                  <div style={{fontSize:10,color:isTop?"rgba(255,255,255,.4)":"#8A96A8",marginTop:2}}>{p.role} · {p.branch}</div>
+                </div>
+                <div style={{fontWeight:800,fontSize:15,color:isTop?"#fff":"#0A1628",flexShrink:0,whiteSpace:"nowrap"}}>{p.balance.toLocaleString()} pts</div>
+              </div>;
+            });
+          })()}
+        </div>
+      </div>}
+
       {/* MONTHLY REPORT */}
       {tab==="report"&&<div className="fade-in">
         <div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:14,alignItems:"center"}}>
@@ -760,6 +786,27 @@ export default function App(){
         </div>
       </div>}
 
-    </div>
+    </div>{/* end main content */}
+
+      {/* SIDEBAR — right side, collapsible */}
+      <div style={{
+        width:sidebarOpen?220:0,flexShrink:0,overflow:"hidden",
+        transition:"width .2s ease",background:"#0F1B30",borderLeft:sidebarOpen?"1px solid #1C2D4A":"none",
+        minHeight:"calc(100vh - 49px)",position:"sticky",top:49,alignSelf:"flex-start",
+      }}>
+        <div style={{width:220,padding:"16px 10px"}}>
+          {TABS.map(t=>(
+            <button key={t.id} onClick={()=>setTab(t.id)} style={{
+              display:"flex",alignItems:"center",width:"100%",textAlign:"left",padding:"9px 12px",marginBottom:3,
+              border:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600,fontSize:12,borderRadius:8,
+              background:tab===t.id?"rgba(255,255,255,.1)":"transparent",color:tab===t.id?"#fff":"rgba(255,255,255,.45)",
+              transition:"background .15s",
+            }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>{/* end flex layout */}
   </div>;
 }
