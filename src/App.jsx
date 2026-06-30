@@ -1711,7 +1711,7 @@ export default function App(){
           <div style={{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}}>
             <span style={{fontSize:11,fontWeight:700,color:"#8A96A8",marginRight:4,textTransform:"uppercase",letterSpacing:"0.06em"}}>Branch</span>
             {BRANCH_ORDER.map(b=>(
-              <button key={b} onClick={()=>setSelBranch(b)} style={{padding:"4px 12px",border:"none",cursor:"pointer",borderRadius:6,fontWeight:700,fontSize:11,fontFamily:"Inter,sans-serif",
+              <button key={b} onClick={()=>setSelBranch(b)} style={{padding:"4px 12px",cursor:"pointer",borderRadius:6,fontWeight:700,fontSize:11,fontFamily:"Inter,sans-serif",
                 background:selBranch===b?"#0A1628":"#fff",color:selBranch===b?"#fff":"#4A5568",
                 border:selBranch===b?"none":"1px solid #E4EAF2",transition:"all .15s"}}>
                 {b}
