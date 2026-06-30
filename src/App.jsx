@@ -18,12 +18,12 @@ const T = {
 };
 
 const CSS = `
-.sidebar-rank-item:hover{background:rgba(255,255,255,.06)!important;}
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Inter',-apple-system,sans-serif;background:#F7F9FC;color:#0A1628;}
   ::-webkit-scrollbar{width:5px;height:5px;}
   ::-webkit-scrollbar-thumb{background:#CDD5E0;border-radius:3px;}
+  .sidebar-rank-item:hover{background:rgba(255,255,255,.06)!important;}
   
   .card{background:#fff;border:1px solid #E4EAF2;border-radius:12px;box-shadow:0 1px 3px rgba(10,22,40,.06),0 4px 12px rgba(10,22,40,.04);transition:box-shadow .2s,transform .2s;}
   .card:hover{box-shadow:0 4px 16px rgba(10,22,40,.10);}
@@ -1555,6 +1555,7 @@ export default function App(){
   const [tab,setTab]               = useState("overview");
   const [sidebarOpen,setSidebarOpen] = useState(true);
   const [showPointsModal,setShowPointsModal] = useState(false);
+  const [showRankSidebar,setShowRankSidebar] = useState(false);
   const [pointsModalPerson,setPointsModalPerson] = useState(null);
   const [selBranch,setSelBranch]   = useState("KM");
   const [selStartDay,setSelStartDay] = useState(1);
@@ -1859,10 +1860,18 @@ export default function App(){
             ))}
           </div>
           <div style={{width:"100%",height:1,background:"rgba(255,255,255,.08)",margin:"12px 0"}}/>
-          <div style={{padding:"0 4px 8px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.35)",textTransform:"uppercase",letterSpacing:"0.08em",display:"flex",alignItems:"center",gap:5,flexShrink:0}}>
-            🏆 Reward Points
-          </div>
-          <div style={{flex:1,overflowY:"auto",paddingRight:2}}>
+          <button onClick={()=>setShowRankSidebar(o=>!o)} style={{
+            display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",padding:"8px 4px",
+            border:"none",cursor:"pointer",background:"transparent",fontFamily:"Inter,sans-serif",flexShrink:0,
+          }}>
+            <span style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,.5)",textTransform:"uppercase",letterSpacing:"0.08em",display:"flex",alignItems:"center",gap:5}}>
+              🏆 Reward Point Ranking
+            </span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" strokeWidth="2.5" style={{transform:showRankSidebar?"rotate(180deg)":"rotate(0deg)",transition:"transform .15s"}}>
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          {showRankSidebar&&<div style={{flex:1,overflowY:"auto",paddingRight:2,marginTop:4}}>
             {(()=>{
               const allPeople=[
                 ...BRANCH_ORDER.map(b=>({id:`BM_${b}`,name:branchMeta[b]?.manager||b,sub:`${b} · BM`})),
@@ -1883,7 +1892,7 @@ export default function App(){
                 </button>
               ));
             })()}
-          </div>
+          </div>}
         </div>
       </div>
 
