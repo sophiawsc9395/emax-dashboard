@@ -18,6 +18,7 @@ const T = {
 };
 
 const CSS = `
+.sidebar-rank-item:hover{background:rgba(255,255,255,.06)!important;}
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Inter',-apple-system,sans-serif;background:#F7F9FC;color:#0A1628;}
@@ -244,14 +245,14 @@ function EC({value,onSave,color="#4A5568"}){
 }
 
 // ─── SR TABLE ──────────────────────────────────────────────
-function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days,rewardBalance=0}){
+function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days,rewardBalance=0,pointsAsOf=""}){
   const target=targets?.sr?.[sr.id]?.target||0,bonus=targets?.sr?.[sr.id]?.bonus||0;
   const rows=days.map(d=>{const k=`${d}/${month}/${year}`,v=records[k]?.[sr.id]||{};return{day:d,wi:v.walkin||0,ae:v.aeon||0};});
   const tWI=rows.reduce((s,r)=>s+r.wi,0),tAE=rows.reduce((s,r)=>s+r.ae,0),total=tWI+tAE;
   const p=pctN(total,target),color=achColor(total,target);
   const bonusEarned=branchPct>=100&&total>=target&&bonus>0;
   const achBonus=calcAchievementBonus(p),points=calcRewardPoints(p,branchPct);
-  const thS={padding:"6px 12px",fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",background:"#F7F9FC",borderBottom:"1px solid #E4EAF2",whiteSpace:"nowrap"};
+  const thS={padding:"6px 12px",fontSize:10,fontWeight:700,color:"#5A6472",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",background:"#F7F9FC",borderBottom:"1px solid #E4EAF2",whiteSpace:"nowrap"};
   return <div style={{border:"1px solid #E4EAF2",borderRadius:10,overflow:"hidden",background:"#fff",boxShadow:printMode?"none":"0 1px 4px rgba(10,22,40,.05)"}}>
     <div style={{background:"#0A1628",padding:"10px 14px"}}>
       <div style={{fontSize:9,fontWeight:700,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.08em"}}>EMAX NETWORK SDN BHD</div>
@@ -288,23 +289,23 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days,
     <div style={{padding:"10px 14px",background:"#F7F9FC",borderTop:"2px solid #E4EAF2"}}>
       {[["Walk In",fRM(tWI),"#4A5568"],["Invoice",fRM(tAE),"#4A5568"],["Total Profit",fRM(total),"#0A1628"]].map(([l,v,c])=>(
         <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"2px 0",fontSize:11}}>
-          <span style={{color:"#8A96A8"}}>{l}</span>
+          <span style={{color:"#5A6472"}}>{l}</span>
           <span style={{fontWeight:700,color:c,fontSize:11}}>{v}</span>
         </div>
       ))}
       <div style={{height:1,background:"#E4EAF2",margin:"7px 0"}}/>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
-        <span style={{color:"#8A96A8"}}>Target</span>
+        <span style={{color:"#5A6472"}}>Target</span>
         <span style={{fontWeight:700,fontSize:11}}>{target>0?fRM(target):"Not set"}</span>
       </div>
       {target>0&&<>
         <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:4}}>
-          <span style={{color:"#8A96A8"}}>Personal Achievement</span>
+          <span style={{color:"#5A6472"}}>Personal Achievement</span>
           <AchBadge profit={total} target={target}/>
         </div>
         <ProgressBar pct={p} color={color}/>
         <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginTop:5}}>
-          <span style={{color:"#8A96A8"}}>Balance to Hit</span>
+          <span style={{color:"#5A6472"}}>Balance to Hit</span>
           <span style={{fontWeight:700,color:Math.max(target-total,0)>0?"#F0354B":"#00C896",fontSize:11}}>
             {Math.max(target-total,0)>0?fRM(Math.max(target-total,0)):"Target Met"}
           </span>
@@ -312,22 +313,22 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days,
       </>}
       {/* ── BRANCH ACHIEVEMENT BONUS & REWARD POINTS ── */}
       <div style={{height:1,background:"#E4EAF2",margin:"8px 0"}}/>
-      <div style={{fontSize:9,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Incentives</div>
+      <div style={{fontSize:9,fontWeight:700,color:"#5A6472",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Incentives</div>
 
       {/* Personal Achievement Bonus */}
       {bonus>0&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,marginBottom:4}}>
-        <span style={{color:"#8A96A8"}}>Personal Achievement Bonus</span>
-        <span style={{fontWeight:700,color:bonusEarned?"#00C896":"#8A96A8",whiteSpace:"nowrap"}}>
+        <span style={{color:"#5A6472"}}>Personal Achievement Bonus</span>
+        <span style={{fontWeight:700,color:bonusEarned?"#0A8754":"#5A6472",whiteSpace:"nowrap"}}>
           {bonusEarned?fRM(bonus):`${fRM(bonus)} (Pending)`}
         </span>
       </div>}
 
       {/* Branch Achievement Bonus */}
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
-        <span style={{color:"#8A96A8"}}>Branch Achievement Bonus</span>
+        <span style={{color:"#5A6472"}}>Branch Achievement Bonus</span>
         {(branchPct>=121&&p>=100)
-          ? <span style={{fontWeight:700,color:"#F5A623"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
-          : <span style={{color:"#8A96A8"}}>—</span>
+          ? <span style={{fontWeight:700,color:"#B7791F"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
+          : <span style={{color:"#5A6472"}}>—</span>
         }
       </div>
       {(branchPct>=121&&p>=100)&&(()=>{
@@ -352,14 +353,14 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days,
 
       {/* Reward Points */}
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2,marginTop:2}}>
-        <span style={{color:"#8A96A8"}}>Reward Points (This Month)</span>
+        <span style={{color:"#5A6472"}}>Reward Points (This Month)</span>
         {(branchPct>=100&&p>=110)
           ? <span style={{fontWeight:700,color:"#1E6FDB"}}>{calcRewardPoints(p,branchPct).toLocaleString()} pts</span>
-          : <span style={{color:"#8A96A8"}}>—</span>
+          : <span style={{color:"#5A6472"}}>—</span>
         }
       </div>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
-        <span style={{color:"#8A96A8"}}>Reward Points Balance</span>
+        <span style={{color:"#5A6472"}}>Earned Reward Points{pointsAsOf?` (as at ${pointsAsOf})`:""}</span>
         <span style={{fontWeight:800,color:"#0A1628"}}>{rewardBalance.toLocaleString()} pts</span>
       </div>
       {(branchPct>=100&&p>=110)&&(()=>{
@@ -391,7 +392,7 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days,
 }
 
 // ─── BM TABLE ──────────────────────────────────────────────
-function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,month,year,days,rewardBalance=0}){
+function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,month,year,days,rewardBalance=0,pointsAsOf=""}){
   const meta=branchMeta[branchId]||{},bSRs=srList.filter(s=>s.branch===branchId);
   const target=targets?.bm?.[branchId]||0,bmBonus=targets?.bmBonus?.[branchId]||0;
   const rows=days.map(d=>{
@@ -404,13 +405,13 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
   const p=pctN(total,target),color=achColor(total,target);
   const bmBonusEarned=target>0&&total>=target&&bmBonus>0;
   const achBonus=calcAchievementBonus(p,"bm"),points=calcRewardPoints(p,p);
-  const thS={padding:"6px 10px",fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",background:"#F7F9FC",borderBottom:"1px solid #E4EAF2",whiteSpace:"nowrap"};
+  const thS={padding:"6px 10px",fontSize:10,fontWeight:700,color:"#5A6472",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",background:"#F7F9FC",borderBottom:"1px solid #E4EAF2",whiteSpace:"nowrap"};
   return <div style={{border:"1px solid #E4EAF2",borderRadius:10,overflow:"hidden",background:"#fff",boxShadow:printMode?"none":"0 1px 4px rgba(10,22,40,.05)"}}>
     <div style={{background:"#0A1628",padding:"10px 14px"}}>
       <div style={{fontSize:9,fontWeight:700,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.08em"}}>EMAX NETWORK SDN BHD</div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:3}}>
-        <span style={{fontWeight:800,fontSize:13,color:"#fff"}}>Branch Manager</span>
-        <span style={{fontSize:11,fontWeight:700,color:"#fff"}}>{meta.manager}</span>
+        <span style={{fontWeight:800,fontSize:13,color:"#fff"}}>{meta.manager}</span>
+        <span style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,.6)"}}>Branch Manager</span>
       </div>
     </div>
     <div style={{padding:"5px 14px",background:"#0F2040",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -441,20 +442,20 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
     <div style={{padding:"10px 14px",background:"#F7F9FC",borderTop:"2px solid #E4EAF2"}}>
       {[["Unallocated",fRM(tUA),"#4A5568"],["Walk In",fRM(tWI),"#4A5568"],["Invoice",fRM(tAE),"#4A5568"],["Total Profit",fRM(total),"#0A1628"]].map(([l,v,c])=>(
         <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"2px 0",fontSize:11}}>
-          <span style={{color:"#8A96A8"}}>{l}</span><span style={{fontWeight:700,color:c,fontSize:11}}>{v}</span>
+          <span style={{color:"#5A6472"}}>{l}</span><span style={{fontWeight:700,color:c,fontSize:11}}>{v}</span>
         </div>
       ))}
       <div style={{height:1,background:"#E4EAF2",margin:"7px 0"}}/>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
-        <span style={{color:"#8A96A8"}}>Target</span><span style={{fontWeight:700,fontSize:11}}>{target>0?fRM(target):"Not set"}</span>
+        <span style={{color:"#5A6472"}}>Target</span><span style={{fontWeight:700,fontSize:11}}>{target>0?fRM(target):"Not set"}</span>
       </div>
       {target>0&&<>
         <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:4}}>
-          <span style={{color:"#8A96A8"}}>Personal Achievement</span><AchBadge profit={total} target={target}/>
+          <span style={{color:"#5A6472"}}>Personal Achievement</span><AchBadge profit={total} target={target}/>
         </div>
         <ProgressBar pct={p} color={color}/>
         <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginTop:5}}>
-          <span style={{color:"#8A96A8"}}>Balance to Hit</span>
+          <span style={{color:"#5A6472"}}>Balance to Hit</span>
           <span style={{fontWeight:700,color:Math.max(target-total,0)>0?"#F0354B":"#00C896",fontSize:11}}>
             {Math.max(target-total,0)>0?fRM(Math.max(target-total,0)):"Target Met"}
           </span>
@@ -462,12 +463,12 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
       </>}
       {/* ── BM INCENTIVES ── */}
       <div style={{height:1,background:"#E4EAF2",margin:"8px 0"}}/>
-      <div style={{fontSize:9,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Incentives</div>
+      <div style={{fontSize:9,fontWeight:700,color:"#5A6472",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Incentives</div>
 
       {/* Personal Achievement Bonus: RM500 always, RM2200 if branch hits 100%+ */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,marginBottom:4}}>
-        <span style={{color:"#8A96A8"}}>Personal Achievement Bonus</span>
-        <span style={{fontWeight:700,color:p>=100?"#00C896":"#8A96A8",whiteSpace:"nowrap"}}>
+        <span style={{color:"#5A6472"}}>Personal Achievement Bonus</span>
+        <span style={{fontWeight:700,color:p>=100?"#0A8754":"#5A6472",whiteSpace:"nowrap"}}>
           {p>=100?"RM 2,200":"RM 500 (Pending)"}
         </span>
       </div>
@@ -476,10 +477,10 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
 
       {/* Branch Achievement Bonus — BM qualifies when branch >121% */}
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
-        <span style={{color:"#8A96A8"}}>Branch Achievement Bonus</span>
+        <span style={{color:"#5A6472"}}>Branch Achievement Bonus</span>
         {p>=121
-          ? <span style={{fontWeight:700,color:"#F5A623"}}>{fRM(calcAchievementBonus(p,"bm"))}</span>
-          : <span style={{color:"#8A96A8"}}>—</span>
+          ? <span style={{fontWeight:700,color:"#B7791F"}}>{fRM(calcAchievementBonus(p,"bm"))}</span>
+          : <span style={{color:"#5A6472"}}>—</span>
         }
       </div>
       {p>=121&&(()=>{
@@ -504,14 +505,14 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
 
       {/* Reward Points — BM needs branch 100%+ and own achievement 110%+ */}
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2,marginTop:2}}>
-        <span style={{color:"#8A96A8"}}>Reward Points (This Month)</span>
+        <span style={{color:"#5A6472"}}>Reward Points (This Month)</span>
         {(p>=100&&p>=110)
           ? <span style={{fontWeight:700,color:"#1E6FDB"}}>{calcRewardPoints(p,p).toLocaleString()} pts</span>
-          : <span style={{color:"#8A96A8"}}>—</span>
+          : <span style={{color:"#5A6472"}}>—</span>
         }
       </div>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
-        <span style={{color:"#8A96A8"}}>Reward Points Balance</span>
+        <span style={{color:"#5A6472"}}>Earned Reward Points{pointsAsOf?` (as at ${pointsAsOf})`:""}</span>
         <span style={{fontWeight:800,color:"#0A1628"}}>{rewardBalance.toLocaleString()} pts</span>
       </div>
       {(p>=100&&p>=110)&&(()=>{
@@ -553,7 +554,7 @@ function AeonTable({sr,records,printMode,month,year,days}){
     </div>
     <table style={{width:"100%",borderCollapse:"collapse"}}>
       <thead><tr style={{background:"#F7F9FC"}}>
-        <th style={{padding:"5px 10px",fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",textAlign:"center",borderBottom:"1px solid #E4EAF2",width:48}}>Date</th>
+        <th style={{padding:"5px 10px",fontSize:10,fontWeight:700,color:"#5A6472",textTransform:"uppercase",textAlign:"center",borderBottom:"1px solid #E4EAF2",width:48}}>Date</th>
         <th style={{padding:"5px 10px",fontSize:10,fontWeight:700,color:"#7C5CFC",textTransform:"uppercase",textAlign:"right",borderBottom:"1px solid #E4EAF2"}}>Amount</th>
       </tr></thead>
       <tbody>{active.map(({day,ae})=>(
@@ -564,7 +565,7 @@ function AeonTable({sr,records,printMode,month,year,days}){
       ))}</tbody>
     </table>
     <div style={{padding:"8px 14px",background:"#F7F9FC",borderTop:"1px solid #E4EAF2",display:"flex",justifyContent:"space-between",fontSize:11}}>
-      <span style={{color:"#8A96A8",fontWeight:600}}>Total</span>
+      <span style={{color:"#5A6472",fontWeight:600}}>Total</span>
       <span style={{fontWeight:800,color:"#7C5CFC"}}>{fRM(total)}</span>
     </div>
   </div>;
@@ -585,7 +586,7 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
       <div>
         <h3 style={{fontWeight:800,fontSize:14,color:"#0A1628",margin:0}}>Branch Performance Report</h3>
         <div style={{display:"flex",alignItems:"center",gap:4,marginTop:2,flexWrap:"wrap"}}>
-          <span style={{fontSize:11,color:"#8A96A8"}}>Period:</span>
+          <span style={{fontSize:11,color:"#5A6472"}}>Period:</span>
           {onChangeStartDay
             ? <select value={startDay} onChange={e=>onChangeStartDay(Number(e.target.value))}
                 style={{fontSize:11,color:"#1E6FDB",fontWeight:700,border:"none",background:"transparent",outline:"none",cursor:"pointer",padding:0,fontFamily:"Inter,sans-serif"}}>
@@ -593,9 +594,9 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
                   <option key={d} value={d}>{d}/{month}/{year}</option>
                 ))}
               </select>
-            : <span style={{fontSize:11,color:"#8A96A8"}}>{startDay}/{month}/{year}</span>
+            : <span style={{fontSize:11,color:"#5A6472"}}>{startDay}/{month}/{year}</span>
           }
-          <span style={{fontSize:11,color:"#8A96A8"}}>–</span>
+          <span style={{fontSize:11,color:"#5A6472"}}>–</span>
           {onChangeEndDay
             ? <select value={endDay} onChange={e=>onChangeEndDay(Number(e.target.value))}
                 style={{fontSize:11,color:"#1E6FDB",fontWeight:700,border:"none",background:"transparent",outline:"none",cursor:"pointer",padding:0,fontFamily:"Inter,sans-serif"}}>
@@ -603,12 +604,12 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
                   <option key={d} value={d}>{d}/{month}/{year}</option>
                 ))}
               </select>
-            : <span style={{fontSize:11,color:"#8A96A8"}}>{endDay}/{month}/{year}</span>
+            : <span style={{fontSize:11,color:"#5A6472"}}>{endDay}/{month}/{year}</span>
           }
         </div>
       </div>
       <div style={{textAlign:"right"}}>
-        <div style={{fontSize:10,color:"#8A96A8"}}>Total</div>
+        <div style={{fontSize:10,color:"#5A6472"}}>Total</div>
         <div style={{fontWeight:700,fontSize:14,color:"#0A1628"}}>{fRM(grandT)}</div>
       </div>
     </div>
@@ -633,7 +634,7 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
           return <tr key={b} className="shine-row" style={{background:i%2===0?"#fff":"#F7F9FC"}}>
             <td style={{...TD({textAlign:"left"})}}>
               <div style={{fontWeight:700,color:"#0A1628",fontSize:12,textTransform:"uppercase"}}>{branchMeta[b]?.name||b}</div>
-              <div style={{fontSize:10,color:"#8A96A8",marginTop:1}}>{branchMeta[b]?.manager}</div>
+              <div style={{fontSize:10,color:"#5A6472",marginTop:1}}>{branchMeta[b]?.manager}</div>
             </td>
             <td style={{...TD(),textAlign:"right"}}><span style={{color:"#4A5568"}}>{target>0?nc(target):"—"}</span></td>
             <td style={{...TD({background:"#fff"}),textAlign:"right"}}>
@@ -646,12 +647,12 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
               <span style={{color:"#4A5568"}}>{ae>0?`RM ${nc(ae)}`:"—"}</span>
             </td>
             <td style={{...TD(),textAlign:"right"}}>
-              {bal===null?<span style={{color:"#8A96A8"}}>—</span>
+              {bal===null?<span style={{color:"#5A6472"}}>—</span>
                 :bal>=0?<span style={{color:"#00C896",fontWeight:700}}>+{nc(bal)}</span>
                 :<span style={{color:"#F0354B",fontWeight:700}}>{nc(Math.abs(bal))}</span>}
             </td>
             <td style={{...TD(),textAlign:"right"}}>
-              {target>0?<AchBadge profit={total} target={target} size="md"/>:<span style={{color:"#8A96A8"}}>—</span>}
+              {target>0?<AchBadge profit={total} target={target} size="md"/>:<span style={{color:"#5A6472"}}>—</span>}
             </td>
           </tr>;
         })}</tbody>
@@ -1068,8 +1069,21 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBala
                 <div style={{fontSize:10,color:"#8A96A8",marginBottom:10}}>{b}</div>
                 <label style={{fontSize:10,fontWeight:700,color:"#8A96A8",display:"block",marginBottom:3,textTransform:"uppercase",letterSpacing:"0.05em"}}>Manager Name</label>
                 <input className="input" value={localBM[b]?.manager||""} onChange={e=>setLocalBM(p=>({...p,[b]:{...p[b],manager:e.target.value}}))} style={{marginBottom:8,fontSize:12}}/>
-                <label style={{fontSize:10,fontWeight:700,color:"#8A96A8",display:"block",marginBottom:3,textTransform:"uppercase",letterSpacing:"0.05em"}}>Status</label>
-                <input className="input" value={localBM[b]?.mStatus||""} onChange={e=>setLocalBM(p=>({...p,[b]:{...p[b],mStatus:e.target.value}}))} style={{fontSize:12,marginBottom:8}}/>
+                <label style={{fontSize:10,fontWeight:700,color:"#8A96A8",display:"block",marginBottom:3,textTransform:"uppercase",letterSpacing:"0.05em"}}>Employment Status</label>
+                {(()=>{
+                  const ps=parseStatus(localBM[b]?.mStatus||"");
+                  return <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:8}}>
+                    <select className="input select" value={ps.base} onChange={e=>setLocalBM(p=>({...p,[b]:{...p[b],mStatus:buildStatus(e.target.value,ps.p,ps.f)}}))} style={{width:"auto",minWidth:96,padding:"4px 22px 4px 8px",fontSize:11}}>
+                      {statusBaseOptions.map(s=><option key={s} value={s}>{s}</option>)}
+                    </select>
+                    {ps.base!=="Director"&&<>
+                      <label style={{fontSize:10,color:"#8A96A8"}}>P</label>
+                      <input type="number" min="0" className="input" value={ps.p} onChange={e=>setLocalBM(p=>({...p,[b]:{...p[b],mStatus:buildStatus(ps.base,Math.max(0,parseInt(e.target.value)||0),ps.f)}}))} style={{width:42,padding:"4px 4px",fontSize:11,textAlign:"center"}}/>
+                      <label style={{fontSize:10,color:"#8A96A8"}}>F</label>
+                      <input type="number" min="0" className="input" value={ps.f} onChange={e=>setLocalBM(p=>({...p,[b]:{...p[b],mStatus:buildStatus(ps.base,ps.p,Math.max(0,parseInt(e.target.value)||0))}}))} style={{width:42,padding:"4px 4px",fontSize:11,textAlign:"center"}}/>
+                    </>}
+                  </div>;
+                })()}
                 <label style={{fontSize:10,fontWeight:700,color:"#F5A623",display:"block",marginBottom:3,textTransform:"uppercase",letterSpacing:"0.05em"}}>🏆 Reward Points Balance</label>
                 <input type="number" className="input" defaultValue={rewardBalances?.[`BM_${b}`]?.balance||0}
                   onBlur={e=>setOpeningBalance(`BM_${b}`,e.target.value,rewardBalances?.[`BM_${b}`]?.asOf||"")}
@@ -1468,12 +1482,12 @@ function PdfDownloads({month,year}){
   </div>;
 }
 
-function PointsHistoryModal({srList,branchMeta,rewardBalances,rewardHistory,onClose}){
+function PointsHistoryModal({srList,branchMeta,rewardBalances,rewardHistory,onClose,initialPerson}){
   const people=[
     ...BRANCH_ORDER.map(b=>({id:`BM_${b}`,name:branchMeta[b]?.manager||b,role:`${b} — Branch Manager`})),
     ...srList.map(sr=>({id:sr.id,name:sr.canon,role:`${sr.branch} — ${sr.type} SR`}))
   ];
-  const [selPerson,setSelPerson]=useState(people[0]?.id);
+  const [selPerson,setSelPerson]=useState(initialPerson||people[0]?.id);
   const person=people.find(p=>p.id===selPerson);
   const balance=rewardBalances[selPerson]?.balance||0;
   const history=(rewardHistory[selPerson]||[]).slice().reverse();
@@ -1535,6 +1549,7 @@ export default function App(){
   const [tab,setTab]               = useState("overview");
   const [sidebarOpen,setSidebarOpen] = useState(true);
   const [showPointsModal,setShowPointsModal] = useState(false);
+  const [pointsModalPerson,setPointsModalPerson] = useState(null);
   const [selBranch,setSelBranch]   = useState("KM");
   const [selStartDay,setSelStartDay] = useState(1);
   const [selEndDay,setSelEndDay]   = useState(()=>daysInMonth(new Date().getMonth()+1,new Date().getFullYear()));
@@ -1612,6 +1627,15 @@ export default function App(){
   // ─── REWARD POINTS: lock a branch's month, crediting all SR + BM earned points to balance ───
   const monthKeyStr=`${selYear}_${selMonth}`;
   const isBranchLocked=(branchId)=>!!lockedMonths[monthKeyStr]?.[branchId];
+  const pointsAsOfFor=(branchId)=>{
+    if(isBranchLocked(branchId)){
+      const lastDay=daysInMonth(selMonth,selYear);
+      return `${String(lastDay).padStart(2,"0")}/${String(selMonth).padStart(2,"0")}/${selYear}`;
+    }
+    // Not locked: show as at last day of previous month
+    const prevDate=new Date(selYear,selMonth-1,0); // day 0 of selMonth = last day of previous month
+    return `${String(prevDate.getDate()).padStart(2,"0")}/${String(prevDate.getMonth()+1).padStart(2,"0")}/${prevDate.getFullYear()}`;
+  };
   const lockBranchMonth=async(branchId)=>{
     if(isBranchLocked(branchId)){alert("This branch's "+selMonth+"/"+selYear+" report is already locked.");return;}
     const bSRs=srList.filter(s=>s.branch===branchId);
@@ -1776,17 +1800,6 @@ export default function App(){
           </div>
         </div>
         <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",rowGap:6}}>
-          {/* Reward Points Summary */}
-          {(()=>{
-            const totalPts=Object.values(rewardBalances).reduce((s,r)=>s+(r?.balance||0),0);
-            return <button onClick={()=>setShowPointsModal(true)} style={{display:"flex",alignItems:"center",gap:5,padding:"4px 8px",background:"rgba(245,166,35,.12)",border:"1px solid rgba(245,166,35,.3)",borderRadius:7,cursor:"pointer",fontFamily:"Inter,sans-serif"}}>
-              <span style={{fontSize:13}}>🏆</span>
-              <div style={{textAlign:"left"}}>
-                <div style={{fontSize:8,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.08em",lineHeight:1,whiteSpace:"nowrap"}}>Network Points</div>
-                <div style={{fontSize:12,fontWeight:800,color:"#F5A623",lineHeight:1.3}}>{totalPts.toLocaleString()}</div>
-              </div>
-            </button>;
-          })()}
           {/* Month/Year Picker */}
           <div style={{display:"flex",gap:4,alignItems:"center"}}>
             <select value={selMonth} onChange={e=>setSelMonth(Number(e.target.value))}
@@ -1820,21 +1833,49 @@ export default function App(){
     <div style={{display:"flex",maxWidth:1400,margin:"0 auto"}}>
       {/* SIDEBAR */}
       <div style={{
-        width:sidebarOpen?180:0,flexShrink:0,overflow:"hidden",
+        width:sidebarOpen?220:0,flexShrink:0,overflow:"hidden",
         transition:"width .2s ease",background:"#0F1B30",borderRight:sidebarOpen?"1px solid #1C2D4A":"none",
         minHeight:"calc(100vh - 49px)",position:"sticky",top:49,alignSelf:"flex-start",
       }}>
-        <div style={{width:180,padding:"16px 10px"}}>
-          {TABS.map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)} style={{
-              display:"flex",alignItems:"center",width:"100%",textAlign:"left",padding:"9px 12px",marginBottom:3,
-              border:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600,fontSize:12,borderRadius:8,
-              background:tab===t.id?"rgba(255,255,255,.1)":"transparent",color:tab===t.id?"#fff":"rgba(255,255,255,.45)",
-              transition:"background .15s",
-            }}>
-              {t.label}
-            </button>
-          ))}
+        <div style={{width:220,padding:"16px 10px",display:"flex",flexDirection:"column",height:"calc(100vh - 49px)"}}>
+          <div style={{flexShrink:0}}>
+            {TABS.map(t=>(
+              <button key={t.id} onClick={()=>setTab(t.id)} style={{
+                display:"flex",alignItems:"center",width:"100%",textAlign:"left",padding:"9px 12px",marginBottom:3,
+                border:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600,fontSize:12,borderRadius:8,
+                background:tab===t.id?"rgba(255,255,255,.1)":"transparent",color:tab===t.id?"#fff":"rgba(255,255,255,.45)",
+                transition:"background .15s",
+              }}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <div style={{width:"100%",height:1,background:"rgba(255,255,255,.08)",margin:"12px 0"}}/>
+          <div style={{padding:"0 4px 8px",fontSize:10,fontWeight:700,color:"rgba(255,255,255,.35)",textTransform:"uppercase",letterSpacing:"0.08em",display:"flex",alignItems:"center",gap:5,flexShrink:0}}>
+            🏆 Reward Points
+          </div>
+          <div style={{flex:1,overflowY:"auto",paddingRight:2}}>
+            {(()=>{
+              const allPeople=[
+                ...BRANCH_ORDER.map(b=>({id:`BM_${b}`,name:branchMeta[b]?.manager||b,sub:`${b} · BM`})),
+                ...srList.map(sr=>({id:sr.id,name:sr.canon,sub:`${sr.branch} · SR`})),
+              ];
+              const ranked=allPeople.map(p=>({...p,balance:rewardBalances[p.id]?.balance||0})).sort((a,b)=>b.balance-a.balance);
+              return ranked.map((p,i)=>(
+                <button key={p.id} onClick={()=>{setPointsModalPerson(p.id);setShowPointsModal(true);}} style={{
+                  display:"flex",alignItems:"center",gap:8,width:"100%",textAlign:"left",padding:"6px 8px",marginBottom:2,
+                  border:"none",cursor:"pointer",background:"transparent",borderRadius:6,fontFamily:"Inter,sans-serif",
+                }} className="sidebar-rank-item">
+                  <span style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,.3)",width:16,flexShrink:0}}>{i+1}</span>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:11,fontWeight:600,color:"rgba(255,255,255,.85)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.name}</div>
+                    <div style={{fontSize:9,color:"rgba(255,255,255,.3)"}}>{p.sub}</div>
+                  </div>
+                  <div style={{fontSize:11,fontWeight:800,color:"#F5A623",flexShrink:0,whiteSpace:"nowrap"}}>{p.balance.toLocaleString()}</div>
+                </button>
+              ));
+            })()}
+          </div>
         </div>
       </div>
 
@@ -1892,8 +1933,8 @@ export default function App(){
           const branchPct=pctN(bTotal,bTarget);
           return <div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14,alignItems:"start"}}>
-              {bSRs.map(sr=><SRTable key={sr.id} sr={sr} records={records} targets={targets} branchPct={branchPct} onEdit={handleEdit} printMode={false} month={month} year={year} days={days} rewardBalance={rewardBalances[sr.id]?.balance||0}/>)}
-              <BMTable branchId={selBranch} records={records} targets={targets} srList={srList} branchMeta={branchMeta} onEdit={handleEdit} printMode={false} month={month} year={year} days={days} rewardBalance={rewardBalances[`BM_${selBranch}`]?.balance||0}/>
+              {bSRs.map(sr=><SRTable key={sr.id} sr={sr} records={records} targets={targets} branchPct={branchPct} onEdit={handleEdit} printMode={false} month={month} year={year} days={days} rewardBalance={rewardBalances[sr.id]?.balance||0} pointsAsOf={pointsAsOfFor(selBranch)}/>)}
+              <BMTable branchId={selBranch} records={records} targets={targets} srList={srList} branchMeta={branchMeta} onEdit={handleEdit} printMode={false} month={month} year={year} days={days} rewardBalance={rewardBalances[`BM_${selBranch}`]?.balance||0} pointsAsOf={pointsAsOfFor(selBranch)}/>
             </div>
             {/* PDF Upload for all SR invoice */}
             <div style={{marginTop:22}}>
@@ -1919,6 +1960,6 @@ export default function App(){
     {showTargetModal&&<TargetModal targets={targets} setTargets={handleSaveTargets} srList={srList} branchMeta={branchMeta} onClose={()=>setShowTargetModal(false)}/>}
     {showSRModal&&<SRBMModal srList={srList} setSrList={setSrList} branchMeta={branchMeta} setBranchMeta={setBranchMeta} onClose={()=>setShowSRModal(false)} rewardBalances={rewardBalances} setOpeningBalance={setOpeningBalance}/>}
     {printBranch&&<PrintBranchReport branchId={printBranch} records={records} targets={targets} srList={srList} branchMeta={branchMeta} onClose={()=>setPrintBranch(null)} month={month} year={year} days={days}/>}
-    {showPointsModal&&<PointsHistoryModal srList={srList} branchMeta={branchMeta} rewardBalances={rewardBalances} rewardHistory={rewardHistory} onClose={()=>setShowPointsModal(false)}/>}
+    {showPointsModal&&<PointsHistoryModal srList={srList} branchMeta={branchMeta} rewardBalances={rewardBalances} rewardHistory={rewardHistory} initialPerson={pointsModalPerson} onClose={()=>{setShowPointsModal(false);setPointsModalPerson(null);}}/>}
   </div>;
 }

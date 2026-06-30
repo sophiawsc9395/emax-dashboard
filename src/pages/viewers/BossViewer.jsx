@@ -117,14 +117,14 @@ function RankMedal({rank}){
   return <span style={{fontWeight:700,color:"#8A96A8"}}>#{rank}</span>;
 }
 
-function SRCard({sr,records,targets,branchPct,month,year,days,bMeta,rewardBalance=0}){
+function SRCard({sr,records,targets,branchPct,month,year,days,bMeta,rewardBalance=0,pointsAsOf=""}){
   const target=targets?.sr?.[sr.id]?.target||0,bonus=targets?.sr?.[sr.id]?.bonus||0;
   const rows=days.map(d=>{const k=`${d}/${month}/${year}`,v=records[k]?.[sr.id]||{};return{day:d,wi:v.walkin||0,ae:v.aeon||0};});
   const tWI=rows.reduce((s,r)=>s+r.wi,0),tAE=rows.reduce((s,r)=>s+r.ae,0),total=tWI+tAE;
   const p=pctN(total,target),color=achColor(total,target);
   const bonusEarned=branchPct>=100&&total>=target&&bonus>0;
   const achBonus=calcAchievementBonus(p),points=calcRewardPoints(p,branchPct);
-  const thS={padding:"6px 12px",fontSize:10,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",background:"#F7F9FC",borderBottom:"1px solid #E4EAF2",whiteSpace:"nowrap"};
+  const thS={padding:"6px 12px",fontSize:10,fontWeight:700,color:"#5A6472",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right",background:"#F7F9FC",borderBottom:"1px solid #E4EAF2",whiteSpace:"nowrap"};
   return <div style={{border:"1px solid #E4EAF2",borderRadius:10,overflow:"hidden",background:"#fff",boxShadow:"0 1px 4px rgba(10,22,40,.05)"}}>
     <div style={{background:"#0A1628",padding:"10px 14px"}}>
       <div style={{fontSize:9,fontWeight:700,color:"rgba(255,255,255,.4)",textTransform:"uppercase",letterSpacing:"0.08em"}}>EMAX NETWORK SDN BHD</div>
@@ -157,23 +157,23 @@ function SRCard({sr,records,targets,branchPct,month,year,days,bMeta,rewardBalanc
     <div style={{padding:"10px 14px",background:"#F7F9FC",borderTop:"2px solid #E4EAF2"}}>
       {[["Walk In",fRM(tWI),"#4A5568"],["Invoice",fRM(tAE),"#4A5568"],["Total Profit",fRM(total),"#0A1628"]].map(([l,v,c])=>(
         <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"2px 0",fontSize:11}}>
-          <span style={{color:"#8A96A8"}}>{l}</span>
+          <span style={{color:"#5A6472"}}>{l}</span>
           <span style={{fontWeight:700,color:c,fontSize:11}}>{v}</span>
         </div>
       ))}
       <div style={{height:1,background:"#E4EAF2",margin:"7px 0"}}/>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
-        <span style={{color:"#8A96A8"}}>Target</span>
+        <span style={{color:"#5A6472"}}>Target</span>
         <span style={{fontWeight:700,fontSize:11}}>{target>0?fRM(target):"Not set"}</span>
       </div>
       {target>0&&<>
         <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:4}}>
-          <span style={{color:"#8A96A8"}}>Personal Achievement</span>
+          <span style={{color:"#5A6472"}}>Personal Achievement</span>
           <AchBadge profit={total} target={target}/>
         </div>
         <ProgressBar pct={p} color={color}/>
         <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginTop:5}}>
-          <span style={{color:"#8A96A8"}}>Balance to Hit</span>
+          <span style={{color:"#5A6472"}}>Balance to Hit</span>
           <span style={{fontWeight:700,color:Math.max(target-total,0)>0?"#F0354B":"#00C896",fontSize:11}}>
             {Math.max(target-total,0)>0?fRM(Math.max(target-total,0)):"Target Met"}
           </span>
@@ -181,22 +181,22 @@ function SRCard({sr,records,targets,branchPct,month,year,days,bMeta,rewardBalanc
       </>}
       {/* ── BRANCH ACHIEVEMENT BONUS & REWARD POINTS ── */}
       <div style={{height:1,background:"#E4EAF2",margin:"8px 0"}}/>
-      <div style={{fontSize:9,fontWeight:700,color:"#8A96A8",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Incentives</div>
+      <div style={{fontSize:9,fontWeight:700,color:"#5A6472",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Incentives</div>
 
       {/* Personal Achievement Bonus */}
       {bonus>0&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,marginBottom:4}}>
-        <span style={{color:"#8A96A8"}}>Personal Achievement Bonus</span>
-        <span style={{fontWeight:700,color:bonusEarned?"#00C896":"#8A96A8",whiteSpace:"nowrap"}}>
+        <span style={{color:"#5A6472"}}>Personal Achievement Bonus</span>
+        <span style={{fontWeight:700,color:bonusEarned?"#0A8754":"#5A6472",whiteSpace:"nowrap"}}>
           {bonusEarned?fRM(bonus):`${fRM(bonus)} (Pending)`}
         </span>
       </div>}
 
       {/* Branch Achievement Bonus */}
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
-        <span style={{color:"#8A96A8"}}>Branch Achievement Bonus</span>
+        <span style={{color:"#5A6472"}}>Branch Achievement Bonus</span>
         {(branchPct>=121&&p>=100)
-          ? <span style={{fontWeight:700,color:"#F5A623"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
-          : <span style={{color:"#8A96A8"}}>—</span>
+          ? <span style={{fontWeight:700,color:"#B7791F"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
+          : <span style={{color:"#5A6472"}}>—</span>
         }
       </div>
       {(branchPct>=121&&p>=100)&&(()=>{
@@ -221,14 +221,14 @@ function SRCard({sr,records,targets,branchPct,month,year,days,bMeta,rewardBalanc
 
       {/* Reward Points */}
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2,marginTop:2}}>
-        <span style={{color:"#8A96A8"}}>Reward Points (This Month)</span>
+        <span style={{color:"#5A6472"}}>Reward Points (This Month)</span>
         {(branchPct>=100&&p>=110)
           ? <span style={{fontWeight:700,color:"#1E6FDB"}}>{calcRewardPoints(p,branchPct).toLocaleString()} pts</span>
-          : <span style={{color:"#8A96A8"}}>—</span>
+          : <span style={{color:"#5A6472"}}>—</span>
         }
       </div>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
-        <span style={{color:"#8A96A8"}}>Reward Points Balance</span>
+        <span style={{color:"#5A6472"}}>Earned Reward Points{pointsAsOf?` (as at ${pointsAsOf})`:""}</span>
         <span style={{fontWeight:800,color:"#0A1628"}}>{rewardBalance.toLocaleString()} pts</span>
       </div>
       {(branchPct>=100&&p>=110)&&(()=>{
@@ -415,6 +415,10 @@ export default function App(){
   const month=selMonth,year=selYear;
   const days=Array.from({length:daysInMonth(month,year)},(_,i)=>i+1);
   const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const pointsAsOf=(()=>{
+    const prevDate=new Date(selYear,selMonth-1,0);
+    return `${String(prevDate.getDate()).padStart(2,"0")}/${String(prevDate.getMonth()+1).padStart(2,"0")}/${prevDate.getFullYear()}`;
+  })();
 
   const [selStartDay,setSelStartDay]=useState(1);
   const [selEndDay,setSelEndDay]=useState(daysInMonth(now.getMonth()+1,now.getFullYear()));
@@ -697,7 +701,7 @@ export default function App(){
           const bTot=BRANCH_ORDER.includes(selBranch)?fullMonthBranchTotals[selBranch]?.total||0:0;
           const branchPct=pctN(bTot,bTarget);
           return <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14,alignItems:"start"}}>
-            {bSRs.map(sr=><SRCard key={sr.id} sr={sr} records={records} targets={targets} branchPct={branchPct} month={month} year={year} days={days} bMeta={bMeta} rewardBalance={rewardBalances[sr.id]?.balance||0}/>)}
+            {bSRs.map(sr=><SRCard key={sr.id} sr={sr} records={records} targets={targets} branchPct={branchPct} month={month} year={year} days={days} bMeta={bMeta} rewardBalance={rewardBalances[sr.id]?.balance||0} pointsAsOf={pointsAsOf}/>)}
           </div>;
         })()}
         <PdfDownloads month={month} year={year}/>
