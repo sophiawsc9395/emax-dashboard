@@ -626,7 +626,7 @@ export default function App(){
       {/* Personal Achievement Bonus */}
       {bonus>0&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,marginBottom:4}}>
         <span style={{color:"#5A6472"}}>Personal Achievement Bonus</span>
-        <span style={{fontWeight:700,color:bonusEarned?"#0A8754":"#5A6472",whiteSpace:"nowrap"}}>
+        <span style={{fontWeight:700,fontSize:11,color:"#0A1628",whiteSpace:"nowrap"}}>
           {bonusEarned?fRM(bonus):`${fRM(bonus)} (Pending)`}
         </span>
       </div>}
@@ -635,7 +635,7 @@ export default function App(){
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
         <span style={{color:"#5A6472"}}>Branch Achievement Bonus</span>
         {(branchPct>=121&&p>=100)
-          ? <span style={{fontWeight:700,color:"#B7791F"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
+          ? <span style={{fontWeight:700,fontSize:11,color:"#0A1628"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
           : <span style={{color:"#5A6472"}}>—</span>
         }
       </div>
@@ -644,13 +644,13 @@ export default function App(){
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2,marginTop:2}}>
         <span style={{color:"#5A6472"}}>Reward Points (This Month)</span>
         {(branchPct>=100&&p>=110)
-          ? <span style={{fontWeight:700,color:"#1E6FDB"}}>{calcRewardPoints(p,branchPct).toLocaleString()} pts</span>
+          ? <span style={{fontWeight:700,fontSize:11,color:"#0A1628"}}>{calcRewardPoints(p,branchPct).toLocaleString()} pts</span>
           : <span style={{color:"#5A6472"}}>—</span>
         }
       </div>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:6}}>
         <span style={{color:"#5A6472"}}>Earned Reward Points{pointsAsOf?` (as at ${pointsAsOf})`:""}</span>
-        <span style={{fontWeight:800,color:"#0A1628"}}>{(rewardBalances[sr.id]?.balance||0).toLocaleString()} pts</span>
+        <span style={{fontWeight:700,fontSize:11,color:"#0A1628"}}>{(rewardBalances[sr.id]?.balance||0).toLocaleString()} pts</span>
       </div>
 
       {/* Compact tier progress — only shown when at least one tier is active */}
@@ -665,11 +665,11 @@ export default function App(){
         return <div style={{background:"#F7F9FC",borderRadius:8,padding:"8px 10px",border:"1px solid #E4EAF2",display:"flex",flexDirection:"column",gap:5}}>
           {bTier&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <span style={{fontSize:10,color:"#92400E",fontWeight:600}}>Bonus Tier {bTier}{!bMax?` → next at ${bNextPct}%`:" (max)"}</span>
-            <span style={{fontSize:10,fontWeight:700,color:"#B7791F"}}>{!bMax?fRM(calcAchievementBonus(bNextPct,"sr")):"🏆"}</span>
+            <span style={{fontSize:10,fontWeight:700,color:"#0A1628"}}>{!bMax?fRM(calcAchievementBonus(bNextPct,"sr")):"🏆"}</span>
           </div>}
           {pTierIdx>=0&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <span style={{fontSize:10,color:"#1E40AF",fontWeight:600}}>Points Tier {pTierIdx+1}{pNext?` → next at ${pNext[0]}%`:" (max)"}</span>
-            <span style={{fontSize:10,fontWeight:700,color:"#1E6FDB"}}>{pNext?pNext[1].toLocaleString()+" pts":"🏆"}</span>
+            <span style={{fontSize:10,fontWeight:700,color:"#0A1628"}}>{pNext?pNext[1].toLocaleString()+" pts":"🏆"}</span>
           </div>}
         </div>;
       })()}

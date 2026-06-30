@@ -328,7 +328,7 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days,
       {/* Personal Achievement Bonus */}
       {bonus>0&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,marginBottom:4}}>
         <span style={{color:"#5A6472"}}>Personal Achievement Bonus</span>
-        <span style={{fontWeight:700,color:"#0A1628",whiteSpace:"nowrap"}}>
+        <span style={{fontWeight:700,fontSize:11,color:"#0A1628",whiteSpace:"nowrap"}}>
           {bonusEarned?fRM(bonus):`${fRM(bonus)} (Pending)`}
         </span>
       </div>}
@@ -337,7 +337,7 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days,
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
         <span style={{color:"#5A6472"}}>Branch Achievement Bonus</span>
         {(branchPct>=121&&p>=100)
-          ? <span style={{fontWeight:700,color:"#0A1628"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
+          ? <span style={{fontWeight:700,fontSize:11,color:"#0A1628"}}>{fRM(calcAchievementBonus(branchPct,"sr"))}</span>
           : <span style={{color:"#5A6472"}}>—</span>
         }
       </div>
@@ -346,13 +346,13 @@ function SRTable({sr,records,targets,branchPct,onEdit,printMode,month,year,days,
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2,marginTop:2}}>
         <span style={{color:"#5A6472"}}>Reward Points (This Month)</span>
         {(branchPct>=100&&p>=110)
-          ? <span style={{fontWeight:700,color:"#0A1628"}}>{calcRewardPoints(p,branchPct).toLocaleString()} pts</span>
+          ? <span style={{fontWeight:700,fontSize:11,color:"#0A1628"}}>{calcRewardPoints(p,branchPct).toLocaleString()} pts</span>
           : <span style={{color:"#5A6472"}}>—</span>
         }
       </div>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:6}}>
         <span style={{color:"#5A6472"}}>Earned Reward Points{pointsAsOf?` (as at ${pointsAsOf})`:""}</span>
-        <span style={{fontWeight:800,color:"#0A1628"}}>{rewardBalance.toLocaleString()} pts</span>
+        <span style={{fontWeight:700,fontSize:11,color:"#0A1628"}}>{rewardBalance.toLocaleString()} pts</span>
       </div>
 
       {/* Compact tier progress — only shown when at least one tier is active */}
@@ -457,7 +457,7 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
       {/* Personal Achievement Bonus: RM500 always, RM2200 if branch hits 100%+ */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,marginBottom:4}}>
         <span style={{color:"#5A6472"}}>Personal Achievement Bonus</span>
-        <span style={{fontWeight:700,color:"#0A1628",whiteSpace:"nowrap"}}>
+        <span style={{fontWeight:700,fontSize:11,color:"#0A1628",whiteSpace:"nowrap"}}>
           {p>=100?"RM 2,200":"RM 500 (Pending)"}
         </span>
       </div>
@@ -468,7 +468,7 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2}}>
         <span style={{color:"#5A6472"}}>Branch Achievement Bonus</span>
         {p>=121
-          ? <span style={{fontWeight:700,color:"#0A1628"}}>{fRM(calcAchievementBonus(p,"bm"))}</span>
+          ? <span style={{fontWeight:700,fontSize:11,color:"#0A1628"}}>{fRM(calcAchievementBonus(p,"bm"))}</span>
           : <span style={{color:"#5A6472"}}>—</span>
         }
       </div>
@@ -476,13 +476,13 @@ function BMTable({branchId,records,targets,srList,branchMeta,onEdit,printMode,mo
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:2,marginTop:2}}>
         <span style={{color:"#5A6472"}}>Reward Points (This Month)</span>
         {(p>=100&&p>=110)
-          ? <span style={{fontWeight:700,color:"#0A1628"}}>{calcRewardPoints(p,p).toLocaleString()} pts</span>
+          ? <span style={{fontWeight:700,fontSize:11,color:"#0A1628"}}>{calcRewardPoints(p,p).toLocaleString()} pts</span>
           : <span style={{color:"#5A6472"}}>—</span>
         }
       </div>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:6}}>
         <span style={{color:"#5A6472"}}>Earned Reward Points{pointsAsOf?` (as at ${pointsAsOf})`:""}</span>
-        <span style={{fontWeight:800,color:"#0A1628"}}>{rewardBalance.toLocaleString()} pts</span>
+        <span style={{fontWeight:700,fontSize:11,color:"#0A1628"}}>{rewardBalance.toLocaleString()} pts</span>
       </div>
 
       {/* Compact tier progress — only shown when at least one tier is active */}
@@ -585,9 +585,9 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
         <thead><tr>
           <th style={TH({textAlign:"left"})}>Branch</th>
           <th style={TH()}>Monthly Target</th>
-          <th style={{...TH(),background:"#0A1628",color:"rgba(255,255,255,.85)"}}>Total Profit</th>
-          <th style={{...TH(),background:"#0A1628",color:"rgba(255,255,255,.55)"}}>Walk In</th>
-          <th style={{...TH(),background:"#0A1628",color:"rgba(255,255,255,.55)"}}>Invoice</th>
+          <th style={TH()}>Total Profit</th>
+          <th style={TH()}>Walk In</th>
+          <th style={TH()}>Invoice</th>
           <th style={TH()}>Balance</th>
           <th style={TH()}>Achievement</th>
         </tr></thead>
@@ -598,40 +598,40 @@ function BranchPerfTable({branchTotals,targets,branchMeta,printRef,month,year,st
           }).map((b,i)=>{
           const wi=bt[b]?.wi||0,ae=bt[b]?.ae||0,total=wi+ae;
           const target=targets?.bm?.[b]||0,bal=target>0?total-target:null,over=target>0&&total>=target;
-          return <tr key={b} className="shine-row" style={{background:i%2===0?"#fff":"#F7F9FC"}}>
+          return <tr key={b} className="shine-row" style={{background:"#fff"}}>
             <td style={{...TD({textAlign:"left"})}}>
               <div style={{fontWeight:700,color:"#0A1628",fontSize:12,textTransform:"uppercase"}}>{branchMeta[b]?.name||b}</div>
               <div style={{fontSize:10,color:"#5A6472",marginTop:1}}>{branchMeta[b]?.manager}</div>
             </td>
-            <td style={{...TD(),textAlign:"right"}}><span style={{color:"#4A5568"}}>{target>0?nc(target):"—"}</span></td>
-            <td style={{...TD({background:"#fff"}),textAlign:"right"}}>
-              <span style={{fontWeight:600,color:over?"#00C896":"#4A5568"}}>{total>0?`RM ${nc(total)}`:"—"}</span>
-            </td>
-            <td style={{...TD({background:"#fff"}),textAlign:"right"}}>
-              <span style={{color:"#4A5568"}}>{wi!==0?`RM ${nc(wi)}`:"—"}</span>
-            </td>
-            <td style={{...TD({background:"#fff"}),textAlign:"right"}}>
-              <span style={{color:"#4A5568"}}>{ae>0?`RM ${nc(ae)}`:"—"}</span>
+            <td style={{...TD(),textAlign:"right"}}><span style={{color:"#4A5568",fontSize:12}}>{target>0?`RM ${nc(target)}`:"—"}</span></td>
+            <td style={{...TD(),textAlign:"right"}}>
+              <span style={{color:"#4A5568",fontSize:12}}>{total>0?`RM ${nc(total)}`:"—"}</span>
             </td>
             <td style={{...TD(),textAlign:"right"}}>
-              {bal===null?<span style={{color:"#5A6472"}}>—</span>
-                :bal>=0?<span style={{color:"#00C896",fontWeight:700}}>+{nc(bal)}</span>
-                :<span style={{color:"#F0354B",fontWeight:700}}>{nc(Math.abs(bal))}</span>}
+              <span style={{color:"#4A5568",fontSize:12}}>{wi!==0?`RM ${nc(wi)}`:"—"}</span>
             </td>
             <td style={{...TD(),textAlign:"right"}}>
-              {target>0?<AchBadge profit={total} target={target} size="md"/>:<span style={{color:"#5A6472"}}>—</span>}
+              <span style={{color:"#4A5568",fontSize:12}}>{ae>0?`RM ${nc(ae)}`:"—"}</span>
+            </td>
+            <td style={{...TD(),textAlign:"right"}}>
+              {bal===null?<span style={{color:"#4A5568",fontSize:12}}>—</span>
+                :bal>=0?<span style={{color:"#4A5568",fontSize:12}}>+RM {nc(bal)}</span>
+                :<span style={{color:"#4A5568",fontSize:12}}>RM {nc(Math.abs(bal))}</span>}
+            </td>
+            <td style={{...TD(),textAlign:"right"}}>
+              {target>0?<AchBadge profit={total} target={target} size="md"/>:<span style={{color:"#4A5568",fontSize:12}}>—</span>}
             </td>
           </tr>;
         })}</tbody>
         <tfoot><tr style={{background:"#0A1628",fontSize:12}}>
           <td style={{padding:"10px 16px",fontWeight:600,color:"rgba(255,255,255,.6)"}}>Total</td>
-          <td style={{padding:"10px 16px",textAlign:"right"}}><span style={{color:"rgba(255,255,255,.6)"}}>{grandTgt>0?nc(grandTgt):"—"}</span></td>
-          <td style={{padding:"10px 16px",textAlign:"right"}}><span style={{fontWeight:600,color:grandT>=grandTgt?"#00C896":"rgba(255,255,255,.6)"}}>{grandT>0?`RM ${nc(grandT)}`:"—"}</span></td>
+          <td style={{padding:"10px 16px",textAlign:"right"}}><span style={{color:"rgba(255,255,255,.6)"}}>{grandTgt>0?`RM ${nc(grandTgt)}`:"—"}</span></td>
+          <td style={{padding:"10px 16px",textAlign:"right"}}><span style={{color:"rgba(255,255,255,.6)"}}>{grandT>0?`RM ${nc(grandT)}`:"—"}</span></td>
           <td style={{padding:"10px 16px",textAlign:"right"}}><span style={{color:"rgba(255,255,255,.6)"}}>{grandWI!==0?`RM ${nc(grandWI)}`:"—"}</span></td>
           <td style={{padding:"10px 16px",textAlign:"right"}}><span style={{color:"rgba(255,255,255,.6)"}}>{grandAE>0?`RM ${nc(grandAE)}`:"—"}</span></td>
           <td style={{padding:"10px 16px",textAlign:"right"}}>
-            <span style={{fontWeight:700,color:grandT>=grandTgt?"#00C896":"#F0354B"}}>
-              {grandTgt>0?(grandT-grandTgt>=0?"+"+nc(grandT-grandTgt):nc(Math.abs(grandT-grandTgt))):"—"}
+            <span style={{color:"rgba(255,255,255,.6)"}}>
+              {grandTgt>0?(grandT-grandTgt>=0?"+RM "+nc(grandT-grandTgt):"RM "+nc(Math.abs(grandT-grandTgt))):"—"}
             </span>
           </td>
           <td style={{padding:"10px 16px",textAlign:"right"}}><AchBadge profit={grandT} target={grandTgt} size="md"/></td>
@@ -985,6 +985,54 @@ function TargetModal({targets,setTargets,srList,branchMeta,onClose}){
 }
 
 // ─── SR/BM MANAGEMENT MODAL ────────────────────────────────
+function StatusEditWidget({status,onSave}){
+  const [editing,setEditing]=useState(false);
+  const ps=parseStatus(status);
+  const [base,setBase]=useState(ps.base);
+  const [p,setP]=useState(ps.p);
+  const [f,setF]=useState(ps.f);
+  const [desc,setDesc]=useState("");
+
+  // Reset local edit fields whenever the underlying status changes (e.g. after a lock auto-update)
+  // or when the editor is closed without saving.
+  const startEdit=()=>{const cur=parseStatus(status);setBase(cur.base);setP(cur.p);setF(cur.f);setDesc("");setEditing(true);};
+
+  const save=()=>{
+    if(!desc.trim()){return;}
+    const newStatus=buildStatus(base,p,f);
+    onSave(newStatus,desc.trim());
+    setEditing(false);
+  };
+
+  if(!editing){
+    return <div style={{display:"flex",alignItems:"center",gap:8}}>
+      <span style={{fontSize:11,fontWeight:600,color:"#0A1628"}}>{status||"—"}</span>
+      <button onClick={startEdit} style={{padding:"3px 8px",fontSize:10,fontWeight:700,border:"1px solid #E4EAF2",borderRadius:6,background:"#F7F9FC",color:"#4A5568",cursor:"pointer",fontFamily:"Inter,sans-serif",whiteSpace:"nowrap"}}>
+        Edit
+      </button>
+    </div>;
+  }
+
+  return <div style={{padding:10,background:"#F7F9FC",border:"1px solid #E4EAF2",borderRadius:8}}>
+    <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:6}}>
+      <select className="input select" value={base} onChange={e=>setBase(e.target.value)} style={{width:"auto",minWidth:96,padding:"4px 22px 4px 8px",fontSize:11}}>
+        {statusBaseOptions.map(s=><option key={s} value={s}>{s}</option>)}
+      </select>
+      {base!=="Director"&&base!=="Resigned"&&<>
+        <label style={{fontSize:10,color:"#8A96A8"}}>P</label>
+        <input type="number" min="0" className="input" value={p} onChange={e=>setP(Math.max(0,parseInt(e.target.value)||0))} style={{width:42,padding:"4px 4px",fontSize:11,textAlign:"center"}}/>
+        <label style={{fontSize:10,color:"#8A96A8"}}>F</label>
+        <input type="number" min="0" className="input" value={f} onChange={e=>setF(Math.max(0,parseInt(e.target.value)||0))} style={{width:42,padding:"4px 4px",fontSize:11,textAlign:"center"}}/>
+      </>}
+    </div>
+    <input type="text" className="input" placeholder="Reason for change (required)" value={desc} onChange={e=>setDesc(e.target.value)} style={{fontSize:11,marginBottom:8}}/>
+    <div style={{display:"flex",gap:6}}>
+      <button onClick={()=>setEditing(false)} style={{flex:1,padding:"6px 0",fontSize:11,fontWeight:700,border:"1px solid #E4EAF2",borderRadius:6,background:"#fff",color:"#8A96A8",cursor:"pointer",fontFamily:"Inter,sans-serif"}}>Cancel</button>
+      <button onClick={save} disabled={!desc.trim()} style={{flex:1,padding:"6px 0",fontSize:11,fontWeight:700,border:"none",borderRadius:6,background:!desc.trim()?"#E4EAF2":"#0A1628",color:!desc.trim()?"#8A96A8":"#fff",cursor:!desc.trim()?"not-allowed":"pointer",fontFamily:"Inter,sans-serif"}}>Save</button>
+    </div>
+  </div>;
+}
+
 function AdjustBalanceWidget({personId,balance,adjustBalance}){
   const [open,setOpen]=useState(false);
   const [amount,setAmount]=useState("");
@@ -999,13 +1047,13 @@ function AdjustBalanceWidget({personId,balance,adjustBalance}){
   };
 
   return <div style={{position:"relative"}}>
-    <div style={{display:"flex",alignItems:"center",gap:8}}>
-      <span style={{fontWeight:800,fontSize:14,color:"#0A1628"}}>{balance.toLocaleString()} pts</span>
-      <button onClick={()=>setOpen(o=>!o)} style={{padding:"3px 10px",fontSize:11,fontWeight:700,border:"1px solid #E4EAF2",borderRadius:6,background:open?"#0A1628":"#F7F9FC",color:open?"#fff":"#4A5568",cursor:"pointer",fontFamily:"Inter,sans-serif"}}>
+    <div style={{display:"flex",alignItems:"center",gap:6}}>
+      <span style={{fontWeight:700,fontSize:11,color:"#0A1628",whiteSpace:"nowrap"}}>{balance.toLocaleString()} pts</span>
+      <button onClick={()=>setOpen(o=>!o)} style={{padding:"3px 8px",fontSize:10,fontWeight:700,border:"1px solid #E4EAF2",borderRadius:6,background:open?"#0A1628":"#F7F9FC",color:open?"#fff":"#4A5568",cursor:"pointer",fontFamily:"Inter,sans-serif",whiteSpace:"nowrap"}}>
         {open?"Cancel":"Adjust ±"}
       </button>
     </div>
-    {open&&<div style={{marginTop:8,padding:10,background:"#F7F9FC",border:"1px solid #E4EAF2",borderRadius:8}}>
+    {open&&<div style={{position:"absolute",top:"100%",right:0,marginTop:6,padding:10,background:"#fff",border:"1px solid #E4EAF2",borderRadius:8,boxShadow:"0 4px 16px rgba(10,22,40,.15)",width:220,zIndex:50}}>
       <div style={{display:"flex",gap:6,marginBottom:6}}>
         <button onClick={()=>setMode("add")} style={{flex:1,padding:"5px 0",fontSize:11,fontWeight:700,border:"1px solid "+(mode==="add"?"#00C896":"#E4EAF2"),borderRadius:6,background:mode==="add"?"#00C89615":"#fff",color:mode==="add"?"#00C896":"#8A96A8",cursor:"pointer",fontFamily:"Inter,sans-serif"}}>+ Add</button>
         <button onClick={()=>setMode("subtract")} style={{flex:1,padding:"5px 0",fontSize:11,fontWeight:700,border:"1px solid "+(mode==="subtract"?"#F0354B":"#E4EAF2"),borderRadius:6,background:mode==="subtract"?"#F0354B15":"#fff",color:mode==="subtract"?"#F0354B":"#8A96A8",cursor:"pointer",fontFamily:"Inter,sans-serif"}}>− Subtract</button>
@@ -1019,7 +1067,7 @@ function AdjustBalanceWidget({personId,balance,adjustBalance}){
   </div>;
 }
 
-function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBalances,adjustBalance}){
+function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBalances,adjustBalance,statusHistory,setStatusHistory}){
   const [tab,setTab]=useState("bm");
   const [localBM,setLocalBM]=useState(JSON.parse(JSON.stringify(branchMeta)));
   const [localSR,setLocalSR]=useState(JSON.parse(JSON.stringify(srList)));
@@ -1037,6 +1085,24 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBala
     setNewSR({id:"",canon:"",branch:"KM",type:"Online",status:"Probation In Progress"});await saveSR(updated);
   };
   const updateSR=async(id,field,val)=>{const updated=localSR.map(s=>s.id===id?{...s,[field]:val}:s);setLocalSR(updated);await saveSR(updated);};
+  const saveSRStatus=async(id,newStatus,desc)=>{
+    await updateSR(id,"status",newStatus);
+    const hist=statusHistory[id]||[];
+    const newHist={...statusHistory,[id]:[...hist,{date:new Date().toISOString(),status:newStatus,note:desc}]};
+    setStatusHistory(newHist);
+    await saveData("emax_v5_status_history",newHist);
+  };
+  const saveBMStatus=async(b,newStatus,desc)=>{
+    const updatedMeta={...branchMeta,[b]:{...branchMeta[b],mStatus:newStatus}};
+    setBranchMeta(updatedMeta);
+    await saveData(BM_KEY,updatedMeta);
+    setLocalBM(p=>({...p,[b]:{...p[b],mStatus:newStatus}}));
+    const key=`BM_${b}`;
+    const hist=statusHistory[key]||[];
+    const newHist={...statusHistory,[key]:[...hist,{date:new Date().toISOString(),status:newStatus,note:desc}]};
+    setStatusHistory(newHist);
+    await saveData("emax_v5_status_history",newHist);
+  };
   const removeSR=async(id)=>{if(!confirm("Remove this SR?"))return;const updated=localSR.filter(s=>s.id!==id);setLocalSR(updated);await saveSR(updated);};
   const filteredSR=filterBranch==="ALL"?localSR:localSR.filter(s=>s.branch===filterBranch);
   return <div className="modal-overlay">
@@ -1063,21 +1129,10 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBala
                 <div style={{fontSize:10,color:"#8A96A8",marginBottom:10}}>{b}</div>
                 <label style={{fontSize:10,fontWeight:700,color:"#8A96A8",display:"block",marginBottom:3,textTransform:"uppercase",letterSpacing:"0.05em"}}>Manager Name</label>
                 <input className="input" value={localBM[b]?.manager||""} onChange={e=>setLocalBM(p=>({...p,[b]:{...p[b],manager:e.target.value}}))} style={{marginBottom:8,fontSize:12}}/>
-                <label style={{fontSize:10,fontWeight:700,color:"#8A96A8",display:"block",marginBottom:3,textTransform:"uppercase",letterSpacing:"0.05em"}}>Employment Status</label>
-                {(()=>{
-                  const ps=parseStatus(localBM[b]?.mStatus||"");
-                  return <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:8}}>
-                    <select className="input select" value={ps.base} onChange={e=>setLocalBM(p=>({...p,[b]:{...p[b],mStatus:buildStatus(e.target.value,ps.p,ps.f)}}))} style={{width:"auto",minWidth:96,padding:"4px 22px 4px 8px",fontSize:11}}>
-                      {statusBaseOptions.map(s=><option key={s} value={s}>{s}</option>)}
-                    </select>
-                    {ps.base!=="Director"&&ps.base!=="Resigned"&&<>
-                      <label style={{fontSize:10,color:"#8A96A8"}}>P</label>
-                      <input type="number" min="0" className="input" value={ps.p} onChange={e=>setLocalBM(p=>({...p,[b]:{...p[b],mStatus:buildStatus(ps.base,Math.max(0,parseInt(e.target.value)||0),ps.f)}}))} style={{width:42,padding:"4px 4px",fontSize:11,textAlign:"center"}}/>
-                      <label style={{fontSize:10,color:"#8A96A8"}}>F</label>
-                      <input type="number" min="0" className="input" value={ps.f} onChange={e=>setLocalBM(p=>({...p,[b]:{...p[b],mStatus:buildStatus(ps.base,ps.p,Math.max(0,parseInt(e.target.value)||0))}}))} style={{width:42,padding:"4px 4px",fontSize:11,textAlign:"center"}}/>
-                    </>}
-                  </div>;
-                })()}
+                <label style={{fontSize:10,fontWeight:700,color:"#8A96A8",display:"block",marginBottom:5,textTransform:"uppercase",letterSpacing:"0.05em"}}>Employment Status</label>
+                <div style={{marginBottom:8}}>
+                  <StatusEditWidget status={localBM[b]?.mStatus||""} onSave={(newStatus,desc)=>saveBMStatus(b,newStatus,desc)}/>
+                </div>
                 <label style={{fontSize:10,fontWeight:700,color:"#F5A623",display:"block",marginBottom:5,textTransform:"uppercase",letterSpacing:"0.05em"}}>🏆 Reward Points Balance</label>
                 <AdjustBalanceWidget personId={`BM_${b}`} balance={rewardBalances?.[`BM_${b}`]?.balance||0} adjustBalance={adjustBalance}/>
               </div>
@@ -1143,8 +1198,9 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBala
               <button className="btn btn-success" onClick={addSR}>Add SR</button>
             </div>
           </div>}
-          <div className="card" style={{overflow:"hidden"}}>
-            <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+          <div className="card" style={{overflow:"visible"}}>
+            <div style={{overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,minWidth:900}}>
               <thead><tr style={{background:"#0A1628"}}>
                 {["ID","Name","Branch","Type","Status","Points Balance",""].map(h=>(
                   <th key={h} style={{padding:"9px 14px",textAlign:"left",fontWeight:700,fontSize:10,color:"rgba(255,255,255,.7)",textTransform:"uppercase",letterSpacing:"0.06em"}}>{h}</th>
@@ -1173,20 +1229,7 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBala
                     </select>
                   </td>
                   <td style={{padding:"8px 14px"}}>
-                    {(()=>{
-                      const ps=parseStatus(sr.status);
-                      return <div style={{display:"flex",gap:4,alignItems:"center"}}>
-                        <select className="input select" value={ps.base} onChange={e=>updateSR(sr.id,"status",buildStatus(e.target.value,ps.p,ps.f))} style={{width:"auto",minWidth:96,padding:"4px 20px 4px 6px",fontSize:11}}>
-                          {statusBaseOptions.map(s=><option key={s} value={s}>{s}</option>)}
-                        </select>
-                        {ps.base!=="Director"&&ps.base!=="Resigned"&&<>
-                          <span style={{fontSize:10,color:"#8A96A8"}}>P</span>
-                          <input type="number" min="0" className="input" value={ps.p} onChange={e=>updateSR(sr.id,"status",buildStatus(ps.base,Math.max(0,parseInt(e.target.value)||0),ps.f))} style={{width:40,padding:"4px 4px",fontSize:11,textAlign:"center"}}/>
-                          <span style={{fontSize:10,color:"#8A96A8"}}>F</span>
-                          <input type="number" min="0" className="input" value={ps.f} onChange={e=>updateSR(sr.id,"status",buildStatus(ps.base,ps.p,Math.max(0,parseInt(e.target.value)||0)))} style={{width:40,padding:"4px 4px",fontSize:11,textAlign:"center"}}/>
-                        </>}
-                      </div>;
-                    })()}
+                    <StatusEditWidget status={sr.status} onSave={(newStatus,desc)=>saveSRStatus(sr.id,newStatus,desc)}/>
                   </td>
                   <td style={{padding:"8px 14px"}}>
                     <AdjustBalanceWidget personId={sr.id} balance={rewardBalances?.[sr.id]?.balance||0} adjustBalance={adjustBalance}/>
@@ -1197,6 +1240,7 @@ function SRBMModal({srList,setSrList,branchMeta,setBranchMeta,onClose,rewardBala
                 </tr>
               ))}</tbody>
             </table>
+            </div>
           </div>
           <p style={{fontSize:11,color:"#8A96A8",marginTop:8}}>Click SR name to edit inline. Other fields save immediately on change.</p>
         </div>}
@@ -1561,6 +1605,7 @@ export default function App(){
   const [repairRefresh,setRepairRefresh] = useState(0);
   const [rewardBalances,setRewardBalances] = useState({});
   const [rewardHistory,setRewardHistory] = useState({});
+  const [statusHistory,setStatusHistory] = useState({});
   const [lockedMonths,setLockedMonths] = useState({});
   const [showTargetModal,setShowTargetModal] = useState(false);
   const [showSRModal,setShowSRModal]         = useState(false);
@@ -1590,7 +1635,7 @@ export default function App(){
     setSelEndDay(daysInMonth(selMonth,selYear));
     const snapKey=`emax_v5_status_${selYear}_${selMonth}`;
     const monthKey=`${selYear}_${selMonth}`;
-    Promise.all([loadData(recordsKey),loadData(TARGET_KEY),loadData(SR_KEY),loadData(BM_KEY),loadData(snapKey),loadData("emax_v5_reward_balance"),loadData("emax_v5_locked_months"),loadData("emax_v5_reward_history")]).then(([r,t,srData,bmData,snap,rb,lm,rh])=>{
+    Promise.all([loadData(recordsKey),loadData(TARGET_KEY),loadData(SR_KEY),loadData(BM_KEY),loadData(snapKey),loadData("emax_v5_reward_balance"),loadData("emax_v5_locked_months"),loadData("emax_v5_reward_history"),loadData("emax_v5_status_history")]).then(([r,t,srData,bmData,snap,rb,lm,rh,sh])=>{
       setRecords(r||{});
       const baseSR=(srData&&Array.isArray(srData)&&srData.length>0)?srData:DEFAULT_SR;
       // Overlay historical status snapshot if viewing a past month
@@ -1606,6 +1651,7 @@ export default function App(){
       setRewardBalances(rb||{});
       setLockedMonths(lm||{});
       setRewardHistory(rh||{});
+      setStatusHistory(sh||{});
       setLoading(false);
     });
   },[selMonth,selYear]);
@@ -1641,6 +1687,7 @@ export default function App(){
     const noteMonth=`${MONTHS_FULL[selMonth-1]} ${selYear}`;
 
     // SR points + employment status P/F update
+    const statusUpdates={...statusHistory};
     const updatedSRList=srList.map(sr=>{
       if(sr.branch!==branchId)return sr;
       const srTarget=targets?.sr?.[sr.id]?.target||0;
@@ -1657,6 +1704,8 @@ export default function App(){
       if(ps.base==="Director"||ps.base==="Resigned"||srTarget<=0)return sr;
       const hit=srTotal>=srTarget;
       const newStatus=buildStatus(ps.base,hit?ps.p+1:ps.p,hit?ps.f:ps.f+1);
+      const sHist=statusUpdates[sr.id]||[];
+      statusUpdates[sr.id]=[...sHist,{date:new Date().toISOString(),status:newStatus,note:`Auto-updated on lock: ${noteMonth} personal target ${hit?"hit":"missed"} (${srPct.toFixed(1)}%)`}];
       return{...sr,status:newStatus};
     });
     setSrList(updatedSRList);
@@ -1679,6 +1728,9 @@ export default function App(){
         const newBranchMeta={...branchMeta,[branchId]:{...bmMeta,mStatus:newBMStatus}};
         setBranchMeta(newBranchMeta);
         await saveData(BM_KEY,newBranchMeta);
+        const bmStatusKey=`BM_${branchId}`;
+        const bmSHist=statusUpdates[bmStatusKey]||[];
+        statusUpdates[bmStatusKey]=[...bmSHist,{date:new Date().toISOString(),status:newBMStatus,note:`Auto-updated on lock: ${noteMonth} branch target ${bmHit?"hit":"missed"} (${branchPct.toFixed(1)}%)`}];
       }
     }
 
@@ -1686,6 +1738,8 @@ export default function App(){
     await saveData("emax_v5_reward_balance",updates);
     setRewardHistory(historyUpdates);
     await saveData("emax_v5_reward_history",historyUpdates);
+    setStatusHistory(statusUpdates);
+    await saveData("emax_v5_status_history",statusUpdates);
     const newLocked={...lockedMonths,[monthKeyStr]:{...(lockedMonths[monthKeyStr]||{}),[branchId]:true}};
     setLockedMonths(newLocked);
     await saveData("emax_v5_locked_months",newLocked);
@@ -1858,14 +1912,6 @@ export default function App(){
               ))}
             </select>
           </div>
-          <div style={{textAlign:"right"}}>
-            <div style={{fontSize:9,color:"rgba(255,255,255,.35)",textTransform:"uppercase",letterSpacing:"0.1em",whiteSpace:"nowrap"}}>
-              {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][month-1]} {year}
-            </div>
-            <div style={{fontWeight:800,fontSize:13,color:"#fff",whiteSpace:"nowrap"}}>{fRM(grandTotal)}</div>
-          </div>
-          <button className="btn btn-ghost" onClick={()=>setShowTargetModal(true)} style={{fontSize:11,color:"rgba(255,255,255,.6)",borderColor:"rgba(255,255,255,.15)",padding:"5px 11px",whiteSpace:"nowrap"}}>Set Targets</button>
-          <button className="btn btn-ghost" onClick={()=>setShowSRModal(true)} style={{fontSize:11,color:"rgba(255,255,255,.6)",borderColor:"rgba(255,255,255,.15)",padding:"5px 11px",whiteSpace:"nowrap"}}>Manage SR</button>
           <button onClick={()=>setSidebarOpen(o=>!o)} title={sidebarOpen?"Collapse menu":"Expand menu"}
             style={{display:"flex",alignItems:"center",justifyContent:"center",width:30,height:30,border:"1px solid rgba(255,255,255,.15)",borderRadius:7,background:"rgba(255,255,255,.06)",cursor:"pointer",flexShrink:0}}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -2007,12 +2053,27 @@ export default function App(){
               {t.label}
             </button>
           ))}
+          <div style={{width:"100%",height:1,background:"rgba(255,255,255,.08)",margin:"10px 0"}}/>
+          <button onClick={()=>{setShowTargetModal(true);setSidebarOpen(false);}} style={{
+            display:"flex",alignItems:"center",width:"100%",textAlign:"left",padding:"9px 12px",marginBottom:3,
+            border:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600,fontSize:12,borderRadius:8,
+            background:"transparent",color:"rgba(255,255,255,.45)",transition:"background .15s",
+          }}>
+            Set Targets
+          </button>
+          <button onClick={()=>{setShowSRModal(true);setSidebarOpen(false);}} style={{
+            display:"flex",alignItems:"center",width:"100%",textAlign:"left",padding:"9px 12px",marginBottom:3,
+            border:"none",cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:600,fontSize:12,borderRadius:8,
+            background:"transparent",color:"rgba(255,255,255,.45)",transition:"background .15s",
+          }}>
+            Manage SR
+          </button>
         </div>
       </div>
     </div>{/* end flex layout */}
 
     {showTargetModal&&<TargetModal targets={targets} setTargets={handleSaveTargets} srList={srList} branchMeta={branchMeta} onClose={()=>setShowTargetModal(false)}/>}
-    {showSRModal&&<SRBMModal srList={srList} setSrList={setSrList} branchMeta={branchMeta} setBranchMeta={setBranchMeta} onClose={()=>setShowSRModal(false)} rewardBalances={rewardBalances} adjustBalance={adjustBalance}/>}
+    {showSRModal&&<SRBMModal srList={srList} setSrList={setSrList} branchMeta={branchMeta} setBranchMeta={setBranchMeta} onClose={()=>setShowSRModal(false)} rewardBalances={rewardBalances} adjustBalance={adjustBalance} statusHistory={statusHistory} setStatusHistory={setStatusHistory}/>}
     {printBranch&&<PrintBranchReport branchId={printBranch} records={records} targets={targets} srList={srList} branchMeta={branchMeta} onClose={()=>setPrintBranch(null)} month={month} year={year} days={days}/>}
     {showPointsModal&&<PointsHistoryModal srList={srList} branchMeta={branchMeta} rewardBalances={rewardBalances} rewardHistory={rewardHistory} initialPerson={pointsModalPerson} onClose={()=>{setShowPointsModal(false);setPointsModalPerson(null);}}/>}
   </div>;
