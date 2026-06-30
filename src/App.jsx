@@ -1654,7 +1654,7 @@ export default function App(){
       </div>}
 
       {/* RANKINGS */}
-      {tab==="rankings"&&<div className="fade-in">
+      {tab==="rankings"&&<div className="fade-in" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:20}}>
         <RankingTable title="Branch Manager Ranking" rows={bmRanking} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
         <RankingTable title="Online SR Ranking" rows={mkSRRank("Online")} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
         <RankingTable title="Offline SR Ranking" rows={mkSRRank("Offline")} showBonus showPoints branchMeta={branchMeta} period={rankingPeriod}/>
